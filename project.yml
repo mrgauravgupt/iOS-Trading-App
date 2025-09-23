@@ -1,0 +1,61 @@
+name: iOS-Trading-App
+
+options:
+
+  bundleIdPrefix: com.example
+
+targets:
+
+  iOS-Trading-App:
+
+    type: application
+
+    platform: iOS
+
+    deploymentTarget: 14.0
+
+    sources:
+
+      - path: .
+
+        excludes:
+
+          - "**/.*"
+
+    settings:
+
+      base:
+
+        INFOPLIST_FILE: Info.plist
+
+        CODE_SIGNING_REQUIRED: NO
+
+        CODE_SIGN_IDENTITY: ""
+
+        VALID_ARCHS: "arm64 x86_64"
+
+  iOS-Trading-AppTests:
+
+    type: bundle.unit-test
+
+    platform: iOS
+
+    sources:
+
+      - path: .
+
+        includes:
+
+          - "**/*Test*.swift"
+
+    settings:
+
+      base:
+
+        CODE_SIGNING_REQUIRED: NO
+
+        CODE_SIGN_IDENTITY: ""
+
+    dependencies:
+
+      - target: iOS-Trading-App
