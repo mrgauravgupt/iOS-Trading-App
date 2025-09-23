@@ -2,9 +2,21 @@ import Foundation
 
 class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var webSocketTask: URLSessionWebSocketTask?
-    private let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
+    private var session: URLSession!
     var onMessageReceived: ((String) -> Void)?
 
+    override init() {
+        super.init()
+        if #available(iOS 15.0, *) {
+            // Initialize session with delegate for iOS 15+
+            session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue.main)
+        } else {
+            // Fallback for older iOS versions
+            session = URLSession(configuration: .default)
+        }
+    }
+    
+    @available(iOS 15.0, *)
     func connect(to url: URL) {
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.delegate = self
@@ -13,9 +25,12 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
 
     func disconnect() {
-        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        if #available(iOS 15.0, *) {
+            webSocketTask?.cancel(with: .goingAway, reason: nil)
+        }
     }
 
+    @available(iOS 15.0, *)
     private func receiveMessage() {
         webSocketTask?.receive { [weak self] result in
             switch result {
@@ -43,6 +58,7 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         print("WebSocket closed")
     }
 
+    @available(iOS 15.0, *)
     func connectToZerodhaWebSocket(token: String) {
         let url = URL(string: "wss://ws.kite.trade/?token=\(token)")!
         connect(to: url)

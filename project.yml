@@ -12,15 +12,85 @@ targets:
 
     platform: iOS
 
-    deploymentTarget: 14.0
+    deploymentTarget: 16.0
 
     sources:
 
-      - path: .
+      - path: iOS-Trading-AppApp.swift
 
-        excludes:
+      - path: ContentView.swift
 
-          - "**/.*"
+      - path: Config.swift
+
+      - path: WebSocketManager.swift
+
+      - path: NewsAPIClient.swift
+
+      - path: ZerodhaAPIClient.swift
+
+      - path: DataModels.swift
+
+      - path: DataSyncManager.swift
+
+      - path: DataValidator.swift
+
+      - path: HistoricalDataEngine.swift
+
+      - path: TechnicalAnalysisEngine.swift
+
+      - path: RiskManagementAgent.swift
+
+      - path: StrategySelectionAgent.swift
+
+      - path: MarketAnalysisAgent.swift
+
+      - path: SentimentAnalyzer.swift
+
+      - path: MLModelManager.swift
+
+      - path: VirtualPortfolio.swift
+
+      - path: OrderExecutor.swift
+
+      - path: PLCalculator.swift
+
+      - path: PaperTradingView.swift
+
+      - path: AIAgentTrader.swift
+
+      - path: BacktestingEngine.swift
+
+      - path: BacktestingView.swift
+
+      - path: AdvancedRiskManager.swift
+
+      - path: AgentCoordinator.swift
+
+      - path: PerformanceOptimizer.swift
+
+
+
+      - path: AppStorePrep.swift
+
+      - path: SecurityManager.swift
+
+      - path: LaunchPrep.swift
+
+      - path: AuthManager.swift
+
+      - path: DataExportManager.swift
+
+      - path: Persistence.swift
+
+      - path: NotificationManager.swift
+
+      - path: SettingsView.swift
+
+      - path: ChartView.swift
+
+      - path: BaseAgent.swift
+
+      - path: TradingData+CoreDataProperties.swift
 
     settings:
 
@@ -42,11 +112,11 @@ targets:
 
     sources:
 
-      - path: .
+      - path: UnitTests.swift
 
-        includes:
+      - path: IntegrationTests.swift
 
-          - "**/*Test*.swift"
+      - path: UATTests.swift
 
     settings:
 

@@ -14,7 +14,7 @@ class DataSyncManager {
             switch result {
             case .success(let data):
                 for item in data {
-                    PersistenceController.shared.addTradingData(symbol: item.symbol, price: item.price, volume: item.volume, timestamp: item.timestamp)
+                    PersistenceController.shared.addTradingData(symbol: item.symbol, price: item.price, volume: Int64(item.volume), timestamp: item.timestamp)
                 }
                 completion(.success(()))
             case .failure(let error):

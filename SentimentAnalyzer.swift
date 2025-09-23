@@ -1,8 +1,10 @@
 import Foundation
+import NaturalLanguage
 import CoreML
 
 class SentimentAnalyzer {
     private var model: NLModel?
+    private let tagger = NLTagger(tagSchemes: [.sentimentScore])
 
     init() {
         // Load a pre-trained sentiment analysis model
@@ -25,9 +27,20 @@ class SentimentAnalyzer {
 
     func analyzeSentimentWithCoreML(for text: String) -> String {
         // Use NaturalLanguage framework for sentiment analysis
-        let tagger = NLTagger(tagSchemes: [.sentimentScore])
         tagger.string = text
-        let sentiment = tagger.tag(at: text.startIndex, unit: .paragraph, scheme: .sentimentScore)
-        return sentiment?.rawValue ?? "Neutral"
+        let (tag, _) = tagger.tag(at: text.startIndex, unit: .paragraph, scheme: .sentimentScore)
+
+        guard let sentimentScoreString = tag?.rawValue,
+              let sentimentScore = Double(sentimentScoreString) else {
+            return "Neutral"
+        }
+
+        if sentimentScore > 0.2 {
+            return "Positive"
+        } else if sentimentScore < -0.2 {
+            return "Negative"
+        } else {
+            return "Neutral"
+        }
     }
 }

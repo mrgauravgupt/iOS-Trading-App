@@ -45,7 +45,7 @@ class TechnicalAnalysisEngine {
     }
     
     // EMA calculation
-    private func calculateEMA(prices: [Double], period: Int) -> Double {
+    private func _calculateEMA(prices: [Double], period: Int) -> Double {
         guard prices.count >= period else { return prices.last ?? 0 }
         
         let multiplier = 2.0 / (Double(period) + 1.0)
@@ -76,6 +76,6 @@ class TechnicalAnalysisEngine {
     }
     
     func calculateEMA(prices: [Double], period: Int) -> Double {
-        return calculateEMA(prices: prices, period: period)
+        return _calculateEMA(prices: prices, period: period)
     }
 }

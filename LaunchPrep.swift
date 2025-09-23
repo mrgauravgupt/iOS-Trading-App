@@ -3,7 +3,7 @@ import Foundation
 class LaunchPrep {
     func finalOptimization() {
         let optimizer = PerformanceOptimizer()
-        optimizer.optimizeMemoryUsage(data: [])
+        _ = optimizer.optimizeMemoryUsage(data: [])
         optimizer.optimizeBatteryUsage()
     }
     

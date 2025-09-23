@@ -1,11 +1,23 @@
 import Foundation
 
-class MarketAnalysisAgent {
+class MarketAnalysisAgent: BaseAgent {
     private let sentimentAnalyzer = SentimentAnalyzer()
-
-    func analyzeMarketWithSentiment(news: [Article], marketData: [MarketData]) -> String {
-        let sentiment = news.map { sentimentAnalyzer.analyzeSentiment(for: $0.title) }
-        let averageSentiment = sentiment.filter { $0 != "Neutral" }.count > sentiment.count / 2 ? "Positive" : "Negative"
-        return "Market sentiment is \(averageSentiment) based on recent news."
+    
+    override init(name: String) {
+        super.init(name: name)
+    }
+    
+    override func makeDecision(marketData: MarketData, news: [Article]) -> String {
+        // Concatenate all news descriptions to analyze sentiment
+        let allNewsText = news.compactMap { $0.description }.joined(separator: " ")
+        let sentiment = sentimentAnalyzer.analyzeSentiment(for: allNewsText)
+        
+        if sentiment == "Positive" {
+            return "Buy - Positive sentiment"
+        } else if sentiment == "Negative" {
+            return "Sell - Negative sentiment"
+        } else {
+            return "Hold - Neutral sentiment"
+        }
     }
 }

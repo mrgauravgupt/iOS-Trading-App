@@ -25,7 +25,7 @@ class UnitTests {
     }
     
     func testDataProcessing() {
-        let data = [MarketData(symbol: "NIFTY", price: 18000.0, timestamp: Date())]
+        let data = [MarketData(symbol: "NIFTY", price: 18000.0, volume: 0, timestamp: Date())]
         let processed = data.filter { $0.price > 0 }
         XCTAssertEqual(processed.count, 1, "Data processing should work correctly")
     }

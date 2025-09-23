@@ -5,7 +5,7 @@ protocol Agent {
     func makeDecision(marketData: MarketData, news: [Article]) -> String
 }
 
-class BaseAgent: Agent {
+class BaseAgent: Agent, Hashable {
     let name: String
     
     init(name: String) {
@@ -14,5 +14,13 @@ class BaseAgent: Agent {
     
     func makeDecision(marketData: MarketData, news: [Article]) -> String {
         return "Base decision: Hold position"
+    }
+    
+    static func == (lhs: BaseAgent, rhs: BaseAgent) -> Bool {
+        return lhs.name == rhs.name
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
     }
 }

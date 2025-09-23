@@ -1,18 +1,18 @@
 import Foundation
 
-struct Trade {
+public struct Trade {
     let symbol: String
     let quantity: Int
     let price: Double
     let type: TradeType
     let timestamp: Date
     
-    enum TradeType {
+    public enum TradeType {
         case buy, sell
     }
 }
 
-class VirtualPortfolio {
+public class VirtualPortfolio {
     private var balance: Double = 100000.0 // Starting with 1 lakh
     private var holdings: [String: Int] = [:]
     private var trades: [Trade] = []

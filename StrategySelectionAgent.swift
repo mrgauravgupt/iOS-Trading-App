@@ -3,6 +3,10 @@ import Foundation
 class StrategySelectionAgent: BaseAgent {
     private let technicalEngine = TechnicalAnalysisEngine()
     
+    override init(name: String) {
+        super.init(name: name)
+    }
+    
     override func makeDecision(marketData: MarketData, news: [Article]) -> String {
         let rsi = technicalEngine.calculateRSI(prices: [marketData.price])
         let macd = technicalEngine.calculateMACD(prices: [marketData.price])

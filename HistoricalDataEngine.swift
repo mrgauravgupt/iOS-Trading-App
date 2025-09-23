@@ -7,9 +7,9 @@ class HistoricalDataEngine {
         // Placeholder for fetching historical data
         // In a real implementation, this would fetch from an API or database
         let sampleData = [
-            MarketData(symbol: symbol, price: 18000.0, timestamp: Date()),
-            MarketData(symbol: symbol, price: 18100.0, timestamp: Date().addingTimeInterval(86400)),
-            MarketData(symbol: symbol, price: 17900.0, timestamp: Date().addingTimeInterval(172800))
+            MarketData(symbol: symbol, price: 18000.0, volume: 1000, timestamp: Date()),
+            MarketData(symbol: symbol, price: 18100.0, volume: 1000, timestamp: Date().addingTimeInterval(86400)),
+            MarketData(symbol: symbol, price: 17900.0, volume: 1000, timestamp: Date().addingTimeInterval(172800))
         ]
         historicalData = sampleData
     }

@@ -29,42 +29,44 @@ struct ContentView: View {
                     ProgressView("Loading news...")
                 } else {
                     List(articles) { article in
-                    VStack(alignment: .leading) {
-                        Text(article.title)
-                            .font(.headline)
-                        if let description = article.description {
-                            Text(description)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                            let sentiment = sentimentAnalyzer.analyzeSentiment(for: description)
-                            Text("Sentiment: \(sentiment)")
+                        VStack(alignment: .leading) {
+                            Text(article.title)
+                                .font(.headline)
+                            if let description = article.description {
+                                Text(description)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                let sentiment = sentimentAnalyzer.analyzeSentiment(for: description)
+                                Text("Sentiment: \(sentiment)")
+                                    .font(.caption)
+                                    .foregroundColor(sentiment == "Positive" ? .green : sentiment == "Negative" ? .red : .blue)
+                            } else {
+                                Text("No description available")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            Text(article.publishedAt)
                                 .font(.caption)
-                                .foregroundColor(sentiment == "Positive" ? .green : sentiment == "Negative" ? .red : .blue)
-                        } else {
-                            Text("No description available")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
                         }
-                        Text(article.publishedAt)
-                            .font(.caption)
-                    }
-                    }
-                }
-                .onAppear {
-                    loadNews()
-                    webSocketManager.onMessageReceived = { message in
-                        DispatchQueue.main.async {
-                            self.marketData = message
-                        }
-                    }
-                    // Connect to Zerodha WebSocket with a sample token (replace with actual token)
-                    webSocketManager.connectToZerodhaWebSocket(token: Config.zerodhaAPIKey)
-                }
-                .onDisappear {
-                    webSocketManager.disconnect()
+                    } // Close the List closure
                 }
                 
                 Spacer()
+            }
+            .onAppear {
+                loadNews()
+                webSocketManager.onMessageReceived = { message in
+                    DispatchQueue.main.async {
+                        self.marketData = message
+                    }
+                }
+                // Connect to Zerodha WebSocket with a sample token (replace with actual token)
+                if #available(iOS 15.0, *) {
+                    webSocketManager.connectToZerodhaWebSocket(token: Config.zerodhaAPIKey)
+                }
+            }
+            .onDisappear {
+                webSocketManager.disconnect()
             }
             .tabItem {
                 Image(systemName: "house")

@@ -34,8 +34,8 @@ class NewsAPIClient {
     func startRealTimeNewsStreaming(completion: @escaping (Article) -> Void) {
         // Placeholder for real-time streaming
         // In a real implementation, use WebSocket or polling
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
-            fetchIndianMarketNews { result in
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [self] _ in
+            self.fetchIndianMarketNews { result in
                 if let articles = try? result.get() {
                     for article in articles {
                         completion(article)
@@ -50,7 +50,8 @@ struct NewsResponse: Codable {
     let articles: [Article]
 }
 
-struct Article: Codable {
+struct Article: Codable, Identifiable {
+    let id = UUID()
     let title: String
     let description: String?
     let url: String

@@ -3,7 +3,7 @@ import Foundation
 class IntegrationTests {
     func testEndToEndWorkflow() {
         let coordinator = AgentCoordinator()
-        let marketData = MarketData(symbol: "NIFTY", price: 18000.0, timestamp: Date())
+        let marketData = MarketData(symbol: "NIFTY", price: 18000.0, volume: 0, timestamp: Date())
         let news: [Article] = []
         let decision = coordinator.coordinateDecision(marketData: marketData, news: news)
         print("End-to-end workflow test: \(decision)")

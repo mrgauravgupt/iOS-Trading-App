@@ -1,13 +1,14 @@
 import Foundation
 
-struct MarketData: Codable, Identifiable {
+struct MarketData: Codable, Identifiable, Hashable {
     let id = UUID()
     let symbol: String
     let price: Double
+    let volume: Int
     let timestamp: Date
 }
 
-struct Trade: Codable, Identifiable {
+struct TradeData: Codable, Identifiable {
     let id = UUID()
     let symbol: String
     let quantity: Int

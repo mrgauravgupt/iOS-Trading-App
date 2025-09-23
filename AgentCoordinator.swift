@@ -1,9 +1,9 @@
 import Foundation
 
 class AgentCoordinator {
-    private let marketAnalysisAgent = MarketAnalysisAgent()
-    private let strategySelectionAgent = StrategySelectionAgent()
-    private let riskManagementAgent = RiskManagementAgent()
+    private let marketAnalysisAgent = MarketAnalysisAgent(name: "MarketAnalysis")
+    private let strategySelectionAgent = StrategySelectionAgent(name: "StrategySelection")
+    private let riskManagementAgent = RiskManagementAgent(name: "RiskManagement")
     private let advancedRiskManager = AdvancedRiskManager()
     
     func coordinateDecision(marketData: MarketData, news: [Article]) -> String {
