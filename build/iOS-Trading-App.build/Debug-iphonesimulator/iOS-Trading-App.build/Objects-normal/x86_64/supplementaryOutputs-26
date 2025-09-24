@@ -1,0 +1,24 @@
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/MarketAnalysisAgent.swift":
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MarketAnalysisAgent.swiftdeps"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MarketAnalysisAgent.swiftconstvalues"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MarketAnalysisAgent.o"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MarketAnalysisAgent.d"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MarketAnalysisAgent.dia"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/MLModelManager.swift":
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MLModelManager.swiftdeps"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MLModelManager.swiftconstvalues"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MLModelManager.o"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MLModelManager.dia"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/MLModelManager.d"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/NewsAPIClient.swift":
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NewsAPIClient.d"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NewsAPIClient.swiftconstvalues"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NewsAPIClient.swiftdeps"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NewsAPIClient.o"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NewsAPIClient.dia"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/NotificationManager.swift":
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NotificationManager.d"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NotificationManager.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NotificationManager.swiftdeps"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NotificationManager.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/NotificationManager.swiftconstvalues"

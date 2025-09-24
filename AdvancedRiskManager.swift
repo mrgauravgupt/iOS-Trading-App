@@ -1,6 +1,7 @@
 import Foundation
+import SwiftUI
 
-class AdvancedRiskManager {
+class AdvancedRiskManager: ObservableObject {
     private let baseStopLossPercentage: Double = 0.02
     private let trailingStopLossPercentage: Double = 0.05
     

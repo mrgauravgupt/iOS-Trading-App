@@ -1,0 +1,30 @@
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/Config.swift":
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/Config.swiftdeps"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/Config.d"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/Config.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/Config.swiftconstvalues"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/Config.o"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/BacktestingView.swift":
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingView.dia"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingView.o"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingView.swiftconstvalues"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingView.swiftdeps"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingView.d"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/BaseAgent.swift":
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BaseAgent.d"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BaseAgent.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BaseAgent.swiftdeps"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BaseAgent.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BaseAgent.swiftconstvalues"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/ChartView.swift":
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/ChartView.swiftconstvalues"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/ChartView.dia"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/ChartView.d"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/ChartView.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/ChartView.swiftdeps"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/BacktestingEngine.swift":
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingEngine.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingEngine.swiftconstvalues"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingEngine.swiftdeps"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingEngine.o"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/arm64/BacktestingEngine.d"

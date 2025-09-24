@@ -1,0 +1,30 @@
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/AuthManager.swift":
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AuthManager.swiftdeps"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AuthManager.swiftconstvalues"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AuthManager.dia"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AuthManager.o"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AuthManager.d"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/AIAgentTrader.swift":
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AIAgentTrader.d"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AIAgentTrader.swiftconstvalues"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AIAgentTrader.dia"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AIAgentTrader.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AIAgentTrader.swiftdeps"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/AppStorePrep.swift":
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AppStorePrep.d"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AppStorePrep.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AppStorePrep.swiftdeps"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AppStorePrep.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AppStorePrep.swiftconstvalues"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/AgentCoordinator.swift":
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AgentCoordinator.dia"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AgentCoordinator.swiftconstvalues"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AgentCoordinator.d"
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AgentCoordinator.o"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AgentCoordinator.swiftdeps"
+"/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/AdvancedRiskManager.swift":
+  object: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AdvancedRiskManager.o"
+  dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AdvancedRiskManager.d"
+  const-values: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AdvancedRiskManager.swiftconstvalues"
+  swift-dependencies: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AdvancedRiskManager.swiftdeps"
+  diagnostics: "/Users/hexa/Desktop/latest-nifty/iOS-Trading-App/build/iOS-Trading-App.build/Debug-iphonesimulator/iOS-Trading-App.build/Objects-normal/x86_64/AdvancedRiskManager.dia"

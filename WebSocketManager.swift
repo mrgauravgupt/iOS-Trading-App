@@ -37,6 +37,8 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
 
     /// Receive messages from WebSocket
+    private var tokenToSymbol: [UInt32: String] = [:]
+
     private func receiveMessage() {
         webSocketTask?.receive { [weak self] result in
             guard let self = self else { return }
@@ -54,7 +56,9 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         self.onTick?(tick)
                     }
                 case .data(let data):
-                    print("Received data: \(data)")
+                    print("Received data: \(data.count) bytes")
+                    let ticks = self.parseBinaryTicks(data)
+                    for t in ticks { self.onTick?(t) }
                 @unknown default:
                     break
                 }
@@ -64,6 +68,62 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 }
             }
         }
+    }
+
+    // Parse Zerodha Kite Ticker binary frames for LTP mode
+    // Frame format (big-endian):
+    // [2 bytes] packet_count
+    // For each packet:
+    //   [2 bytes] packet_length (L)
+    //   [L bytes] packet_payload
+    // LTP payload (length 8):
+    //   [4 bytes] instrument_token (UInt32)
+    //   [4 bytes] last_traded_price (Int32, price in paise)
+    private func parseBinaryTicks(_ data: Data) -> [MarketData] {
+        var ticks: [MarketData] = []
+        var idx = 0
+        func readUInt8() -> UInt8? { guard idx + 1 <= data.count else { return nil }; defer { idx += 1 }; return data[idx] }
+        func readUInt16BE() -> UInt16? {
+            guard idx + 2 <= data.count else { return nil }
+            let v = (UInt16(data[idx]) << 8) | UInt16(data[idx+1])
+            idx += 2
+            return v
+        }
+        func readUInt32BE() -> UInt32? {
+            guard idx + 4 <= data.count else { return nil }
+            let v = (UInt32(data[idx]) << 24) | (UInt32(data[idx+1]) << 16) | (UInt32(data[idx+2]) << 8) | UInt32(data[idx+3])
+            idx += 4
+            return v
+        }
+        func readInt32BE() -> Int32? {
+            guard let u = readUInt32BE() else { return nil }
+            return Int32(bitPattern: u)
+        }
+
+        guard let packetCount = readUInt16BE() else { return ticks }
+        for _ in 0..<packetCount {
+            guard let length = readUInt16BE() else { break }
+            let start = idx
+            let end = min(idx + Int(length), data.count)
+            guard end - start == Int(length) else { break }
+            // LTP payload expected length 8
+            if length == 8 {
+                idx = start
+                if let token = readUInt32BE(), let pricePaise = readInt32BE() {
+                    let symbol = tokenToSymbol[token] ?? ""
+                    let price = Double(pricePaise) / 100.0
+                    if !symbol.isEmpty {
+                        let md = MarketData(symbol: symbol, price: price, volume: 0, timestamp: Date())
+                        ticks.append(md)
+                    }
+                }
+                idx = end
+            } else {
+                // Skip unknown payload lengths
+                idx = end
+            }
+        }
+        return ticks
     }
 
     /// WebSocket connected handler
@@ -121,6 +181,8 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         // Send subscribe and set mode to LTP (text JSON as per Kite Ticker protocol)
         let subscribe = ["a": "subscribe", "v": [token]] as [String : Any]
         let mode = ["a": "mode", "v": ["ltp", [token]]] as [String : Any]
+        // Keep reverse map for binary decoding
+        tokenToSymbol[UInt32(token)] = symbol
         if let sData = try? JSONSerialization.data(withJSONObject: subscribe),
            let sText = String(data: sData, encoding: .utf8) {
             sendMessage(sText)
