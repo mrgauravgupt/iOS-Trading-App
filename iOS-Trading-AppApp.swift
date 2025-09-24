@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct iOS_Trading_AppApp: App {
-    @State private var isDarkMode = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     var body: some Scene {
         WindowGroup {

@@ -3,7 +3,7 @@ import Foundation
 class OrderExecutor {
     private let portfolio = VirtualPortfolio()
     
-    func executeOrder(symbol: String, quantity: Int, price: Double, type: Trade.TradeType) -> Bool {
+    func executeOrder(symbol: String, quantity: Int, price: Double, type: VirtualPortfolio.PortfolioTrade.TradeType) -> Bool {
         switch type {
         case .buy:
             return portfolio.buy(symbol: symbol, quantity: quantity, price: price)
@@ -24,7 +24,7 @@ class OrderExecutor {
         return portfolio.getPortfolioValue(currentPrices: currentPrices)
     }
     
-    func getTradeHistory() -> [Trade] {
+    func getTradeHistory() -> [VirtualPortfolio.PortfolioTrade] {
         return portfolio.getTrades()
     }
 }

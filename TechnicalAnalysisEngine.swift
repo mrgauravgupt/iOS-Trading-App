@@ -38,20 +38,31 @@ class TechnicalAnalysisEngine {
         let longEMA = calculateEMA(prices: prices, period: longPeriod)
         let macd = shortEMA - longEMA
         
-        let macdArray = [macd] // Simplified for this example
-        let signal = calculateEMA(prices: macdArray, period: signalPeriod)
+        // Calculate signal line properly
+        var macdLine: [Double] = []
+        for i in 0..<prices.count {
+            if i >= longPeriod {
+                let short = calculateEMA(prices: Array(prices[0...i]), period: shortPeriod)
+                let long = calculateEMA(prices: Array(prices[0...i]), period: longPeriod)
+                macdLine.append(short - long)
+            }
+        }
         
-        return (macd, signal, macd - signal)
+        // Calculate signal line as EMA of MACD line
+        let signal = macdLine.count >= signalPeriod ? calculateEMA(prices: macdLine, period: signalPeriod) : 0
+        let histogram = macd - signal
+        
+        return (macd, signal, histogram)
     }
     
     // EMA calculation
-    private func _calculateEMA(prices: [Double], period: Int) -> Double {
+    func calculateEMA(prices: [Double], period: Int) -> Double {
         guard prices.count >= period else { return prices.last ?? 0 }
         
         let multiplier = 2.0 / (Double(period) + 1.0)
-        var ema = prices[period-1]
+        var ema = prices[0]
         
-        for i in period..<prices.count {
+        for i in 1..<prices.count {
             ema = (prices[i] * multiplier) + (ema * (1 - multiplier))
         }
         
@@ -74,8 +85,81 @@ class TechnicalAnalysisEngine {
         guard prices.count >= period else { return 0 }
         return prices.suffix(period).reduce(0, +) / Double(period)
     }
-    
-    func calculateEMA(prices: [Double], period: Int) -> Double {
-        return _calculateEMA(prices: prices, period: period)
+
+    // Fibonacci Retracements
+    func calculateFibonacciRetracement(high: Double, low: Double) -> [Double] {
+        let range = high - low
+        return [
+            high,
+            high - 0.236 * range,
+            high - 0.382 * range,
+            high - 0.5 * range,
+            high - 0.618 * range,
+            low
+        ]
+    }
+
+    // Candlestick Patterns
+    enum CandlestickPattern {
+        case doji, hammer, shootingStar, engulfing
+    }
+
+    struct Candlestick {
+        let open: Double
+        let high: Double
+        let low: Double
+        let close: Double
+    }
+
+    func detectCandlestickPattern(candles: [Candlestick]) -> CandlestickPattern? {
+        guard candles.count >= 2 else { return nil }
+
+        let current = candles.last!
+        let previous = candles[candles.count - 2]
+
+        // Doji pattern
+        let bodySize = abs(current.close - current.open)
+        let totalRange = current.high - current.low
+        if bodySize <= totalRange * 0.05 {
+            return .doji
+        }
+
+        // Hammer pattern
+        if current.low < current.open && current.low < current.close &&
+           bodySize > 0 && (current.high - max(current.open, current.close)) > bodySize * 2 {
+            return .hammer
+        }
+
+        // Shooting Star pattern
+        if current.high > current.open && current.high > current.close &&
+           bodySize > 0 && (min(current.open, current.close) - current.low) > bodySize * 2 {
+            return .shootingStar
+        }
+
+        // Engulfing pattern
+        let previousBody = abs(previous.close - previous.open)
+        let currentBody = abs(current.close - current.open)
+        if currentBody > previousBody &&
+           ((current.open > previous.close && current.close < previous.open) ||
+            (current.open < previous.close && current.close > previous.open)) {
+            return .engulfing
+        }
+
+        return nil
+    }
+
+    // Stochastic Oscillator
+    func calculateStochastic(highs: [Double], lows: [Double], closes: [Double], period: Int = 14) -> Double {
+        guard highs.count >= period && lows.count >= period && closes.count >= period else { return 50.0 }
+
+        let currentHigh = highs.suffix(period).max() ?? 0
+        let currentLow = lows.suffix(period).min() ?? 0
+        let currentClose = closes.last ?? 0
+
+        if currentHigh == currentLow {
+            return 50.0
+        }
+
+        return ((currentClose - currentLow) / (currentHigh - currentLow)) * 100
     }
 }

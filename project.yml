@@ -1,131 +1,74 @@
 name: iOS-Trading-App
-
 options:
-
   bundleIdPrefix: com.example
 
 targets:
-
   iOS-Trading-App:
-
     type: application
-
     platform: iOS
-
-    deploymentTarget: 16.0
-
+    deploymentTarget: "16.0"
     sources:
-
       - path: iOS-Trading-AppApp.swift
-
       - path: ContentView.swift
-
       - path: Config.swift
-
       - path: WebSocketManager.swift
-
       - path: NewsAPIClient.swift
-
       - path: ZerodhaAPIClient.swift
-
+      - path: DataProviders.swift
+      - path: ZerodhaAuthManager.swift
+      - path: KeychainHelper.swift
       - path: DataModels.swift
-
       - path: DataSyncManager.swift
-
       - path: DataValidator.swift
-
       - path: HistoricalDataEngine.swift
-
       - path: TechnicalAnalysisEngine.swift
-
       - path: RiskManagementAgent.swift
-
       - path: StrategySelectionAgent.swift
-
       - path: MarketAnalysisAgent.swift
-
       - path: SentimentAnalyzer.swift
-
       - path: MLModelManager.swift
-
       - path: VirtualPortfolio.swift
-
       - path: OrderExecutor.swift
-
       - path: PLCalculator.swift
-
       - path: PaperTradingView.swift
-
       - path: AIAgentTrader.swift
-
       - path: BacktestingEngine.swift
-
       - path: BacktestingView.swift
-
       - path: AdvancedRiskManager.swift
-
       - path: AgentCoordinator.swift
-
       - path: PerformanceOptimizer.swift
-
-
-
       - path: AppStorePrep.swift
-
       - path: SecurityManager.swift
-
       - path: LaunchPrep.swift
-
       - path: AuthManager.swift
-
       - path: DataExportManager.swift
-
       - path: Persistence.swift
-
       - path: NotificationManager.swift
-
       - path: SettingsView.swift
-
+      - path: LoginView.swift
       - path: ChartView.swift
-
+      - path: UIHelpers.swift
       - path: BaseAgent.swift
-
       - path: TradingData+CoreDataProperties.swift
-
+      - path: TradingData.swift
+      - path: PatternRecognitionEngine.swift
     settings:
-
       base:
-
         INFOPLIST_FILE: Info.plist
-
         CODE_SIGNING_REQUIRED: NO
-
         CODE_SIGN_IDENTITY: ""
-
-        VALID_ARCHS: "arm64 x86_64"
+        VALID_ARCHS: arm64 x86_64
 
   iOS-Trading-AppTests:
-
     type: bundle.unit-test
-
     platform: iOS
-
     sources:
-
       - path: UnitTests.swift
-
       - path: IntegrationTests.swift
-
       - path: UATTests.swift
-
     settings:
-
       base:
-
         CODE_SIGNING_REQUIRED: NO
-
         CODE_SIGN_IDENTITY: ""
-
     dependencies:
-
       - target: iOS-Trading-App

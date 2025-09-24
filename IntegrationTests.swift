@@ -12,7 +12,7 @@ class IntegrationTests {
     func testMultiAgentInteractions() {
         let agents = [MarketAnalysisAgent(), StrategySelectionAgent(), RiskManagementAgent()]
         let coordinator = AgentCoordinator()
-        let decision = coordinator.coordinateDecision(marketData: MarketData(symbol: "NIFTY", price: 18000.0, timestamp: Date()), news: [])
+        let decision = coordinator.coordinateDecision(marketData: MarketData(symbol: "NIFTY", price: 18000.0, volume: 0, timestamp: Date()), news: [])
         print("Multi-agent interaction test: \(decision)")
     }
     

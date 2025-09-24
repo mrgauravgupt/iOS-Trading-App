@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		062BD270EC5E92C8B18E8B3B /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3065CA9918A2C3219F880AC6 /* Persistence.swift */; };
+		0CCB15DA9C043D1F1722DF30 /* DataProviders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6098FCFB91061E89AEB4E765 /* DataProviders.swift */; };
 		100B0993D5A48A6BA341C56F /* BacktestingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3889F0C8E65008F9EF7B62 /* BacktestingEngine.swift */; };
 		10D43D8B5B4827A811B73C3D /* DataValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95963B99A13DC1E0446A4744 /* DataValidator.swift */; };
 		10E5699F865A8D74137FDADC /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F60AF1D307EE5AA2232CA1 /* WebSocketManager.swift */; };
@@ -17,16 +18,20 @@
 		230BB192A712721AB8E7D88E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7D41914B00FC1B25FB4170 /* SettingsView.swift */; };
 		28924AB59853C4D08CD7A7C1 /* PaperTradingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FAEB77D543261B5501DA6BF /* PaperTradingView.swift */; };
 		2C5995A26308041CCB5688C0 /* LaunchPrep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F349409F53478FC03BF8D67 /* LaunchPrep.swift */; };
+		2FD6D66CC5774370B0A299A4 /* TradingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6174E1AB961FCA0A2A88799 /* TradingData.swift */; };
 		368BED8ACD6E31642C7DAA9D /* TradingData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278D823819DCFD25A11E11 /* TradingData+CoreDataProperties.swift */; };
 		37D07F07F19EC277D811718C /* PLCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485501501B73C6D198CE9EE /* PLCalculator.swift */; };
+		4199D29931FC5F80219E0B96 /* PatternRecognitionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE38D386C46EBFE053761426 /* PatternRecognitionEngine.swift */; };
 		478A382124EE0357DD1ED912 /* OrderExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731038FDA57B17D00215F2A9 /* OrderExecutor.swift */; };
 		4867BF79416D000052FB2575 /* ZerodhaAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34931895B74C9259D5AE6309 /* ZerodhaAPIClient.swift */; };
 		4C1577C7543E2A7C53A61CFA /* AIAgentTrader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F033B3A76AC3EF02D84CC3AF /* AIAgentTrader.swift */; };
 		551B90D9BC6C31C870659187 /* BaseAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA5ED4E30A8D4CA4E93A309 /* BaseAgent.swift */; };
 		56A769347FEBBA17186D4FB6 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF5E57BD5C14C085C8E0921 /* Config.swift */; };
 		64463A17FC56F9CE44703E27 /* DataExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E47F6E53BFA3C0C23705030 /* DataExportManager.swift */; };
+		67DD20007C65723BA236FC51 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D74870B4C76D767B11228C4 /* KeychainHelper.swift */; };
 		67ED2ADFBED05BAA9D1EB6BE /* UnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707152FB550F1697721EC641 /* UnitTests.swift */; };
 		71B7CBA0E93EC8BCB86B04B8 /* AppStorePrep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0629EEDFB6FF84733915EC8 /* AppStorePrep.swift */; };
+		71FE89E2C43C33C4433082EC /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423BBF4981EF5CA3A27B6AAD /* LoginView.swift */; };
 		7755FCDAAD42D295DFEB3943 /* NewsAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E2719F1B8ABFC4720EE376D /* NewsAPIClient.swift */; };
 		7C43FB8190D706892A88428A /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1630A5ECF24EE5FBB699F5EA /* AuthManager.swift */; };
 		7C5F991138F0823D53D30035 /* BacktestingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9024FFEBD518B34D8742DB31 /* BacktestingView.swift */; };
@@ -44,8 +49,10 @@
 		B2D1071C6DAE3040143A8117 /* UATTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7562906B76830AB60DCE0F1 /* UATTests.swift */; };
 		B87466629C9B6A2B95B88354 /* iOS-Trading-AppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDEE08ECD38853C8711BD55A /* iOS-Trading-AppApp.swift */; };
 		B9FB0E4DABEDB09D0C186078 /* RiskManagementAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7710E5A99D984674625BAB6 /* RiskManagementAgent.swift */; };
+		BACB82AE06157B3C4F199E49 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C20B7DA6455D39E2A7CCA4 /* UIHelpers.swift */; };
 		BC79DE6B4901C8BAB52E59C1 /* PerformanceOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B93122DE4FFB512BD2E709 /* PerformanceOptimizer.swift */; };
 		DDC89FD706EEC2101960D197 /* VirtualPortfolio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68926EA97D532DBA770B4127 /* VirtualPortfolio.swift */; };
+		E6F2F9EE3381A2E5D674830A /* ZerodhaAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B6C23E855075886DEAF399 /* ZerodhaAuthManager.swift */; };
 		F258C473743C868C901479CF /* HistoricalDataEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8367C78DDC8421DF6E0E8B /* HistoricalDataEngine.swift */; };
 /* End PBXBuildFile section */
 
@@ -60,15 +67,19 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		02B6C23E855075886DEAF399 /* ZerodhaAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZerodhaAuthManager.swift; sourceTree = "<group>"; };
+		08C20B7DA6455D39E2A7CCA4 /* UIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIHelpers.swift; sourceTree = "<group>"; };
 		0F349409F53478FC03BF8D67 /* LaunchPrep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchPrep.swift; sourceTree = "<group>"; };
 		0F8367C78DDC8421DF6E0E8B /* HistoricalDataEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoricalDataEngine.swift; sourceTree = "<group>"; };
 		0FA5ED4E30A8D4CA4E93A309 /* BaseAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseAgent.swift; sourceTree = "<group>"; };
 		1630A5ECF24EE5FBB699F5EA /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		1D74870B4C76D767B11228C4 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		2FAEB77D543261B5501DA6BF /* PaperTradingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperTradingView.swift; sourceTree = "<group>"; };
 		3065CA9918A2C3219F880AC6 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		32C38A438174ED9A6D0FA256 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		34931895B74C9259D5AE6309 /* ZerodhaAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZerodhaAPIClient.swift; sourceTree = "<group>"; };
 		3C0D57F4D1F89A8B6EDC6708 /* MarketAnalysisAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketAnalysisAgent.swift; sourceTree = "<group>"; };
+		423BBF4981EF5CA3A27B6AAD /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		45607BAD43F583244BBAB3B6 /* IntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
 		4E2719F1B8ABFC4720EE376D /* NewsAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsAPIClient.swift; sourceTree = "<group>"; };
 		4EF5E57BD5C14C085C8E0921 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
@@ -77,6 +88,7 @@
 		59F5CB609B67265F3C173981 /* TechnicalAnalysisEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TechnicalAnalysisEngine.swift; sourceTree = "<group>"; };
 		5E47F6E53BFA3C0C23705030 /* DataExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManager.swift; sourceTree = "<group>"; };
 		5E7D41914B00FC1B25FB4170 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6098FCFB91061E89AEB4E765 /* DataProviders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataProviders.swift; sourceTree = "<group>"; };
 		619D82785F031AA10C6DF835 /* AgentCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCoordinator.swift; sourceTree = "<group>"; };
 		68926EA97D532DBA770B4127 /* VirtualPortfolio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualPortfolio.swift; sourceTree = "<group>"; };
 		707152FB550F1697721EC641 /* UnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitTests.swift; sourceTree = "<group>"; };
@@ -91,6 +103,7 @@
 		A4B93122DE4FFB512BD2E709 /* PerformanceOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceOptimizer.swift; sourceTree = "<group>"; };
 		A7562906B76830AB60DCE0F1 /* UATTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UATTests.swift; sourceTree = "<group>"; };
 		AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "iOS-Trading-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE38D386C46EBFE053761426 /* PatternRecognitionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternRecognitionEngine.swift; sourceTree = "<group>"; };
 		B61861EF8450F626C07050A9 /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
 		B7710E5A99D984674625BAB6 /* RiskManagementAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskManagementAgent.swift; sourceTree = "<group>"; };
 		BE3E84E2BE35B7120394D850 /* AdvancedRiskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedRiskManager.swift; sourceTree = "<group>"; };
@@ -101,6 +114,7 @@
 		EE4BD3070C9F33460D56CC29 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		F033B3A76AC3EF02D84CC3AF /* AIAgentTrader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAgentTrader.swift; sourceTree = "<group>"; };
 		F0629EEDFB6FF84733915EC8 /* AppStorePrep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStorePrep.swift; sourceTree = "<group>"; };
+		F6174E1AB961FCA0A2A88799 /* TradingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradingData.swift; sourceTree = "<group>"; };
 		FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "iOS-Trading-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -130,18 +144,22 @@
 				32C38A438174ED9A6D0FA256 /* ContentView.swift */,
 				5E47F6E53BFA3C0C23705030 /* DataExportManager.swift */,
 				D94293756FAB037D7A1DCB46 /* DataModels.swift */,
+				6098FCFB91061E89AEB4E765 /* DataProviders.swift */,
 				7DE5ECD514EC00A3689D261D /* DataSyncManager.swift */,
 				95963B99A13DC1E0446A4744 /* DataValidator.swift */,
 				0F8367C78DDC8421DF6E0E8B /* HistoricalDataEngine.swift */,
 				45607BAD43F583244BBAB3B6 /* IntegrationTests.swift */,
 				EDEE08ECD38853C8711BD55A /* iOS-Trading-AppApp.swift */,
+				1D74870B4C76D767B11228C4 /* KeychainHelper.swift */,
 				0F349409F53478FC03BF8D67 /* LaunchPrep.swift */,
+				423BBF4981EF5CA3A27B6AAD /* LoginView.swift */,
 				3C0D57F4D1F89A8B6EDC6708 /* MarketAnalysisAgent.swift */,
 				8C4284426485A93E3592FF20 /* MLModelManager.swift */,
 				4E2719F1B8ABFC4720EE376D /* NewsAPIClient.swift */,
 				EE4BD3070C9F33460D56CC29 /* NotificationManager.swift */,
 				731038FDA57B17D00215F2A9 /* OrderExecutor.swift */,
 				2FAEB77D543261B5501DA6BF /* PaperTradingView.swift */,
+				AE38D386C46EBFE053761426 /* PatternRecognitionEngine.swift */,
 				A4B93122DE4FFB512BD2E709 /* PerformanceOptimizer.swift */,
 				3065CA9918A2C3219F880AC6 /* Persistence.swift */,
 				A485501501B73C6D198CE9EE /* PLCalculator.swift */,
@@ -151,12 +169,15 @@
 				5E7D41914B00FC1B25FB4170 /* SettingsView.swift */,
 				53E7B16DB80E8C990B7EF75C /* StrategySelectionAgent.swift */,
 				59F5CB609B67265F3C173981 /* TechnicalAnalysisEngine.swift */,
+				F6174E1AB961FCA0A2A88799 /* TradingData.swift */,
 				56278D823819DCFD25A11E11 /* TradingData+CoreDataProperties.swift */,
 				A7562906B76830AB60DCE0F1 /* UATTests.swift */,
+				08C20B7DA6455D39E2A7CCA4 /* UIHelpers.swift */,
 				707152FB550F1697721EC641 /* UnitTests.swift */,
 				68926EA97D532DBA770B4127 /* VirtualPortfolio.swift */,
 				A0F60AF1D307EE5AA2232CA1 /* WebSocketManager.swift */,
 				34931895B74C9259D5AE6309 /* ZerodhaAPIClient.swift */,
+				02B6C23E855075886DEAF399 /* ZerodhaAuthManager.swift */,
 				0CE974483089E1227826B8B4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -256,10 +277,13 @@
 				8BCA017878BA6A380DE38FC7 /* ContentView.swift in Sources */,
 				64463A17FC56F9CE44703E27 /* DataExportManager.swift in Sources */,
 				91C2939567DAABA9AECA6B45 /* DataModels.swift in Sources */,
+				0CCB15DA9C043D1F1722DF30 /* DataProviders.swift in Sources */,
 				8165FA6E658AE203EC7E7BDB /* DataSyncManager.swift in Sources */,
 				10D43D8B5B4827A811B73C3D /* DataValidator.swift in Sources */,
 				F258C473743C868C901479CF /* HistoricalDataEngine.swift in Sources */,
+				67DD20007C65723BA236FC51 /* KeychainHelper.swift in Sources */,
 				2C5995A26308041CCB5688C0 /* LaunchPrep.swift in Sources */,
+				71FE89E2C43C33C4433082EC /* LoginView.swift in Sources */,
 				8F83C4422E05F6B8EB7665BA /* MLModelManager.swift in Sources */,
 				849B012235361E650C1045B4 /* MarketAnalysisAgent.swift in Sources */,
 				7755FCDAAD42D295DFEB3943 /* NewsAPIClient.swift in Sources */,
@@ -267,6 +291,7 @@
 				478A382124EE0357DD1ED912 /* OrderExecutor.swift in Sources */,
 				37D07F07F19EC277D811718C /* PLCalculator.swift in Sources */,
 				28924AB59853C4D08CD7A7C1 /* PaperTradingView.swift in Sources */,
+				4199D29931FC5F80219E0B96 /* PatternRecognitionEngine.swift in Sources */,
 				BC79DE6B4901C8BAB52E59C1 /* PerformanceOptimizer.swift in Sources */,
 				062BD270EC5E92C8B18E8B3B /* Persistence.swift in Sources */,
 				B9FB0E4DABEDB09D0C186078 /* RiskManagementAgent.swift in Sources */,
@@ -276,9 +301,12 @@
 				A816B6B2A2E1B2B90C00CD82 /* StrategySelectionAgent.swift in Sources */,
 				A52F6E3B37E30E9AEF820E42 /* TechnicalAnalysisEngine.swift in Sources */,
 				368BED8ACD6E31642C7DAA9D /* TradingData+CoreDataProperties.swift in Sources */,
+				2FD6D66CC5774370B0A299A4 /* TradingData.swift in Sources */,
+				BACB82AE06157B3C4F199E49 /* UIHelpers.swift in Sources */,
 				DDC89FD706EEC2101960D197 /* VirtualPortfolio.swift in Sources */,
 				10E5699F865A8D74137FDADC /* WebSocketManager.swift in Sources */,
 				4867BF79416D000052FB2575 /* ZerodhaAPIClient.swift in Sources */,
+				E6F2F9EE3381A2E5D674830A /* ZerodhaAuthManager.swift in Sources */,
 				B87466629C9B6A2B95B88354 /* iOS-Trading-AppApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

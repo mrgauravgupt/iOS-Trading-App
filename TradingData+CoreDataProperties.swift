@@ -1,10 +1,6 @@
 import Foundation
 import CoreData
 
-@objc(TradingData)
-public class TradingData: NSManagedObject {
-}
-
 extension TradingData {
     @nonobjc public class func fetchRequest() -> NSFetchRequest<TradingData> {
         return NSFetchRequest<TradingData>(entityName: "TradingData")

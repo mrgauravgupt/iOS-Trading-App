@@ -1,28 +1,27 @@
 import Foundation
 
-public struct Trade {
-    let symbol: String
-    let quantity: Int
-    let price: Double
-    let type: TradeType
-    let timestamp: Date
-    
-    public enum TradeType {
-        case buy, sell
-    }
-}
-
 public class VirtualPortfolio {
+    public struct PortfolioTrade {
+        let symbol: String
+        let quantity: Int
+        let price: Double
+        let type: TradeType
+        let timestamp: Date
+        
+        public enum TradeType {
+            case buy, sell
+        }
+    }
     private var balance: Double = 100000.0 // Starting with 1 lakh
     private var holdings: [String: Int] = [:]
-    private var trades: [Trade] = []
+    private var trades: [PortfolioTrade] = []
     
     func buy(symbol: String, quantity: Int, price: Double) -> Bool {
         let totalCost = Double(quantity) * price
         if balance >= totalCost {
             balance -= totalCost
             holdings[symbol] = (holdings[symbol] ?? 0) + quantity
-            trades.append(Trade(symbol: symbol, quantity: quantity, price: price, type: .buy, timestamp: Date()))
+            trades.append(PortfolioTrade(symbol: symbol, quantity: quantity, price: price, type: .buy, timestamp: Date()))
             return true
         }
         return false
@@ -36,7 +35,7 @@ public class VirtualPortfolio {
             if holdings[symbol] == 0 {
                 holdings.removeValue(forKey: symbol)
             }
-            trades.append(Trade(symbol: symbol, quantity: quantity, price: price, type: .sell, timestamp: Date()))
+            trades.append(PortfolioTrade(symbol: symbol, quantity: quantity, price: price, type: .sell, timestamp: Date()))
             return true
         }
         return false
@@ -50,7 +49,7 @@ public class VirtualPortfolio {
         return holdings
     }
     
-    func getTrades() -> [Trade] {
+    func getTrades() -> [PortfolioTrade] {
         return trades
     }
     
