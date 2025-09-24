@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -102,7 +102,7 @@
 		A485501501B73C6D198CE9EE /* PLCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PLCalculator.swift; sourceTree = "<group>"; };
 		A4B93122DE4FFB512BD2E709 /* PerformanceOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceOptimizer.swift; sourceTree = "<group>"; };
 		A7562906B76830AB60DCE0F1 /* UATTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UATTests.swift; sourceTree = "<group>"; };
-		AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "iOS-Trading-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS-Trading-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE38D386C46EBFE053761426 /* PatternRecognitionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternRecognitionEngine.swift; sourceTree = "<group>"; };
 		B61861EF8450F626C07050A9 /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
 		B7710E5A99D984674625BAB6 /* RiskManagementAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskManagementAgent.swift; sourceTree = "<group>"; };
@@ -115,7 +115,7 @@
 		F033B3A76AC3EF02D84CC3AF /* AIAgentTrader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAgentTrader.swift; sourceTree = "<group>"; };
 		F0629EEDFB6FF84733915EC8 /* AppStorePrep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStorePrep.swift; sourceTree = "<group>"; };
 		F6174E1AB961FCA0A2A88799 /* TradingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradingData.swift; sourceTree = "<group>"; };
-		FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "iOS-Trading-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "iOS-Trading-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -227,7 +227,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1640;
 			};
 			buildConfigurationList = 15E32CD6E3476663032CB306 /* Build configuration list for PBXProject "iOS-Trading-App" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -239,7 +239,6 @@
 			);
 			mainGroup = 1551E4FA9D842DF8949EE085;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -378,6 +377,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -459,6 +459,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

@@ -1,813 +1,617 @@
 import SwiftUI
+import Foundation
 
 struct ContentView: View {
-    @State private var articles: [Article] = []
-    @State private var isLoading = false
-    @State private var marketData: String = "No data"
-    @State private var portfolioValue: Double = 100000.0
-    @State private var pnl: Double = 0.0
     @State private var selectedTab: Int = 0
-    @State private var showQuickOrderSheet = false
-    @State private var chartData: [MarketData] = []
-    @State private var showLogin = false
-    @State private var patternAlerts: [PatternRecognitionEngine.PatternAlert] = []
-    @State private var multiTimeframeAnalysis: [String: [TechnicalAnalysisEngine.PatternResult]] = [:]
-    @State private var confluencePatterns: [TechnicalAnalysisEngine.PatternResult] = []
-    @State private var marketRegime: PatternRecognitionEngine.MarketRegime = .sideways
-    @State private var showPatternScanner = false
-    @State private var aiTradingEnabled = false
-    @State private var lastPatternUpdate = Date()
+    @State private var articles: [Article] = []
+    @State private var marketData: [MarketData] = []
+    @State private var isLoading = false
+    @State private var showingSettings = false
+    @State private var currentPrice: Double = 18250.50
+    @State private var priceChange: Double = 125.30
+    @State private var percentChange: Double = 0.69
     
-    private let sentimentAnalyzer = SentimentAnalyzer()
-    private let marketDataProvider = ZerodhaMarketDataProvider()
-    private let historicalProvider = ZerodhaHistoricalDataProvider()
-    private let virtualPortfolio = VirtualPortfolio()
-    private let patternEngine = PatternRecognitionEngine()
-    private let aiTrader = AIAgentTrader()
-
-    // MARK: - Dashboard View
-    private var dashboardView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                VStack(spacing: 4) {
-                    Text("Dashboard")
-                        .font(.largeTitle).bold()
-                    Text("Live NIFTY overview and news")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                // Market snapshot with AI status
-                marketOverviewSection
+    private let newsClient = NewsAPIClient()
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Background gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.black,
+                        Color(red: 0.05, green: 0.05, blue: 0.15),
+                        Color.black
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(.all)
                 
-                // AI Trading Status Widget
-                aiTradingStatusSection
-
-                // Real-time Pattern Alerts
-                if !patternAlerts.isEmpty {
-                    patternAlertsSection
+                VStack(spacing: 0) {
+                    // Custom Header
+                    headerView
+                        .frame(height: 100)
+                    
+                    // Main Content
+                    TabView(selection: $selectedTab) {
+                        // Dashboard Tab
+                        dashboardView
+                            .tag(0)
+                        
+                        // Trading Tab
+                        tradingView
+                            .tag(1)
+                        
+                        // AI Control Tab
+                        aiControlView
+                            .tag(2)
+                        
+                        // Analytics Tab
+                        analyticsView
+                            .tag(3)
+                        
+                        // Portfolio Tab
+                        portfolioView
+                            .tag(4)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    
+                    // Custom Tab Bar
+                    customTabBar
+                        .frame(height: 80)
                 }
-
-                // Quick Access Navigation
-                quickAccessSection
-
-                // Multi-timeframe Analysis
-                multiTimeframeAnalysisSection
-
-                // Enhanced Market Intelligence
-                marketIntelligenceSection
-
-                // Quick actions
-                SectionCard("Quick Actions") {
-                    QuickActionButtons(onQuickOrder: { showQuickOrderSheet = true })
-                }
-
-                // News Feed
-                newsFeedSection
-
-                Spacer(minLength: 16)
             }
-            .padding()
-        }
-        .background(Color.kiteBackground.ignoresSafeArea())
-        .sheet(isPresented: $showQuickOrderSheet) {
-            quickOrderSheet
         }
         .onAppear {
-            loadNews()
-            startPatternAnalysis()
-            setupMarketDataProvider()
+            loadInitialData()
         }
-        .sheet(isPresented: $showLogin) {
-            loginSheet
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
         }
     }
     
-    // MARK: - Dashboard Sections
-    private var marketOverviewSection: some View {
-        SectionCard("Market Overview") {
-            VStack(alignment: .leading, spacing: 12) {
-                MarketDataWidget(marketData: marketData)
+    // MARK: - Header View
+    private var headerView: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("NIFTY 50")
+                    .font(.system(size: 16, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.8))
                 
-                // Market Regime Indicator
-                HStack {
-                    Text("Market Regime:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text(marketRegime.description)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(regimeColor(marketRegime))
+                HStack(spacing: 8) {
+                    Text("₹\(String(format: "%.2f", currentPrice))")
+                        .font(.system(size: 24, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
-                        .cornerRadius(6)
-                }
-                
-                HStack(spacing: 12) {
-                    StatChip(label: "Portfolio", value: "₹" + String(format: "%.2f", portfolioValue))
-                    StatChip(label: "P&L", value: "₹" + String(format: "%.2f", pnl), color: pnl >= 0 ? .green : .red)
-                    StatChip(label: "Cash", value: "₹" + String(format: "%.2f", virtualPortfolio.getBalance()))
-                }
-            }
-        }
-    }
-    
-    private var aiTradingStatusSection: some View {
-        SectionCard("AI Trading Status") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Image(systemName: aiTradingEnabled ? "brain.head.profile" : "brain.head.profile.fill")
-                        .foregroundColor(aiTradingEnabled ? .green : .gray)
-                    Text("AI Auto-Trading")
-                        .font(.headline)
-                    Spacer()
-                    Toggle("", isOn: $aiTradingEnabled)
-                        .onChange(of: aiTradingEnabled) { enabled in
-                            if enabled {
-                                startAITrading()
-                            }
-                        }
-                }
-                
-                if aiTradingEnabled {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 8, height: 8)
-                            Text("AI agents active")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        }
-                        
-                        Text("Last analysis: \(lastPatternUpdate, style: .time)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if !confluencePatterns.isEmpty {
-                            Text("Confluence patterns detected: \(confluencePatterns.count)")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    private var patternAlertsSection: some View {
-        SectionCard("Pattern Alerts") {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(Array(patternAlerts.prefix(5).enumerated()), id: \.offset) { index, alert in
-                    PatternAlertRow(alert: alert)
-                        .onTapGesture {
-                            // Could open detailed pattern view
-                        }
-                }
-                
-                if patternAlerts.count > 5 {
-                    Button("View All \(patternAlerts.count) Alerts") {
-                        showPatternScanner = true
-                    }
-                    .font(.caption)
-                    .foregroundColor(.blue)
-                }
-            }
-        }
-    }
-    
-    private var quickAccessSection: some View {
-        SectionCard("Quick Access") {
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    QuickAccessButton(
-                        title: "Pattern Scanner",
-                        icon: "waveform.path.ecg",
-                        color: .purple
-                    ) {
-                        showPatternScanner = true
-                    }
                     
-                    QuickAccessButton(
-                        title: "AI Control",
-                        icon: "brain.head.profile",
-                        color: .blue
-                    ) {
-                        selectedTab = 1
+                    HStack(spacing: 4) {
+                        Image(systemName: priceChange >= 0 ? "arrow.up.right" : "arrow.down.right")
+                            .font(.system(size: 12, weight: .bold))
+                        Text("\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))")
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        Text("(\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", percentChange))%)")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                     }
+                    .foregroundColor(priceChange >= 0 ? .green : .red)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill((priceChange >= 0 ? Color.green : Color.red).opacity(0.2))
+                    )
+                }
+            }
+            
+            Spacer()
+            
+            Button(action: { showingSettings = true }) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                    )
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+    }
+    
+    // MARK: - Dashboard View
+    private var dashboardView: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 16) {
+                // Market Overview Cards
+                marketOverviewSection
+                
+                // Quick Actions
+                quickActionsSection
+                
+                // Live Chart
+                liveChartSection
+                
+                // Recent News
+                newsSection
+                
+                // Performance Metrics
+                performanceSection
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 100)
+        }
+    }
+    
+    // MARK: - Market Overview Section
+    private var marketOverviewSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Market Overview")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("Live")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.green)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.2))
+                    )
+            }
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                MarketCard(title: "NIFTY 50", value: "18,250.50", change: "+125.30", changePercent: "+0.69%", isPositive: true)
+                MarketCard(title: "SENSEX", value: "61,872.99", change: "+423.12", changePercent: "+0.69%", isPositive: true)
+                MarketCard(title: "BANK NIFTY", value: "43,156.25", change: "-89.75", changePercent: "-0.21%", isPositive: false)
+                MarketCard(title: "NIFTY IT", value: "28,945.80", change: "+234.60", changePercent: "+0.82%", isPositive: true)
+            }
+        }
+    }
+    
+    // MARK: - Quick Actions Section
+    private var quickActionsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Quick Actions")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            
+            HStack(spacing: 12) {
+                QuickActionButton(title: "Buy", icon: "chart.line.uptrend.xyaxis", color: .green) {
+                    selectedTab = 1
                 }
                 
-                HStack(spacing: 12) {
-                    QuickAccessButton(
-                        title: "Analytics",
-                        icon: "chart.line.uptrend.xyaxis",
-                        color: .green
-                    ) {
-                        selectedTab = 2
-                    }
-                    
-                    QuickAccessButton(
-                        title: "Risk Dashboard",
-                        icon: "shield.fill",
-                        color: .red
-                    ) {
-                        selectedTab = 6
-                    }
+                QuickActionButton(title: "Sell", icon: "chart.line.downtrend.xyaxis", color: .red) {
+                    selectedTab = 1
+                }
+                
+                QuickActionButton(title: "AI Trade", icon: "brain.head.profile", color: .blue) {
+                    selectedTab = 2
+                }
+                
+                QuickActionButton(title: "Analytics", icon: "chart.bar.xaxis", color: .purple) {
+                    selectedTab = 3
                 }
             }
         }
     }
     
-    private var multiTimeframeAnalysisSection: some View {
-        SectionCard("Multi-Timeframe Analysis") {
-            VStack(alignment: .leading, spacing: 10) {
-                if multiTimeframeAnalysis.isEmpty {
-                    Text("Analyzing patterns across timeframes...")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                } else {
-                    ForEach(["1D", "4h", "1h", "15m"], id: \.self) { timeframe in
-                        if let patterns = multiTimeframeAnalysis[timeframe], !patterns.isEmpty {
-                            TimeframeAnalysisRow(timeframe: timeframe, patterns: patterns)
-                        }
+    // MARK: - Live Chart Section
+    private var liveChartSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Live Chart")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                HStack(spacing: 8) {
+                    ChartTimeButton(title: "1D", isSelected: true)
+                    ChartTimeButton(title: "1W", isSelected: false)
+                    ChartTimeButton(title: "1M", isSelected: false)
+                    ChartTimeButton(title: "1Y", isSelected: false)
+                }
+            }
+            
+            // Placeholder for chart
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.05))
+                .frame(height: 200)
+                .overlay(
+                    VStack {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 40))
+                            .foregroundColor(.white.opacity(0.3))
+                        Text("Live Chart")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
                     }
+                )
+        }
+    }
+    
+    // MARK: - News Section
+    private var newsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Market News")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button("View All") {
+                    // Navigate to news view
                 }
-                
-                Button("View Pattern Scanner") {
-                    showPatternScanner = true
-                }
-                .font(.caption)
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
             }
-        }
-    }
-    
-    private var marketIntelligenceSection: some View {
-        SectionCard("Market Intelligence") {
-            VStack(alignment: .leading, spacing: 10) {
-                // Confluence Patterns
-                if !confluencePatterns.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Strong Confluence Patterns")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        
-                        ForEach(Array(confluencePatterns.prefix(3).enumerated()), id: \.offset) { index, pattern in
-                            HStack {
-                                Circle()
-                                    .fill(signalColor(pattern.signal))
-                                    .frame(width: 8, height: 8)
-                                Text(pattern.pattern)
-                                    .font(.caption)
-                                Spacer()
-                                Text("\(Int(pattern.confidence * 100))%")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                            }
-                        }
-                    }
-                    Divider()
+            
+            if articles.isEmpty {
+                ForEach(0..<3, id: \.self) { _ in
+                    NewsCardPlaceholder()
                 }
-                
-                // Pattern Statistics
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Active Patterns")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("\(totalActivePatterns())")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing) {
-                        Text("Avg Confidence")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("\(Int(averageConfidence() * 100))%")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-        }
-    }
-    
-    private var newsFeedSection: some View {
-        SectionCard("News & Sentiment") {
-            if isLoading {
-                ProgressView("Loading news...")
             } else {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    ForEach(articles) { article in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(article.title)
-                                .font(.headline)
-                            if let description = article.description {
-                                Text(description)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(3)
-                                let sentiment = sentimentAnalyzer.analyzeSentiment(for: description)
-                                Text("Sentiment: \(sentiment)")
-                                    .font(.caption)
-                                    .foregroundStyle(sentiment == "Positive" ? .green : sentiment == "Negative" ? .red : .blue)
-                            } else {
-                                Text("No description available")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Text(article.publishedAt)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Divider()
+                ForEach(articles.prefix(3), id: \.id) { article in
+                    NewsCard(article: article)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Performance Section
+    private var performanceSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Performance")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            
+            VStack(spacing: 8) {
+                PerformanceRow(title: "Today's P&L", value: "+₹2,450.00", isPositive: true)
+                PerformanceRow(title: "Total P&L", value: "+₹15,230.50", isPositive: true)
+                PerformanceRow(title: "Win Rate", value: "68.5%", isPositive: true)
+                PerformanceRow(title: "Active Positions", value: "12", isPositive: nil)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+            )
+        }
+    }
+    
+    // MARK: - Trading View
+    private var tradingView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                Text("Trading Terminal")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                // Trading interface placeholder
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .frame(height: 400)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.white.opacity(0.3))
+                            Text("Trading Terminal")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.5))
                         }
-                    }
-                }
+                    )
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 100)
         }
     }
     
-    private var quickOrderSheet: some View {
-        VStack(spacing: 16) {
-            Text("Quick Order")
-                .font(.title2)
-                .fontWeight(.semibold)
-            Text("For full controls, use the Paper Trading tab.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Button("Go to Paper Trading") {
-                showQuickOrderSheet = false
-                selectedTab = 1 // Paper Trading tab index
+    // MARK: - AI Control View
+    private var aiControlView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                Text("AI Trading Control")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                // AI control interface placeholder
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .frame(height: 400)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "brain.head.profile")
+                                .font(.system(size: 50))
+                                .foregroundColor(.blue.opacity(0.7))
+                            Text("AI Control Center")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    )
             }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-        .presentationDetents([.height(240)])
-    }
-    
-    private var loginSheet: some View {
-        VStack(spacing: 16) {
-            Text("Zerodha Login Required")
-                .font(.title2)
-                .fontWeight(.semibold)
-            Text("Please configure your Zerodha API credentials in Settings to access live market data.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("Open Settings") {
-                // Close the overlay/sheet first, then switch tab
-                showLogin = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    selectedTab = 4
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-        .presentationDetents([.medium])
-    }
-
-    var body: some View {
-        TabView(selection: $selectedTab) {
-            // Dashboard Tab
-            dashboardView
-            .tabItem {
-                Image(systemName: "house")
-                Text("Dashboard")
-            }
-            .tag(0)
-            
-            // AI Control Center Tab
-            Text("AI Control Center - Coming Soon")
-                .tabItem {
-                    Image(systemName: "brain.head.profile")
-                    Text("AI Control")
-                }
-                .tag(1)
-            
-            // Analytics Tab
-            Text("Performance Analytics - Coming Soon")
-                .tabItem {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                    Text("Analytics")
-                }
-                .tag(2)
-            
-            // Paper Trading Tab
-            PaperTradingView()
-                .tabItem {
-                    Image(systemName: "chart.bar")
-                    Text("Paper Trading")
-                }
-                .tag(3)
-            
-            // Backtesting Tab
-            BacktestingView()
-                .tabItem {
-                    Image(systemName: "arrow.left.arrow.right")
-                    Text("Backtesting")
-                }
-                .tag(4)
-            
-            // Chart Tab
-            ChartView(data: chartData)
-                .tabItem {
-                    Image(systemName: "chart.xyaxis.line")
-                    Text("Chart")
-                }
-                .tag(5)
-            
-            // Risk Management Tab
-            Text("Risk Management - Coming Soon")
-                .tabItem {
-                    Image(systemName: "shield.fill")
-                    Text("Risk")
-                }
-                .tag(6)
-            
-            // Settings Tab
-            SettingsView()
-                .tabItem {
-                    Image(systemName: "gear")
-                    Text("Settings")
-                }
-                .tag(7)
-        }
-        .sheet(isPresented: $showPatternScanner) {
-            Text("Pattern Scanner - Coming Soon")
-                .padding()
+            .padding(.horizontal, 16)
+            .padding(.bottom, 100)
         }
     }
     
-    // MARK: - Helper Methods
-    
-    private func setupMarketDataProvider() {
-        marketDataProvider.onTick = { tick in
-            DispatchQueue.main.async {
-                self.marketData = "\(tick.symbol) ₹\(String(format: "%.2f", tick.price))"
+    // MARK: - Analytics View
+    private var analyticsView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                Text("Analytics & Insights")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
                 
-                // Update portfolio value
-                let currentPrices = [tick.symbol: tick.price]
-                self.portfolioValue = self.virtualPortfolio.getPortfolioValue(currentPrices: currentPrices)
-                self.pnl = self.portfolioValue - 100000.0
-                
-                // Update chart data with new tick
-                let newData = MarketData(symbol: tick.symbol, price: tick.price, volume: tick.volume, timestamp: Date())
-                self.chartData.append(newData)
-                
-                // Keep only last 200 data points
-                if self.chartData.count > 200 {
-                    self.chartData.removeFirst()
-                }
-                
-                // Trigger AI trading if enabled
-                if self.aiTradingEnabled {
-                    self.performAITrading()
-                }
-                
-                // Update pattern analysis every 30 seconds
-                if Date().timeIntervalSince(self.lastPatternUpdate) > 30 {
-                    self.updatePatternAnalysis()
-                }
+                // Analytics interface placeholder
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .frame(height: 400)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "chart.bar.xaxis")
+                                .font(.system(size: 50))
+                                .foregroundColor(.purple.opacity(0.7))
+                            Text("Analytics Dashboard")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    )
             }
-        }
-        
-        marketDataProvider.onError = { err in
-            DispatchQueue.main.async {
-                print("Market data error: \(err.localizedDescription)")
-                self.showLogin = true
-                self.marketData = "No data — check Zerodha credentials in Settings and use Test Connection."
-            }
-        }
-
-        // If creds exist, connect to real WS; else show login UI
-        let hasCreds = !Config.zerodhaAPIKey().isEmpty && !Config.zerodhaAccessToken().isEmpty
-        if hasCreds {
-            marketDataProvider.connect()
-            marketDataProvider.subscribe(symbols: ["NIFTY"])
-        } else {
-            self.showQuickOrderSheet = false
-            self.showLogin = true
-        }
-
-        // Load historical data for chart (real data only)
-        historicalProvider.fetchCandles(symbol: "NIFTY") { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let data):
-                    self.chartData = data
-                    // Initialize pattern analysis with historical data
-                    self.updatePatternAnalysis()
-                case .failure(let error):
-                    print("Error fetching historical data: \(error)")
-                }
-            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 100)
         }
     }
     
-    private func loadNews() {
+    // MARK: - Portfolio View
+    private var portfolioView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                Text("Portfolio")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                // Portfolio interface placeholder
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .frame(height: 400)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "briefcase.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.orange.opacity(0.7))
+                            Text("Portfolio Overview")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    )
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 100)
+        }
+    }
+    
+    // MARK: - Custom Tab Bar
+    private var customTabBar: some View {
+        HStack(spacing: 0) {
+            TabBarButton(icon: "house.fill", title: "Dashboard", isSelected: selectedTab == 0) {
+                selectedTab = 0
+            }
+            
+            TabBarButton(icon: "chart.line.uptrend.xyaxis", title: "Trading", isSelected: selectedTab == 1) {
+                selectedTab = 1
+            }
+            
+            TabBarButton(icon: "brain.head.profile", title: "AI", isSelected: selectedTab == 2) {
+                selectedTab = 2
+            }
+            
+            TabBarButton(icon: "chart.bar.xaxis", title: "Analytics", isSelected: selectedTab == 3) {
+                selectedTab = 3
+            }
+            
+            TabBarButton(icon: "briefcase.fill", title: "Portfolio", isSelected: selectedTab == 4) {
+                selectedTab = 4
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.8))
+                .blur(radius: 10)
+        )
+    }
+    
+    // MARK: - Helper Functions
+    private func loadInitialData() {
         isLoading = true
-        NewsAPIClient().fetchIndianMarketNews { result in
-            DispatchQueue.main.async {
-                isLoading = false
-                switch result {
-                case .success(let fetchedArticles):
-                    self.articles = fetchedArticles
-                case .failure(let error):
-                    print("Error fetching news: \(error)")
-                }
-            }
-        }
-    }
-    
-    private func startPatternAnalysis() {
-        // Initialize pattern analysis timer
-        Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
-            DispatchQueue.main.async {
-                self.updatePatternAnalysis()
-            }
-        }
-    }
-    
-    private func updatePatternAnalysis() {
-        guard !chartData.isEmpty else { return }
         
-        // Update multi-timeframe analysis
-        multiTimeframeAnalysis = patternEngine.analyzeMultiTimeframe(data: chartData)
-        
-        // Generate pattern alerts
-        patternAlerts = patternEngine.generateAlerts(from: multiTimeframeAnalysis)
-        
-        // Find confluence patterns
-        confluencePatterns = patternEngine.findConfluencePatterns(analysis: multiTimeframeAnalysis)
-        
-        // Update market regime
-        marketRegime = patternEngine.determineMarketRegime(data: chartData)
-        
-        lastPatternUpdate = Date()
-    }
-    
-    private func startAITrading() {
-        // Initialize AI trading
-        guard let currentData = chartData.last else { return }
-        aiTrader.startTrading(
-            marketData: currentData,
-            news: [] // Empty news array for now
-        )
-    }
-    
-    private func performAITrading() {
-        // Perform AI trading analysis and execution
-        guard let currentData = chartData.last else { return }
-        aiTrader.analyzeAndTrade(
-            marketData: currentData,
-            news: [] // Empty news array for now
-        )
-    }
-    
-    private func totalActivePatterns() -> Int {
-        return multiTimeframeAnalysis.values.flatMap { $0 }.count
-    }
-    
-    private func averageConfidence() -> Double {
-        let allPatterns = multiTimeframeAnalysis.values.flatMap { $0 }
-        guard !allPatterns.isEmpty else { return 0.0 }
-        return allPatterns.map { $0.confidence }.reduce(0, +) / Double(allPatterns.count)
-    }
-    
-    private func regimeColor(_ regime: PatternRecognitionEngine.MarketRegime) -> Color {
-        switch regime {
-        case .bullish: return .green
-        case .bearish: return .red
-        case .sideways: return .orange
-        case .volatile: return .purple
-        }
-    }
-    
-    private func signalColor(_ signal: TechnicalAnalysisEngine.TradingSignal) -> Color {
-        switch signal {
-        case .buy, .strongBuy: return .green
-        case .sell, .strongSell: return .red
-        case .hold: return .gray
+        // Simulate loading market data
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Load sample articles
+            self.articles = [
+                Article(title: "NIFTY 50 Reaches New High Amid Strong Market Sentiment", description: "The benchmark index continues its upward trajectory...", url: "https://example.com", publishedAt: "2024-01-15T10:30:00Z"),
+                Article(title: "Banking Sector Shows Mixed Performance", description: "While some banks outperformed, others lagged...", url: "https://example.com", publishedAt: "2024-01-15T09:45:00Z"),
+                Article(title: "IT Stocks Rally on Strong Q3 Results", description: "Technology companies report better than expected earnings...", url: "https://example.com", publishedAt: "2024-01-15T08:20:00Z")
+            ]
+            
+            self.isLoading = false
         }
     }
 }
 
 // MARK: - Supporting Views
 
-struct MarketDataWidget: View {
-    let marketData: String
+struct MarketCard: View {
+    let title: String
+    let value: String
+    let change: String
+    let changePercent: String
+    let isPositive: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+            
+            Text(value)
+                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+            
+            HStack(spacing: 4) {
+                Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
+                    .font(.system(size: 10, weight: .bold))
+                Text(change)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                Text(changePercent)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+            }
+            .foregroundColor(isPositive ? .green : .red)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+}
+
+
+
+struct ChartTimeButton: View {
+    let title: String
+    let isSelected: Bool
+    
+    var body: some View {
+        Text(title)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(isSelected ? .black : .white.opacity(0.7))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isSelected ? Color.white : Color.clear)
+            )
+    }
+}
+
+struct NewsCard: View {
+    let article: Article
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(article.title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+                .lineLimit(2)
+            
+            if let description = article.description {
+                Text(description)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(2)
+            }
+            
+            Text(timeAgo(from: article.publishedAt))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+    
+    private func timeAgo(from dateString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: dateString) {
+            let relativeFormatter = RelativeDateTimeFormatter()
+            relativeFormatter.unitsStyle = .abbreviated
+            return relativeFormatter.localizedString(for: date, relativeTo: Date())
+        }
+        return "Recently"
+    }
+}
+
+struct NewsCardPlaceholder: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 16)
+            
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 12)
+                .frame(width: 200)
+            
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 10)
+                .frame(width: 80)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+}
+
+struct PerformanceRow: View {
+    let title: String
+    let value: String
+    let isPositive: Bool?
     
     var body: some View {
         HStack {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .foregroundColor(.blue)
-            Text(marketData)
-                .font(.headline)
-                .fontWeight(.semibold)
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.8))
+            
             Spacer()
+            
+            Text(value)
+                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .foregroundColor(
+                    isPositive == nil ? .white :
+                    isPositive! ? .green : .red
+                )
         }
     }
 }
 
-struct QuickAccessButton: View {
-    let title: String
+struct TabBarButton: View {
     let icon: String
-    let color: Color
+    let title: String
+    let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
+                
                 Text(title)
-                    .font(.caption)
-                    .foregroundColor(.primary)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(color.opacity(0.1))
-            .cornerRadius(8)
-        }
-    }
-}
-
-struct PerformanceWidget: View {
-    let title: String
-    let value: String
-    let change: String
-    let winRate: Double
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.purple)
-            
-            HStack {
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                Spacer()
-                Text(change)
-                    .font(.subheadline)
-                    .foregroundColor(change.hasPrefix("+") ? .green : .red)
-            }
-
-            ProgressView(value: winRate / 100)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                .padding(.top, 5)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(radius: 2)
-    }
-}
-
-struct QuickActionButtons: View {
-    let onQuickOrder: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Quick Actions")
-                .font(.headline)
-                .foregroundColor(.purple)
-
-            HStack(spacing: 15) {
-                Button(action: onQuickOrder) {
-                    Text("Quick Order")
-                        .font(.body)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Color.accentColor)
-                        .cornerRadius(8)
-                }
-
-                Button(action: {
-                    print("Refresh button tapped")
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.body)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 10)
-                        .background(Color.orange)
-                        .cornerRadius(8)
-                }
-            }
-        }
-        .padding()
-        .background(.thinMaterial)
-        .cornerRadius(12)
-        .shadow(radius: 2)
-    }
-}
-
-// MARK: - Missing Row Components
-
-struct PatternAlertRow: View {
-    let alert: PatternRecognitionEngine.PatternAlert
-    
-    var body: some View {
-        HStack {
-            Circle()
-                .fill(urgencyColor(alert.urgency))
-                .frame(width: 8, height: 8)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(alert.pattern.pattern)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                
-                Text(alert.timeframe)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Int(alert.pattern.confidence * 100))%")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                
-                Text(alert.pattern.signal.rawValue)
-                    .font(.caption2)
-                    .foregroundColor(signalColor(alert.pattern.signal))
-            }
-        }
-        .padding(.vertical, 4)
-    }
-    
-    private func urgencyColor(_ urgency: PatternRecognitionEngine.AlertUrgency) -> Color {
-        switch urgency {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .blue
-        }
-    }
-    
-    private func signalColor(_ signal: TechnicalAnalysisEngine.TradingSignal) -> Color {
-        switch signal {
-        case .buy, .strongBuy: return .green
-        case .sell, .strongSell: return .red
-        case .hold: return .gray
-        }
-    }
-}
-
-struct TimeframeAnalysisRow: View {
-    let timeframe: String
-    let patterns: [TechnicalAnalysisEngine.PatternResult]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(timeframe)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Color.blue.opacity(0.2))
-                    .cornerRadius(4)
-                
-                Spacer()
-                
-                Text("\(patterns.count) patterns")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            if let topPattern = patterns.first {
-                HStack {
-                    Text(topPattern.pattern)
-                        .font(.caption2)
-                    
-                    Spacer()
-                    
-                    Text("\(Int(topPattern.confidence * 100))%")
-                        .font(.caption2)
-                        .foregroundColor(signalColor(topPattern.signal))
-                }
-            }
-        }
-        .padding(.vertical, 2)
-    }
-    
-    private func signalColor(_ signal: TechnicalAnalysisEngine.TradingSignal) -> Color {
-        switch signal {
-        case .buy, .strongBuy: return .green
-        case .sell, .strongSell: return .red
-        case .hold: return .gray
+            .frame(height: 50)
         }
     }
 }
