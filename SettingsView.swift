@@ -22,9 +22,7 @@ struct SettingsView: View {
     private let client = ZerodhaAPIClient()
     private let authManager = ZerodhaAuthManager()
 
-    // Web login sheet
-    @State private var showWebLogin = false
-    @State private var webView: WKWebView? = nil
+
 
     var body: some View {
         NavigationView {
@@ -73,7 +71,7 @@ struct SettingsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
 
                         HStack {
-                            Button(action: saveZerodhaCreds) {
+                            Button(action: { saveZerodhaCreds() }) {
                                 Label("Save", systemImage: "tray.and.arrow.down")
                             }
                             .buttonStyle(.bordered)
@@ -146,25 +144,6 @@ struct SettingsView: View {
         .alert(infoAlertTitle, isPresented: $showInfoAlert) {
             Button("OK", role: .cancel) {}
         } message: { Text(infoAlertMessage) }
-        .sheet(isPresented: $showWebLogin) {
-            NavigationView {
-                ZStack {
-                    if let wv = webView {
-                        WebViewContainer(webView: wv)
-                            .edgesIgnoringSafeArea(.bottom)
-                    } else {
-                        ProgressView("Loading...")
-                    }
-                }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Close") { showWebLogin = false }
-                    }
-                }
-            }
-            .presentationDetents([.large])
-        }
     }
 
     // MARK: - Actions
@@ -193,24 +172,26 @@ struct SettingsView: View {
         } catch { infoAlert(title: "Error", message: "Failed to save News API key: \(error.localizedDescription)") }
     }
 
-    private func saveZerodhaCreds() {
+    private func saveZerodhaCreds(silent: Bool = false) {
         do {
             _ = try KeychainHelper.shared.save(zerodhaAPIKeyText, forKey: "ZerodhaAPIKey")
             _ = try KeychainHelper.shared.save(zerodhaAPISecretText, forKey: "ZerodhaAPISecret")
             _ = try KeychainHelper.shared.save(zerodhaRedirectURLText, forKey: "ZerodhaRedirectURL")
             _ = try KeychainHelper.shared.save(zerodhaAccessTokenText, forKey: "ZerodhaAccessToken")
-            infoAlert(title: "Saved", message: "Zerodha API Key, Secret, Redirect URL, and Access Token saved.")
+            if !silent {
+                infoAlert(title: "Saved", message: "Zerodha API Key, Secret, Redirect URL, and Access Token saved.")
+            }
         } catch {
             infoAlert(title: "Error", message: "Failed to save Zerodha creds: \(error.localizedDescription)")
         }
     }
 
     private func startZerodhaLoginInWebView() {
-        // Persist values first
-        saveZerodhaCreds()
+        // Persist values first (silently)
+        saveZerodhaCreds(silent: true)
         authManager.startLoginInWebView(present: { webView in
-            self.webView = webView
-            self.showWebLogin = true
+            // Present globally via TemporaryWebLogin sheet defined in App
+            TemporaryWebLogin.shared.present(webView: webView)
         }, completion: { result in
             DispatchQueue.main.async {
                 switch result {
@@ -255,7 +236,7 @@ struct SettingsView: View {
                 do {
                     _ = try KeychainHelper.shared.save(access, forKey: "ZerodhaAccessToken")
                     self.zerodhaAccessTokenText = access
-                    self.showWebLogin = false
+                    TemporaryWebLogin.shared.isPresented = false
                     self.infoAlert(title: "Connected", message: "Access token saved. Connection ready.")
                 } catch {
                     self.infoAlert(title: "Save Failed", message: error.localizedDescription)

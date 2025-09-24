@@ -106,10 +106,30 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             print("Not connected to WebSocket")
             return
         }
-        
-        // Zerodha expects binary subscriptions for tokens; as a minimal placeholder, keep a no-op or log.
-        // TODO: Implement proper token subscription via Kite Ticker binary protocol.
-        print("Requested subscription for: \(symbol)")
+
+        // Map to Zerodha instrument token (minimal): NIFTY index -> 256265
+        let token: Int?
+        switch symbol.uppercased() {
+        case "NIFTY": token = 256265
+        default: token = nil
+        }
+        guard let token = token else {
+            print("Unknown symbol for subscription: \(symbol)")
+            return
+        }
+
+        // Send subscribe and set mode to LTP (text JSON as per Kite Ticker protocol)
+        let subscribe = ["a": "subscribe", "v": [token]] as [String : Any]
+        let mode = ["a": "mode", "v": ["ltp", [token]]] as [String : Any]
+        if let sData = try? JSONSerialization.data(withJSONObject: subscribe),
+           let sText = String(data: sData, encoding: .utf8) {
+            sendMessage(sText)
+        }
+        if let mData = try? JSONSerialization.data(withJSONObject: mode),
+           let mText = String(data: mData, encoding: .utf8) {
+            sendMessage(mText)
+        }
+        print("Requested subscription for: \(symbol) [token: \(token)]")
     }
 
     /// Send a message through WebSocket

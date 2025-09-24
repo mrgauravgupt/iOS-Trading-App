@@ -160,8 +160,14 @@ struct ContentView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                        Button("Open Settings") { selectedTab = 4 }
-                            .buttonStyle(.borderedProminent)
+                        Button("Open Settings") {
+                            // Close the overlay/sheet first, then switch tab
+                            showLogin = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                selectedTab = 4
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
                     .padding()
                 }

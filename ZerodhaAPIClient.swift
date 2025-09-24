@@ -31,10 +31,15 @@ class ZerodhaAPIClient {
         let calendar = Calendar.current
         let to = Date()
         let from = calendar.date(byAdding: .day, value: -30, to: to) ?? to
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let fromStr = ISO8601DateFormatter.string(from: from, timeZone: .current, formatOptions: [.withInternetDateTime])
-        let toStr = ISO8601DateFormatter.string(from: to, timeZone: .current, formatOptions: [.withInternetDateTime])
+
+        // Zerodha expects: yyyy-MM-dd HH:mm:ss (exchange timezone)
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = TimeZone(identifier: "Asia/Kolkata")
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let fromStr = df.string(from: from)
+        let toStr = df.string(from: to)
 
         var components = URLComponents(string: "\(baseURL)/instruments/historical/\(token)/day")!
         components.queryItems = [
@@ -47,11 +52,17 @@ class ZerodhaAPIClient {
         }
         var request = URLRequest(url: url)
         request.setValue("token \(apiKey):\(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("3", forHTTPHeaderField: "X-Kite-Version")
         request.timeoutInterval = 30
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error { completion(.failure(error)); return }
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+            guard let http = response as? HTTPURLResponse, let data = data else {
                 completion(.failure(NSError(domain: "HTTP Error", code: (response as? HTTPURLResponse)?.statusCode ?? -1)))
+                return
+            }
+            guard http.statusCode == 200 else {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                completion(.failure(NSError(domain: "HTTP Error", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: body])))
                 return
             }
             do {
@@ -91,11 +102,17 @@ class ZerodhaAPIClient {
         }
         var request = URLRequest(url: url)
         request.setValue("token \(apiKey):\(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("3", forHTTPHeaderField: "X-Kite-Version")
         request.timeoutInterval = 15
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error { completion(.failure(error)); return }
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200, let data = data else {
+            guard let http = response as? HTTPURLResponse, let data = data else {
                 completion(.failure(NSError(domain: "HTTP Error", code: (response as? HTTPURLResponse)?.statusCode ?? -1)))
+                return
+            }
+            guard http.statusCode == 200 else {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                completion(.failure(NSError(domain: "HTTP Error", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: body])))
                 return
             }
             do {

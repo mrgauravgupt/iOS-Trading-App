@@ -39,15 +39,8 @@ struct LoginView: View {
         isLoggingIn = true
         // Present WKWebView-based login; after redirect, auto-exchange request_token -> access_token.
         authManager.startLoginInWebView(present: { webView in
-            // Present a simple sheet to host the webview
-            let hosting = UIHostingController(rootView: WebViewContainer(webView: webView))
-            hosting.modalPresentationStyle = .pageSheet
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow }?
-                .rootViewController?
-                .present(hosting, animated: true)
+            // Show SwiftUI sheet with the provided webview
+            TemporaryWebLogin.shared.present(webView: webView)
         }, completion: { result in
             DispatchQueue.main.async {
                 isLoggingIn = false
@@ -130,7 +123,19 @@ private struct CredentialsFields: View {
     }
 }
 
-// Minimal ASWebAuthenticationPresentationContextProviding adapter
+// Helper presenter to show a SwiftUI sheet for the WKWebView without UIKit plumbing spread around
+final class TemporaryWebLogin: ObservableObject {
+    static let shared = TemporaryWebLogin()
+    @Published var isPresented = false
+    private(set) var webView: WKWebView?
+
+    func present(webView: WKWebView) {
+        self.webView = webView
+        self.isPresented = true
+    }
+}
+
+// Minimal ASWebAuthenticationPresentationContextProviding adapter (kept for ASWebAuth if needed later)
 final class AuthPresentationProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         // Best-effort: return the first key window
