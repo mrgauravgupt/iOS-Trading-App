@@ -28,6 +28,7 @@
 		551B90D9BC6C31C870659187 /* BaseAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA5ED4E30A8D4CA4E93A309 /* BaseAgent.swift */; };
 		56A769347FEBBA17186D4FB6 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF5E57BD5C14C085C8E0921 /* Config.swift */; };
 		64463A17FC56F9CE44703E27 /* DataExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E47F6E53BFA3C0C23705030 /* DataExportManager.swift */; };
+		C585FD0AB4B441F689421EFF /* DataConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4DF4EBA5284E168C249805 /* DataConnectionManager.swift */; };
 		67DD20007C65723BA236FC51 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D74870B4C76D767B11228C4 /* KeychainHelper.swift */; };
 		67ED2ADFBED05BAA9D1EB6BE /* UnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707152FB550F1697721EC641 /* UnitTests.swift */; };
 		71B7CBA0E93EC8BCB86B04B8 /* AppStorePrep.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0629EEDFB6FF84733915EC8 /* AppStorePrep.swift */; };
@@ -78,6 +79,7 @@
 		3065CA9918A2C3219F880AC6 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		32C38A438174ED9A6D0FA256 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		34931895B74C9259D5AE6309 /* ZerodhaAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZerodhaAPIClient.swift; sourceTree = "<group>"; };
+		3F4DF4EBA5284E168C249805 /* DataConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataConnectionManager.swift; sourceTree = "<group>"; };
 		3C0D57F4D1F89A8B6EDC6708 /* MarketAnalysisAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketAnalysisAgent.swift; sourceTree = "<group>"; };
 		423BBF4981EF5CA3A27B6AAD /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		45607BAD43F583244BBAB3B6 /* IntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				747A03370A1E541DAF3A6EE3 /* ChartView.swift */,
 				4EF5E57BD5C14C085C8E0921 /* Config.swift */,
 				32C38A438174ED9A6D0FA256 /* ContentView.swift */,
+				3F4DF4EBA5284E168C249805 /* DataConnectionManager.swift */,
 				5E47F6E53BFA3C0C23705030 /* DataExportManager.swift */,
 				D94293756FAB037D7A1DCB46 /* DataModels.swift */,
 				6098FCFB91061E89AEB4E765 /* DataProviders.swift */,
@@ -274,6 +277,7 @@
 				9FDDF89F6DB335B3458B68FD /* ChartView.swift in Sources */,
 				56A769347FEBBA17186D4FB6 /* Config.swift in Sources */,
 				8BCA017878BA6A380DE38FC7 /* ContentView.swift in Sources */,
+				C585FD0AB4B441F689421EFF /* DataConnectionManager.swift in Sources */,
 				64463A17FC56F9CE44703E27 /* DataExportManager.swift in Sources */,
 				91C2939567DAABA9AECA6B45 /* DataModels.swift in Sources */,
 				0CCB15DA9C043D1F1722DF30 /* DataProviders.swift in Sources */,

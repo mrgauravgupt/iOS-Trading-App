@@ -426,35 +426,41 @@ struct BacktestingView: View {
         loadingProgress = 0.0
         errorMessage = ""
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            // Simulate progress updates
-            let totalSteps = selectedPatterns.count * (enableMultiTimeframe ? selectedTimeframes.count : 1)
-            var currentStep = 0
-            
-            // Run comprehensive backtest
-            let result = backtestingEngine.runAdvancedBacktest(
-                symbol: symbol,
-                startDate: startDate,
-                endDate: endDate,
-                patterns: Array(selectedPatterns),
-                timeframes: enableMultiTimeframe ? Array(selectedTimeframes) : ["1D"],
-                enableML: enableMLOptimization,
-                enableMonteCarlo: enableMonteCarloSimulation,
-                monteCarloRuns: monteCarloRuns,
-                initialCapital: initialCapital,
-                positionSize: positionSize,
-                progressCallback: { step in
-                    currentStep = step
-                    DispatchQueue.main.async {
-                        self.loadingProgress = Double(currentStep) / Double(totalSteps)
+        Task {
+            do {
+                // Simulate progress updates
+                let totalSteps = selectedPatterns.count * (enableMultiTimeframe ? selectedTimeframes.count : 1)
+                var currentStep = 0
+                
+                // Run comprehensive backtest
+                let result = try await backtestingEngine.runAdvancedBacktest(
+                    symbol: symbol,
+                    startDate: startDate,
+                    endDate: endDate,
+                    patterns: Array(selectedPatterns),
+                    timeframes: enableMultiTimeframe ? Array(selectedTimeframes) : ["1D"],
+                    enableML: enableMLOptimization,
+                    enableMonteCarlo: enableMonteCarloSimulation,
+                    monteCarloRuns: monteCarloRuns,
+                    initialCapital: initialCapital,
+                    positionSize: positionSize,
+                    progressCallback: { step in
+                        currentStep = step
+                        Task { @MainActor in
+                            self.loadingProgress = Double(currentStep) / Double(totalSteps)
+                        }
                     }
+                )
+                
+                await MainActor.run {
+                    self.backtestResults = result
+                    self.isLoading = false
+                    self.loadingProgress = 1.0
                 }
-            )
-            
-            DispatchQueue.main.async {
-                self.backtestResults = result
-                self.isLoading = false
-                self.loadingProgress = 1.0
+            } catch {
+                await MainActor.run {
+                    self.showError(message: "Backtesting failed: \(error.localizedDescription)")
+                }
             }
         }
     }

@@ -2,16 +2,23 @@ import Foundation
 
 class HistoricalDataEngine {
     private var historicalData: [MarketData] = []
+    private let zerodhaClient = ZerodhaAPIClient()
     
-    func fetchHistoricalData(symbol: String, startDate: Date, endDate: Date) {
-        // Placeholder for fetching historical data
-        // In a real implementation, this would fetch from an API or database
-        let sampleData = [
-            MarketData(symbol: symbol, price: 18000.0, volume: 1000, timestamp: Date()),
-            MarketData(symbol: symbol, price: 18100.0, volume: 1000, timestamp: Date().addingTimeInterval(86400)),
-            MarketData(symbol: symbol, price: 17900.0, volume: 1000, timestamp: Date().addingTimeInterval(172800))
-        ]
-        historicalData = sampleData
+    func fetchHistoricalData(symbol: String, startDate: Date, endDate: Date) async throws {
+        // Fetch real historical data from Zerodha API using completion handler
+        return try await withCheckedThrowingContinuation { continuation in
+            zerodhaClient.fetchHistoricalData(symbol: symbol) { result in
+                switch result {
+                case .success(let data):
+                    self.historicalData = data
+                    continuation.resume()
+                case .failure(let error):
+                    print("Error fetching historical data for \(symbol): \(error.localizedDescription)")
+                    self.historicalData = [] // Clear any existing data on error
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
     
     func getHistoricalData() -> [MarketData] {
@@ -19,6 +26,14 @@ class HistoricalDataEngine {
     }
     
     func preprocessData() -> [[Double]] {
+        guard !historicalData.isEmpty else {
+            print("Warning: No historical data available for preprocessing")
+            return []
+        }
         return historicalData.map { [$0.price] }
+    }
+    
+    func isDataAvailable() -> Bool {
+        return !historicalData.isEmpty
     }
 }

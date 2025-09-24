@@ -7,10 +7,14 @@ struct ContentView: View {
     @State private var marketData: [MarketData] = []
     @State private var isLoading = false
     @State private var showingSettings = false
-    @State private var currentPrice: Double = 18250.50
-    @State private var priceChange: Double = 125.30
-    @State private var percentChange: Double = 0.69
+    @State private var currentPrice: Double = 0.0
+    @State private var priceChange: Double = 0.0
+    @State private var percentChange: Double = 0.0
+    @State private var marketQuotes: [String: MarketData] = [:]
+    @State private var isLoadingData = true
+    @State private var dataError: String?
     
+    @StateObject private var dataManager = DataConnectionManager()
     private let newsClient = NewsAPIClient()
     
     var body: some View {
@@ -75,30 +79,58 @@ struct ContentView: View {
     private var headerView: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("NIFTY 50")
-                    .font(.system(size: 16, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.8))
-                
                 HStack(spacing: 8) {
-                    Text("₹\(String(format: "%.2f", currentPrice))")
-                        .font(.system(size: 24, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
+                    Text("NIFTY 50")
+                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.8))
                     
-                    HStack(spacing: 4) {
-                        Image(systemName: priceChange >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.system(size: 12, weight: .bold))
-                        Text("\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))")
-                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        Text("(\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", percentChange))%)")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    // Connection status indicator
+                    Circle()
+                        .fill(dataManager.connectionStatus.color)
+                        .frame(width: 8, height: 8)
+                }
+                
+                if dataManager.isDataAvailable && currentPrice > 0 {
+                    HStack(spacing: 8) {
+                        Text("₹\(String(format: "%.2f", currentPrice))")
+                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: priceChange >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.system(size: 12, weight: .bold))
+                            Text("\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))")
+                                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                            Text("(\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", percentChange))%)")
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        }
+                        .foregroundColor(priceChange >= 0 ? .green : .red)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill((priceChange >= 0 ? Color.green : Color.red).opacity(0.2))
+                        )
                     }
-                    .foregroundColor(priceChange >= 0 ? .green : .red)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill((priceChange >= 0 ? Color.green : Color.red).opacity(0.2))
-                    )
+                } else if isLoadingData {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(.white)
+                        Text("Loading...")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Data Unavailable")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.red)
+                        Text(dataManager.errorMessage)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineLimit(2)
+                    }
                 }
             }
             
@@ -162,11 +194,32 @@ struct ContentView: View {
                     )
             }
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                MarketCard(title: "NIFTY 50", value: "18,250.50", change: "+125.30", changePercent: "+0.69%", isPositive: true)
-                MarketCard(title: "SENSEX", value: "61,872.99", change: "+423.12", changePercent: "+0.69%", isPositive: true)
-                MarketCard(title: "BANK NIFTY", value: "43,156.25", change: "-89.75", changePercent: "-0.21%", isPositive: false)
-                MarketCard(title: "NIFTY IT", value: "28,945.80", change: "+234.60", changePercent: "+0.82%", isPositive: true)
+            if dataManager.isDataAvailable {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                    // Only show NIFTY 50 with real data, others show "Data Unavailable"
+                    if let niftyData = marketQuotes["NIFTY"] {
+                        MarketCard(
+                            title: "NIFTY 50", 
+                            value: String(format: "%.2f", niftyData.price),
+                            change: String(format: "%+.2f", priceChange),
+                            changePercent: String(format: "%+.2f%%", percentChange),
+                            isPositive: priceChange >= 0
+                        )
+                    } else {
+                        MarketCard(title: "NIFTY 50", value: "---", change: "---", changePercent: "---", isPositive: true)
+                    }
+                    
+                    // Other indices - show unavailable until implemented
+                    MarketCard(title: "SENSEX", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
+                    MarketCard(title: "BANK NIFTY", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
+                    MarketCard(title: "NIFTY IT", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
+                }
+            } else {
+                DataErrorView(message: dataManager.errorMessage) {
+                    Task {
+                        await loadRealTimeData()
+                    }
+                }
             }
         }
     }
@@ -250,9 +303,25 @@ struct ContentView: View {
             }
             
             if articles.isEmpty {
-                ForEach(0..<3, id: \.self) { _ in
-                    NewsCardPlaceholder()
+                VStack(spacing: 12) {
+                    Image(systemName: "newspaper")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white.opacity(0.3))
+                    
+                    Text("No news available")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Text("Check your internet connection or try again later")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.4))
+                        .multilineTextAlignment(.center)
                 }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.05))
+                )
             } else {
                 ForEach(articles.prefix(3), id: \.id) { article in
                     NewsCard(article: article)
@@ -272,10 +341,23 @@ struct ContentView: View {
             }
             
             VStack(spacing: 8) {
-                PerformanceRow(title: "Today's P&L", value: "+₹2,450.00", isPositive: true)
-                PerformanceRow(title: "Total P&L", value: "+₹15,230.50", isPositive: true)
-                PerformanceRow(title: "Win Rate", value: "68.5%", isPositive: true)
-                PerformanceRow(title: "Active Positions", value: "12", isPositive: nil)
+                if dataManager.isDataAvailable {
+                    PerformanceRow(title: "Today's P&L", value: "₹0.00", isPositive: nil)
+                    PerformanceRow(title: "Total P&L", value: "₹0.00", isPositive: nil)
+                    PerformanceRow(title: "Win Rate", value: "0.0%", isPositive: nil)
+                    PerformanceRow(title: "Active Positions", value: "0", isPositive: nil)
+                } else {
+                    VStack(spacing: 8) {
+                        Text("Performance data unavailable")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                        Text("Connect to Zerodha to view your portfolio performance")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.4))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.vertical, 8)
+                }
             }
             .padding(16)
             .background(
@@ -431,18 +513,66 @@ struct ContentView: View {
     
     // MARK: - Helper Functions
     private func loadInitialData() {
-        isLoading = true
+        Task {
+            await loadRealTimeData()
+            await loadRealNews()
+        }
+    }
+    
+    private func loadRealTimeData() async {
+        isLoadingData = true
+        dataError = nil
         
-        // Simulate loading market data
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Load sample articles
-            self.articles = [
-                Article(title: "NIFTY 50 Reaches New High Amid Strong Market Sentiment", description: "The benchmark index continues its upward trajectory...", url: "https://example.com", publishedAt: "2024-01-15T10:30:00Z"),
-                Article(title: "Banking Sector Shows Mixed Performance", description: "While some banks outperformed, others lagged...", url: "https://example.com", publishedAt: "2024-01-15T09:45:00Z"),
-                Article(title: "IT Stocks Rally on Strong Q3 Results", description: "Technology companies report better than expected earnings...", url: "https://example.com", publishedAt: "2024-01-15T08:20:00Z")
-            ]
+        do {
+            // Test connection first
+            await dataManager.testConnection()
             
-            self.isLoading = false
+            if dataManager.isDataAvailable {
+                // Fetch NIFTY 50 real-time data
+                let niftyData = try await dataManager.fetchLTPAsync(symbol: "NIFTY")
+                
+                await MainActor.run {
+                    marketQuotes["NIFTY"] = niftyData
+                    currentPrice = niftyData.price
+                    
+                    // Calculate price change - requires historical data for accurate calculation
+                    // Without historical data, we cannot determine price change
+                    priceChange = 0.0 // Will be updated when historical data is available
+                    percentChange = 0.0
+                    
+                    isLoadingData = false
+                }
+            } else {
+                await MainActor.run {
+                    dataError = dataManager.errorMessage
+                    isLoadingData = false
+                }
+            }
+        } catch {
+            await MainActor.run {
+                dataError = error.localizedDescription
+                isLoadingData = false
+            }
+        }
+    }
+    
+    private func loadRealNews() async {
+        await withCheckedContinuation { continuation in
+            newsClient.fetchIndianMarketNews { result in
+                switch result {
+                case .success(let newsArticles):
+                    Task { @MainActor in
+                        self.articles = newsArticles
+                    }
+                case .failure(let error):
+                    print("Failed to load news: \(error.localizedDescription)")
+                    // Don't show error for news - just leave articles empty
+                    Task { @MainActor in
+                        self.articles = []
+                    }
+                }
+                continuation.resume()
+            }
         }
     }
 }

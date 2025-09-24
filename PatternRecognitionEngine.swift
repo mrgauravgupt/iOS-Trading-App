@@ -219,23 +219,28 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    // Pattern success rate tracking
-    func trackPatternPerformance(historicalData: [MarketData], patterns: [PatternResult]) -> [String: Double] {
+    // Pattern success rate tracking - requires actual trade outcome data
+    func trackPatternPerformance(historicalData: [MarketData], patterns: [PatternResult], tradeOutcomes: [String: Bool] = [:]) -> [String: Double] {
+        guard !tradeOutcomes.isEmpty else {
+            print("Error: No trade outcome data available for pattern performance tracking")
+            return [:]
+        }
+        
         var performanceTracking: [String: (correct: Int, total: Int)] = [:]
         
-        // Simplified performance tracking - in production would use actual trade outcomes
+        // Track performance based on actual trade outcomes
         for pattern in patterns {
             let key = pattern.pattern
             if performanceTracking[key] == nil {
                 performanceTracking[key] = (0, 0)
             }
             
-            // Simulate outcome based on pattern's expected performance
-            let isCorrect = Double.random(in: 0...1) < pattern.successRate
-            
-            performanceTracking[key]!.total += 1
-            if isCorrect {
-                performanceTracking[key]!.correct += 1
+            // Use actual trade outcome if available
+            if let outcome = tradeOutcomes[key] {
+                performanceTracking[key]!.total += 1
+                if outcome {
+                    performanceTracking[key]!.correct += 1
+                }
             }
         }
         
@@ -248,14 +253,19 @@ public class PatternRecognitionEngine: ObservableObject {
         return successRates
     }
 
-    // Test method to validate pattern recognition
-    func testPatternRecognition() -> [PatternResult] {
-        let testHighs = [18100.0, 18200.0, 18300.0, 18250.0, 18150.0, 18200.0, 18350.0]
-        let testLows = [18000.0, 18100.0, 18200.0, 18150.0, 18050.0, 18100.0, 18250.0]
-        let testCloses = [18050.0, 18150.0, 18250.0, 18200.0, 18100.0, 18150.0, 18300.0]
-        let testOpens = [18000.0, 18100.0, 18200.0, 18150.0, 18050.0, 18100.0, 18250.0]
+    // Pattern recognition validation - requires real market data
+    func validatePatternRecognition(marketData: [MarketData]) -> [PatternResult] {
+        guard !marketData.isEmpty else {
+            print("Error: No market data available for pattern recognition")
+            return []
+        }
+        
+        let highs = marketData.map { $0.price } // Simplified - would need actual OHLC data
+        let lows = marketData.map { $0.price }
+        let closes = marketData.map { $0.price }
+        let opens = marketData.map { $0.price }
 
-        return analyzePatterns(highs: testHighs, lows: testLows, closes: testCloses, opens: testOpens)
+        return analyzePatterns(highs: highs, lows: lows, closes: closes, opens: opens)
     }
     
     // MARK: - Pattern Formation Prediction

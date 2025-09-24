@@ -859,14 +859,9 @@ struct PerformanceData {
     var learningMetrics: [LearningMetric] = []
     
     init() {
-        // Initialize with sample data
-        dailyReturns = generateSampleDailyReturns()
-        learningMetrics = [
-            LearningMetric(area: "Pattern Recognition", progress: 0.78, improvement: 12.3),
-            LearningMetric(area: "Risk Assessment", progress: 0.91, improvement: 5.7),
-            LearningMetric(area: "Market Timing", progress: 0.65, improvement: 23.1),
-            LearningMetric(area: "Strategy Selection", progress: 0.72, improvement: 8.9)
-        ]
+        // Initialize with empty data - will be populated from real trading data
+        dailyReturns = []
+        learningMetrics = []
     }
     
     init(totalReturn: Double, totalReturnChange: Double, sharpeRatio: Double, sharpeRatioChange: Double, maxDrawdown: Double, maxDrawdownChange: Double, winRate: Double, winRateChange: Double, profitFactor: Double, profitFactorChange: Double, volatility: Double, volatilityChange: Double, totalTrades: Int, winningTrades: Int, averageTradeReturn: Double, bestPattern: String) {
@@ -886,13 +881,8 @@ struct PerformanceData {
         self.winningTrades = winningTrades
         self.averageTradeReturn = averageTradeReturn
         self.bestPattern = bestPattern
-        self.dailyReturns = generateSampleDailyReturns()
-        self.learningMetrics = [
-            LearningMetric(area: "Pattern Recognition", progress: 0.78, improvement: 12.3),
-            LearningMetric(area: "Risk Assessment", progress: 0.91, improvement: 5.7),
-            LearningMetric(area: "Market Timing", progress: 0.65, improvement: 23.1),
-            LearningMetric(area: "Strategy Selection", progress: 0.72, improvement: 8.9)
-        ]
+        self.dailyReturns = []
+        self.learningMetrics = []
     }
 }
 
@@ -989,15 +979,31 @@ class PerformanceAnalyticsEngine: ObservableObject {
     }
 }
 
-// Helper function to generate sample data
-func generateSampleDailyReturns() -> [DailyReturn] {
+// Helper function to generate daily returns from real trading data
+func generateDailyReturnsFromTrades(trades: [Trade]) -> [DailyReturn] {
+    guard !trades.isEmpty else { return [] }
+    
     var returns: [DailyReturn] = []
     var cumulativeReturn: Double = 0
     let calendar = Calendar.current
     
-    for i in 0..<30 {
-        let date = calendar.date(byAdding: .day, value: -30 + i, to: Date()) ?? Date()
-        let dailyReturn = Double.random(in: -2.0...3.0)
+    // Group trades by date
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    
+    let groupedTrades = Dictionary(grouping: trades) { trade in
+        dateFormatter.string(from: trade.timestamp)
+    }
+    
+    for (dateString, dayTrades) in groupedTrades.sorted(by: { $0.key < $1.key }) {
+        guard let date = dateFormatter.date(from: dateString) else { continue }
+        
+        let dailyPnL = dayTrades.reduce(0.0) { sum, trade in
+            // Calculate P&L for each trade (simplified)
+            return sum + (trade.quantity * trade.price * 0.001) // Simplified calculation
+        }
+        
+        let dailyReturn = dailyPnL / 100000.0 * 100 // Convert to percentage
         cumulativeReturn += dailyReturn
         
         returns.append(DailyReturn(
@@ -1008,6 +1014,13 @@ func generateSampleDailyReturns() -> [DailyReturn] {
     }
     
     return returns
+}
+
+// Placeholder Trade struct for the helper function
+struct Trade {
+    let timestamp: Date
+    let quantity: Int
+    let price: Double
 }
 
 #Preview {

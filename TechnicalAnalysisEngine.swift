@@ -748,21 +748,27 @@ class TechnicalAnalysisEngine: ObservableObject {
         return nil
     }
     
-    private func createPatternResult(_ pattern: AdvancedCandlestickPattern, timeframe: String, confidence: Double) -> PatternResult {
-        let basePrice = 18000.0 // Simplified - would use actual price
+    private func createPatternResult(_ pattern: AdvancedCandlestickPattern, timeframe: String, confidence: Double, currentPrice: Double = 0.0) -> PatternResult {
+        let basePrice = currentPrice > 0 ? currentPrice : 0.0 // Use actual current price
         let signal = pattern.expectedSignal
         
         let targets: [Double]
         let stopLoss: Double?
         
-        switch signal {
-        case .buy, .strongBuy:
-            targets = [basePrice * 1.02, basePrice * 1.05, basePrice * 1.08]
-            stopLoss = basePrice * 0.98
-        case .sell, .strongSell:
-            targets = [basePrice * 0.98, basePrice * 0.95, basePrice * 0.92]
-            stopLoss = basePrice * 1.02
-        case .hold:
+        if basePrice > 0 {
+            switch signal {
+            case .buy, .strongBuy:
+                targets = [basePrice * 1.02, basePrice * 1.05, basePrice * 1.08]
+                stopLoss = basePrice * 0.98
+            case .sell, .strongSell:
+                targets = [basePrice * 0.98, basePrice * 0.95, basePrice * 0.92]
+                stopLoss = basePrice * 1.02
+            case .hold:
+                targets = []
+                stopLoss = nil
+            }
+        } else {
+            // No price data available
             targets = []
             stopLoss = nil
         }

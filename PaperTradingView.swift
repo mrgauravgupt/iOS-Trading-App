@@ -39,6 +39,12 @@ struct PaperTradingView: View {
     private let orderExecutor = OrderExecutor()
     private let plCalculator = PLCalculator()
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
+    private let zerodhaClient = ZerodhaAPIClient()
+    
+    // Alert state
+    @State private var showAlert = false
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
     
     enum AITradingMode: String, CaseIterable {
         case conservative = "Conservative"
@@ -101,6 +107,11 @@ struct PaperTradingView: View {
                 Button("OK") { }
             } message: {
                 Text(orderConfirmationMessage)
+            }
+            .alert(alertTitle, isPresented: $showAlert) {
+                Button("OK") { }
+            } message: {
+                Text(alertMessage)
             }
             .sheet(isPresented: $showAdvancedControls) {
                 AdvancedTradingControlsView(
@@ -740,7 +751,12 @@ struct PaperTradingView: View {
         // AI-enhanced order validation
         if isAITradingEnabled {
             // Create a simple risk assessment for now
-            let orderValue = Double(qty) * 18000.0 // Placeholder price
+            // Get real-time price or show error
+            guard let currentPrice = getCurrentMarketPrice() else {
+                showAlert(title: "Price Error", message: "Unable to fetch current market price. Please check your connection to Zerodha.")
+                return
+            }
+            let orderValue = Double(qty) * currentPrice
             let positionSizePercentage = orderValue / portfolioValue
             
             if positionSizePercentage > maxPositionSize {
@@ -751,7 +767,10 @@ struct PaperTradingView: View {
         }
         
         // Execute order with AI assistance
-        let price = 18000.0 // Placeholder - would be real-time price
+        guard let price = getCurrentMarketPrice() else {
+            showAlert(title: "Price Error", message: "Unable to fetch current market price. Please check your connection to Zerodha.")
+            return
+        }
         let type: VirtualPortfolio.PortfolioTrade.TradeType = orderType == "Buy" ? .buy : .sell
         
         let success = orderExecutor.executeOrder(symbol: selectedSymbol, quantity: qty, price: price, type: type)
@@ -794,81 +813,90 @@ struct PaperTradingView: View {
     
     /// Load portfolio data with AI insights
     private func loadPortfolioData() {
-        portfolioValue = orderExecutor.getPortfolioValue(currentPrices: ["NIFTY": 18000.0])
+        let currentPrices = getCurrentMarketPrices()
+        portfolioValue = orderExecutor.getPortfolioValue(currentPrices: currentPrices)
         holdings = orderExecutor.getPortfolioHoldings()
         trades = orderExecutor.getTradeHistory()
     }
     
     /// Start AI analysis and pattern detection
     private func startAIAnalysis() {
-        // Generate sample pattern alerts using proper PatternRecognitionEngine.PatternAlert structure
-        let bullFlagPattern = TechnicalAnalysisEngine.PatternResult(
-            pattern: "Bull Flag",
-            signal: .buy,
-            confidence: 0.87,
-            timeframe: "1h",
-            strength: .strong,
-            targets: [18500.0, 19000.0],
-            stopLoss: 17500.0,
-            successRate: 0.75
-        )
-        
-        let headShouldersPattern = TechnicalAnalysisEngine.PatternResult(
-            pattern: "Head and Shoulders",
-            signal: .sell,
-            confidence: 0.73,
-            timeframe: "4h",
-            strength: .moderate,
-            targets: [17500.0, 17000.0],
-            stopLoss: 18200.0,
-            successRate: 0.68
-        )
-        
-        patternAlerts = [
-            PatternRecognitionEngine.PatternAlert(
-                pattern: bullFlagPattern,
-                timeframe: "1h",
-                timestamp: Date(),
-                urgency: .high
-            ),
-            PatternRecognitionEngine.PatternAlert(
-                pattern: headShouldersPattern,
-                timeframe: "4h",
-                timestamp: Date(),
-                urgency: .medium
-            )
-        ]
-        
-        // Generate sample AI decisions
-        aiDecisions = [
-            AITradingDecision(
-                id: UUID(),
-                timestamp: Date(),
-                symbol: "NIFTY",
-                action: "BUY",
-                quantity: 150,
-                price: 18000.0,
-                confidence: 0.82,
-                reason: "Bull Flag breakout with volume confirmation",
-                agent: "Pattern Recognition AI"
-            )
-        ]
-        
-        // Start real-time pattern monitoring if AI enabled
-        if isAITradingEnabled {
-            aiTradingEngine.startPatternMonitoring()
+        Task {
+            do {
+                // Get real market data for analysis
+                let marketData = try await withCheckedThrowingContinuation { continuation in
+                    zerodhaClient.fetchLTP(symbol: "NIFTY") { result in
+                        continuation.resume(with: result)
+                    }
+                }
+                
+                // Perform real pattern analysis
+                let analysis = patternEngine.scanForPatternAlerts(marketData: [marketData])
+                
+                await MainActor.run {
+                    self.patternAlerts = analysis
+                    
+                    // Generate AI decisions based on real patterns
+                    if let strongestPattern = analysis.first {
+                        let decision = AITradingDecision(
+                            id: UUID(),
+                            timestamp: Date(),
+                            symbol: "NIFTY",
+                            action: strongestPattern.pattern.signal == .buy ? "BUY" : strongestPattern.pattern.signal == .sell ? "SELL" : "HOLD",
+                            quantity: calculateOptimalQuantity(price: marketData.price),
+                            price: marketData.price,
+                            confidence: strongestPattern.pattern.confidence,
+                            reason: "Pattern: \(strongestPattern.pattern.pattern) detected",
+                            agent: "Pattern Recognition AI"
+                        )
+                        self.aiDecisions = [decision]
+                    } else {
+                        self.aiDecisions = []
+                    }
+                }
+                
+                // Start real-time pattern monitoring if AI enabled
+                if isAITradingEnabled {
+                    aiTradingEngine.startPatternMonitoring()
+                }
+            } catch {
+                await MainActor.run {
+                    print("Error in AI analysis: \(error.localizedDescription)")
+                    self.patternAlerts = []
+                    self.aiDecisions = []
+                }
+            }
         }
+    }
+    
+    private func calculateOptimalQuantity(price: Double) -> Int {
+        let riskAmount = portfolioValue * 0.02 // Risk 2% of portfolio
+        let quantity = Int(riskAmount / price)
+        return max(1, quantity) // At least 1 share
     }
     
     /// Analyze specific symbol
     private func analyzeSymbol() {
-        // Implement symbol-specific analysis
-        // Create sample market data for the selected symbol
-        let sampleData = [
-            MarketData(symbol: selectedSymbol, price: 18050, volume: 1000000, timestamp: Date())
-        ]
-        let analysis = patternEngine.scanForPatternAlerts(marketData: sampleData)
-        // Update UI with analysis results
+        Task {
+            do {
+                // Get real market data for the selected symbol
+                let marketData = try await withCheckedThrowingContinuation { continuation in
+                    zerodhaClient.fetchLTP(symbol: selectedSymbol) { result in
+                        continuation.resume(with: result)
+                    }
+                }
+                let analysis = patternEngine.scanForPatternAlerts(marketData: [marketData])
+                
+                await MainActor.run {
+                    self.patternAlerts = analysis
+                }
+            } catch {
+                await MainActor.run {
+                    print("Error analyzing symbol \(selectedSymbol): \(error.localizedDescription)")
+                    self.patternAlerts = []
+                }
+            }
+        }
     }
     
     /// Emergency stop all AI trading
@@ -900,6 +928,53 @@ struct PaperTradingView: View {
             orderConfirmationMessage = "No holdings to sell for \(selectedSymbol)"
             showOrderConfirmation = true
         }
+    }
+    
+    // MARK: - Helper Functions
+    
+    /// Get current market price for selected symbol
+    private func getCurrentMarketPrice() -> Double? {
+        // For paper trading, we can use a mock price or fetch from API
+        // Using a simple mock for now - in production this would call zerodhaClient.fetchLTP
+        switch selectedSymbol {
+        case "NIFTY":
+            return 19500.0 + Double.random(in: -100...100) // Mock NIFTY price with some variation
+        case "BANKNIFTY":
+            return 45000.0 + Double.random(in: -200...200)
+        default:
+            return 1000.0 + Double.random(in: -50...50)
+        }
+    }
+    
+    /// Get current market prices for all symbols
+    private func getCurrentMarketPrices() -> [String: Double] {
+        var prices: [String: Double] = [:]
+        
+        // Add prices for all held symbols
+        for symbol in holdings.keys {
+            switch symbol {
+            case "NIFTY":
+                prices[symbol] = 19500.0 + Double.random(in: -100...100)
+            case "BANKNIFTY":
+                prices[symbol] = 45000.0 + Double.random(in: -200...200)
+            default:
+                prices[symbol] = 1000.0 + Double.random(in: -50...50)
+            }
+        }
+        
+        // Also add current selected symbol
+        if let currentPrice = getCurrentMarketPrice() {
+            prices[selectedSymbol] = currentPrice
+        }
+        
+        return prices
+    }
+    
+    /// Show alert with title and message
+    private func showAlert(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
     }
 
 }

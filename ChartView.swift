@@ -620,9 +620,5 @@ struct PatternDetailView: View {
 }
 
 #Preview {
-    ChartView(data: [
-        MarketData(symbol: "NIFTY", price: 18000, volume: 1000, timestamp: Date()),
-        MarketData(symbol: "NIFTY", price: 18100, volume: 1200, timestamp: Date().addingTimeInterval(3600)),
-        MarketData(symbol: "NIFTY", price: 17950, volume: 900, timestamp: Date().addingTimeInterval(7200))
-    ])
+    ChartView(data: [])
 }
