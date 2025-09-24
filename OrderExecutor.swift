@@ -27,4 +27,8 @@ class OrderExecutor {
     func getTradeHistory() -> [VirtualPortfolio.PortfolioTrade] {
         return portfolio.getTrades()
     }
+    
+    func getActivePositions() -> Int {
+        return portfolio.getHoldings().count
+    }
 }

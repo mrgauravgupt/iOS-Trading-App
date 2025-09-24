@@ -3,7 +3,7 @@ import Charts
 
 /// Advanced Performance Analytics View with comprehensive pattern and agent performance tracking
 struct PerformanceAnalyticsView: View {
-    @StateObject private var analyticsEngine = PerformanceAnalyticsEngine()
+    // @StateObject private var analyticsEngine = PerformanceAnalyticsEngine() // TODO: Implement PerformanceAnalyticsEngine
     @StateObject private var patternEngine = PatternRecognitionEngine()
     
     // View State

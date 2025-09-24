@@ -210,7 +210,7 @@ struct ChartView: View {
     
     private var patternOverlay: some View {
         VStack {
-            ForEach(detectedPatterns.filter { $0.pattern.confidence >= patternConfidenceThreshold }, id: \.timestamp) { pattern in
+            ForEach(detectedPatterns.filter { $0.pattern.confidence >= patternConfidenceThreshold }) { pattern in
                 Button(action: {
                     selectedPattern = pattern
                     showPatternDetails = true
@@ -220,7 +220,7 @@ struct ChartView: View {
                             .fill(patternConfidenceColor(pattern.pattern.confidence))
                             .frame(width: 8, height: 8)
                         
-                        Text(pattern.pattern.pattern.rawValue)
+                        Text(pattern.pattern.pattern)
                             .font(.caption2)
                             .fontWeight(.medium)
                         
@@ -349,7 +349,7 @@ struct ChartView: View {
             if !detectedPatterns.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(Array(detectedPatterns.prefix(5)), id: \.timestamp) { pattern in
+                        ForEach(Array(detectedPatterns.prefix(5))) { pattern in
                             PatternSummaryCard(pattern: pattern) {
                                 selectedPattern = pattern
                                 showPatternDetails = true
@@ -442,22 +442,32 @@ struct ChartView: View {
         ]
         
         // Calculate support/resistance levels
-        supportResistanceLevels = technicalEngine.calculateSupportResistance(prices: prices)
+        // Derive simple support/resistance as min/max for now (placeholder until dedicated API exists)
+        supportResistanceLevels = [prices.min() ?? 0, prices.max() ?? 0]
     }
     
     private func calculateIndicators() {
         let prices = data.map { $0.price }
         
+        // Build simplified OHLC from available price data for indicators that require it
+        let highs = prices.map { $0 * 1.01 }
+        let lows = prices.map { $0 * 0.99 }
+        let closes = prices
+        
         indicatorValues = [
             "RSI": technicalEngine.calculateRSI(prices: prices),
             "MACD": technicalEngine.calculateMACD(prices: prices).0,
             "Bollinger Bands": technicalEngine.calculateBollingerBands(prices: prices).middle,
-            "Stochastic": technicalEngine.calculateStochastic(prices: prices, period: 14),
-            "Williams %R": technicalEngine.calculateWilliamsR(prices: prices, period: 14),
-            "CCI": technicalEngine.calculateCCI(prices: prices, period: 20),
-            "ATR": technicalEngine.calculateATR(prices: prices, period: 14),
-            "Parabolic SAR": technicalEngine.calculateParabolicSAR(prices: prices)
+            "Stochastic": technicalEngine.calculateStochastic(highs: highs, lows: lows, closes: closes, period: 14),
+            "Williams %R": technicalEngine.calculateWilliamsR(highs: highs, lows: lows, closes: closes, period: 14),
+            "CCI": technicalEngine.calculateCCI(highs: highs, lows: lows, closes: closes, period: 20),
+            "ATR": technicalEngine.calculateATR(highs: highs, lows: lows, closes: closes, period: 14)
         ]
+        // Parabolic SAR produces a series; show the latest value as a summary metric
+        let psarSeries = technicalEngine.calculateParabolicSAR(highs: highs, lows: lows)
+        if let lastPSAR = psarSeries.last {
+            indicatorValues["Parabolic SAR"] = lastPSAR
+        }
     }
     
     private func patternConfidenceColor(_ confidence: Double) -> Color {
@@ -522,13 +532,13 @@ struct PatternSummaryCard: View {
                         .fill(urgencyColor(pattern.urgency))
                         .frame(width: 6, height: 6)
                     
-                    Text(pattern.patternType)
+                    Text(pattern.pattern.pattern)
                         .font(.caption)
                         .fontWeight(.medium)
                         .lineLimit(1)
                 }
                 
-                Text("\(Int(pattern.confidence * 100))%")
+                Text("\(Int(pattern.pattern.confidence * 100))%")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -559,12 +569,12 @@ struct PatternDetailView: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(pattern.patternType)
+                    Text(pattern.pattern.pattern)
                         .font(.title)
                         .fontWeight(.bold)
                     
                     HStack {
-                        Text("Confidence: \(Int(pattern.confidence * 100))%")
+                        Text("Confidence: \(Int(pattern.pattern.confidence * 100))%")
                             .font(.headline)
                         
                         Spacer()
@@ -582,7 +592,7 @@ struct PatternDetailView: View {
                     Text("Description")
                         .font(.headline)
                     
-                    Text(pattern.description)
+                    Text(pattern.alertMessage)
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
@@ -591,7 +601,7 @@ struct PatternDetailView: View {
                     Text("Recommendation")
                         .font(.headline)
                     
-                    Text(pattern.recommendation)
+                    Text(pattern.pattern.signal.rawValue)
                         .font(.body)
                         .foregroundColor(.blue)
                         .fontWeight(.medium)

@@ -93,7 +93,8 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    struct PatternAlert {
+    struct PatternAlert: Identifiable {
+        let id = UUID()
         let pattern: PatternResult
         let timeframe: String
         let timestamp: Date
@@ -194,7 +195,7 @@ public class PatternRecognitionEngine: ObservableObject {
         
         // Determine regime
         if trendStrength > 0.05 {
-            return shortMA > longMA ? .trending(.bullish) : .trending(.bearish)
+            return shortMA > longMA ? .bullish : .bearish
         } else if volatility > 0.02 {
             return .volatile
         } else {
@@ -203,20 +204,17 @@ public class PatternRecognitionEngine: ObservableObject {
     }
     
     enum MarketRegime {
-        case trending(TrendDirection)
+        case bullish
+        case bearish
         case sideways
         case volatile
         
-        enum TrendDirection {
-            case bullish, bearish
-        }
-        
         var description: String {
             switch self {
-            case .trending(.bullish): return "Bullish Trending"
-            case .trending(.bearish): return "Bearish Trending"
-            case .sideways: return "Sideways/Ranging"
-            case .volatile: return "High Volatility"
+            case .bullish: return "Bullish"
+            case .bearish: return "Bearish"
+            case .sideways: return "Sideways"
+            case .volatile: return "Volatile"
             }
         }
     }
@@ -341,12 +339,12 @@ public class PatternRecognitionEngine: ObservableObject {
         
         return patterns.filter { pattern in
             switch regime {
-            case .trending(.bullish):
+            case .bullish:
                 // In bullish markets, prioritize buy signals and continuation patterns
                 return pattern.signal == .buy || pattern.signal == .strongBuy ||
                        pattern.pattern.contains("Flag") || pattern.pattern.contains("Triangle")
                 
-            case .trending(.bearish):
+            case .bearish:
                 // In bearish markets, prioritize sell signals and reversal patterns
                 return pattern.signal == .sell || pattern.signal == .strongSell ||
                        pattern.pattern.contains("Head and Shoulders") || pattern.pattern.contains("Double Top")
@@ -411,5 +409,47 @@ public class PatternRecognitionEngine: ObservableObject {
         var description: String {
             return "\(patternType): \(instances.count) instances across \(timeframes.joined(separator: ", ")), avg confidence: \(Int(averageConfidence * 100))%"
         }
+    }
+    
+    // MARK: - ContentView Integration Methods
+    
+    func analyzeMultiTimeframe(data: [MarketData]) -> [String: [PatternResult]] {
+        return technicalAnalysisEngine.analyzeMultiTimeframe(data: data)
+    }
+    
+    func generateAlerts(from analysis: [String: [PatternResult]]) -> [PatternAlert] {
+        var alerts: [PatternAlert] = []
+        
+        for (timeframe, patterns) in analysis {
+            for pattern in patterns {
+                if pattern.confidence >= 0.7 { // Alert threshold
+                    let alert = PatternAlert(
+                        pattern: pattern,
+                        timeframe: timeframe,
+                        timestamp: Date(),
+                        urgency: determineUrgency(pattern: pattern)
+                    )
+                    alerts.append(alert)
+                }
+            }
+        }
+        
+        // Sort by urgency and confidence
+        alerts.sort { first, second in
+            if first.urgency.priority != second.urgency.priority {
+                return first.urgency.priority > second.urgency.priority
+            }
+            return first.pattern.confidence > second.pattern.confidence
+        }
+        
+        return alerts
+    }
+    
+    func findConfluencePatterns(analysis: [String: [PatternResult]]) -> [PatternResult] {
+        return technicalAnalysisEngine.analyzePatternConfluence(multiTimeframeResults: analysis)
+    }
+    
+    func determineMarketRegime(data: [MarketData]) -> MarketRegime {
+        return detectMarketRegime(marketData: data)
     }
 }

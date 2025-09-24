@@ -216,7 +216,7 @@ class TechnicalAnalysisEngine: ObservableObject {
         let prices = data.map { $0.price }
         let highs = data.map { $0.price * 1.01 } // Simplified - would use actual OHLC
         let lows = data.map { $0.price * 0.99 }
-        let volumes = data.map { $0.volume }
+        let volumes = data.map { Double($0.volume) }
         
         // Chart Patterns
         results.append(contentsOf: detectChartPatterns(prices: prices, highs: highs, lows: lows, timeframe: timeframe))
@@ -1158,12 +1158,14 @@ class TechnicalAnalysisEngine: ObservableObject {
     func calculateCCI(highs: [Double], lows: [Double], closes: [Double], period: Int = 20) -> Double {
         guard highs.count >= period && lows.count >= period && closes.count >= period else { return 0 }
         
-        let typicalPrices = zip(zip(highs, lows), closes).map { ((high, low), close) in
-            (high + low + close) / 3.0
+        let typicalPrices = zip(zip(highs, lows), closes).map { pairs in
+            let ((high, low), close) = pairs
+            return (high + low + close) / 3.0
         }
         
         let sma = typicalPrices.suffix(period).reduce(0, +) / Double(period)
-        let meanDeviation = typicalPrices.suffix(period).map { abs($0 - sma) }.reduce(0, +) / Double(period)
+        let meanDeviationComponents = typicalPrices.suffix(period).map { abs($0 - sma) }
+        let meanDeviation = meanDeviationComponents.reduce(0, +) / Double(period)
         
         guard meanDeviation > 0 else { return 0 }
         

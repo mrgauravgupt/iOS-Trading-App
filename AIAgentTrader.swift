@@ -130,4 +130,47 @@ class AIAgentTrader {
         
         return performanceRatios
     }
+    
+    // MARK: - ContentView Integration Methods
+    
+    func getCurrentTradingStatus() -> String {
+        // Return current AI trading status
+        return "Active"
+    }
+    
+    func getActiveStrategies() -> [String] {
+        // Return list of active trading strategies
+        return ["Momentum", "Pattern Recognition", "Mean Reversion"]
+    }
+    
+    func getTotalProfitLoss() -> Double {
+        // Calculate total P&L from trade history
+        return tradeHistory.reduce(0.0) { $0 + $1.reward }
+    }
+    
+    func getWinRate() -> Double {
+        // Calculate win rate from trade history
+        let winningTrades = tradeHistory.filter { $0.reward > 0 }.count
+        return tradeHistory.isEmpty ? 0.0 : Double(winningTrades) / Double(tradeHistory.count)
+    }
+    
+    func getActivePositions() -> Int {
+        // Return number of active positions
+        return orderExecutor.getActivePositions()
+    }
+    
+    func getDailyPnL() -> Double {
+        // Return today's P&L (simplified)
+        return tradeHistory.suffix(10).reduce(0.0) { $0 + $1.reward }
+    }
+    
+    func startTrading(marketData: MarketData, news: [Article]) {
+        // Start AI trading with given market data and news
+        executeAITrade(marketData: marketData, news: news)
+    }
+    
+    func analyzeAndTrade(marketData: MarketData, news: [Article]) {
+        // Analyze market conditions and execute trades
+        executeAITrade(marketData: marketData, news: news)
+    }
 }

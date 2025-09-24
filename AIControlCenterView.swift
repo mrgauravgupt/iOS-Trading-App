@@ -46,12 +46,13 @@ struct AIControlCenterView: View {
             }
             .navigationTitle("AI Control Center")
             .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showPerformanceDetails) {
-                AgentPerformanceDetailView(selectedAgent: selectedAgent)
-            }
-            .sheet(isPresented: $showManualOverride) {
-                ManualOverrideView(aiTrader: aiTrader)
-            }
+            // TODO: Implement these views
+            // .sheet(isPresented: $showPerformanceDetails) {
+            //     AgentPerformanceDetailView(selectedAgent: selectedAgent)
+            // }
+            // .sheet(isPresented: $showManualOverride) {
+            //     ManualOverrideView(aiTrader: aiTrader)
+            // }
         }
     }
     

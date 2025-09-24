@@ -562,11 +562,14 @@ struct PaperTradingView: View {
     
     private var patternsSection: some View {
         VStack(spacing: 20) {
-            PatternScannerView(
-                multiTimeframeAnalysis: [:],
-                patternAlerts: patternAlerts,
-                confluencePatterns: []
-            )
+            Text("Pattern Scanner - Coming Soon")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            // PatternScannerView(
+            //     multiTimeframeAnalysis: [:],
+            //     patternAlerts: patternAlerts,
+            //     confluencePatterns: []
+            // )
         }
     }
     
@@ -574,7 +577,10 @@ struct PaperTradingView: View {
     
     private var riskSection: some View {
         VStack(spacing: 20) {
-            RiskManagementDashboard()
+            Text("Risk Management Dashboard - Coming Soon")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            // RiskManagementDashboard()
         }
     }
     
@@ -582,7 +588,10 @@ struct PaperTradingView: View {
     
     private var performanceSection: some View {
         VStack(spacing: 20) {
-            PerformanceAnalyticsView()
+            Text("Performance Analytics - Coming Soon")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            // PerformanceAnalyticsView()
         }
     }
     
@@ -699,7 +708,7 @@ struct PaperTradingView: View {
                         
                         VStack(alignment: .trailing) {
                             Text("\(trade.type == .buy ? "BUY" : "SELL") \(trade.quantity)")
-                            Text("₹\(trade.price, specifier: "%.2f")")
+                            Text(String(format: "₹%.2f", trade.price))
                                 .font(.caption)
                         }
                     }
@@ -735,7 +744,7 @@ struct PaperTradingView: View {
             let positionSizePercentage = orderValue / portfolioValue
             
             if positionSizePercentage > maxPositionSize {
-                orderConfirmationMessage = "AI Risk Manager: Order rejected - Position size (\(positionSizePercentage * 100, specifier: "%.1f")%) exceeds limit (\(maxPositionSize * 100, specifier: "%.1f")%)"
+                orderConfirmationMessage = "AI Risk Manager: Order rejected - Position size (\(String(format: "%.1f", positionSizePercentage * 100))%) exceeds limit (\(String(format: "%.1f", maxPositionSize * 100))%)"
                 showOrderConfirmation = true
                 return
             }
@@ -856,7 +865,7 @@ struct PaperTradingView: View {
         // Implement symbol-specific analysis
         // Create sample market data for the selected symbol
         let sampleData = [
-            MarketData(open: 18000, high: 18100, low: 17950, close: 18050, volume: 1000000, timestamp: Date())
+            MarketData(symbol: selectedSymbol, price: 18050, volume: 1000000, timestamp: Date())
         ]
         let analysis = patternEngine.scanForPatternAlerts(marketData: sampleData)
         // Update UI with analysis results
