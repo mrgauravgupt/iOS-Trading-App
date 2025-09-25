@@ -1,6 +1,7 @@
 import Foundation
+import SwiftUI
 
-class AIAgentTrader {
+class AIAgentTrader: ObservableObject {
     private let agentCoordinator = AgentCoordinator()
     private let orderExecutor = OrderExecutor()
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()

@@ -105,6 +105,28 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
+    struct ConfluencePattern: Identifiable {
+        let id = UUID()
+        let patterns: [PatternResult]
+        let timeframes: [String]
+        let overallConfidence: Double
+        let signal: TechnicalAnalysisEngine.TradingSignal
+        let strength: PatternStrength
+        let timestamp: Date
+        
+        var description: String {
+            let patternNames = patterns.map { $0.pattern }.joined(separator: ", ")
+            let timeframeList = timeframes.joined(separator: ", ")
+            return "\(patternNames) confluence across \(timeframeList)"
+        }
+        
+        var confluenceScore: Double {
+            let timeframeBonus = Double(timeframes.count) * 0.1
+            let patternBonus = Double(patterns.count) * 0.05
+            return min(overallConfidence + timeframeBonus + patternBonus, 1.0)
+        }
+    }
+    
     private func determineUrgency(pattern: PatternResult) -> AlertUrgency {
         let confidenceScore = pattern.confidence
         let strengthScore: Double

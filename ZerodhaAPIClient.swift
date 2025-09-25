@@ -134,4 +134,37 @@ class ZerodhaAPIClient {
             }
         }.resume()
     }
+    
+    // MARK: - Trading Methods (Stub implementations for development)
+    
+    func placeOrder(_ orderRequest: [String: Any]) async throws -> [String: Any] {
+        // Stub implementation - returns mock order ID
+        return [
+            "order_id": "mock_order_\(UUID().uuidString.prefix(8))",
+            "status": "COMPLETE"
+        ]
+    }
+    
+    func cancelOrder(orderId: String) async throws -> [String: Any] {
+        // Stub implementation
+        return [
+            "order_id": orderId,
+            "status": "CANCELLED"
+        ]
+    }
+    
+    func getPositions() async throws -> [[String: Any]] {
+        // Stub implementation - returns empty positions
+        return []
+    }
+    
+    func getQuote(symbol: String) -> MarketData {
+        // Stub implementation - returns mock data
+        return MarketData(symbol: symbol, price: 100.0, volume: 1000, timestamp: Date())
+    }
+    
+    func getAvailableFunds() async throws -> Double {
+        // Stub implementation - returns mock available funds
+        return 100000.0 // ₹1,00,000
+    }
 }

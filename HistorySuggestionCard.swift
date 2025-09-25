@@ -2,137 +2,113 @@ import SwiftUI
 
 struct HistorySuggestionCard: View {
     let suggestion: TradeSuggestion
+    let confidence: Double
+    let rationale: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header with symbol and timestamp
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(suggestion.symbol)
+                Text(suggestion.symbol)
+                    .font(.headline)
+                Spacer()
+                
+                HStack(spacing: 8) {
+                    Text(suggestion.action.rawValue.uppercased())
                         .font(.headline)
-                        .fontWeight(.bold)
+                        .foregroundColor(suggestion.action == .buy ? .green : .red)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(suggestion.action == .buy ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
+                        )
                     
-                    Text(suggestion.timestamp, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text(suggestion.timestamp, style: .time)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // Execution status badge
-                HStack {
-                    Image(systemName: suggestion.isExecuted ? "checkmark.circle.fill" : "clock.circle.fill")
-                        .foregroundColor(suggestion.isExecuted ? .green : .orange)
-                    Text(suggestion.isExecuted ? "Executed" : "Pending")
-                        .font(.caption)
-                        .fontWeight(.medium)
+                    // Execution status
+                    Image(systemName: suggestion.isExecuted ? "checkmark.circle.fill" : "clock.circle")
                         .foregroundColor(suggestion.isExecuted ? .green : .orange)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(suggestion.isExecuted ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-                )
             }
             
-            // Action and price info
+            Divider()
+            
             HStack {
-                // Action badge
-                HStack {
-                    Image(systemName: suggestion.action == .buy ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
-                        .foregroundColor(suggestion.action == .buy ? .green : .red)
-                    Text(suggestion.action == .buy ? "BUY" : "SELL")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundColor(suggestion.action == .buy ? .green : .red)
-                }
-                
-                Spacer()
-                
-                // Price info
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .leading) {
+                    Text("Price")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     Text("₹\(String(format: "%.2f", suggestion.price))")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    if let quantity = suggestion.quantity {
-                        Text("Qty: \(quantity)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            
-            // Rationale
-            if !suggestion.rationale.isEmpty {
-                Text(suggestion.rationale)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 4)
-            }
-            
-            // Confidence level
-            HStack {
-                Text("Confidence:")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { index in
-                        Image(systemName: index < Int(suggestion.confidence * 5) ? "star.fill" : "star")
-                            .font(.caption)
-                            .foregroundColor(.yellow)
-                    }
+                        .font(.body)
                 }
                 
                 Spacer()
                 
-                Text("\(Int(suggestion.confidence * 100))%")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                VStack(alignment: .leading) {
+                    Text("Quantity")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("\(suggestion.quantity)")
+                        .font(.body)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .leading) {
+                    Text("Confidence")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("\(Int(confidence * 100))%")
+                        .font(.body)
+                }
             }
+            
+            Text(rationale)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+            
+            HStack {
+                Text("Suggested: \(formattedDate(suggestion.timestamp))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                if suggestion.isExecuted {
+                    Text("EXECUTED")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.green)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green.opacity(0.2))
+                        .cornerRadius(4)
+                } else {
+                    Text("PENDING")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(4)
+                }
+            }
+            .padding(.top, 2)
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-    }
-}
-
-#Preview {
-    VStack(spacing: 16) {
-        HistorySuggestionCard(
-            suggestion: TradeSuggestion(
-                symbol: "RELIANCE",
-                action: .buy,
-                price: 1376.50,
-                quantity: 10,
-                rationale: "Strong bullish momentum with high volume",
-                confidence: 0.85,
-                timestamp: Date(),
-                isExecuted: true
-            )
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(UIColor.systemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         )
-        
-        HistorySuggestionCard(
-            suggestion: TradeSuggestion(
-                symbol: "TCS",
-                action: .sell,
-                price: 4100.25,
-                quantity: 5,
-                rationale: "Resistance level reached, profit booking recommended",
-                confidence: 0.72,
-                timestamp: Date().addingTimeInterval(-3600),
-                isExecuted: false
-            )
-        )
+        .padding(.horizontal)
+        .padding(.vertical, 4)
     }
-    .padding()
-    .background(Color(.systemGray6))
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
 }

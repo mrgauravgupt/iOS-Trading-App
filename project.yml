@@ -57,6 +57,18 @@ targets:
       - path: TradeSuggestionView.swift
       - path: TradeSuggestionAlert.swift
       - path: TradeSuggestionExtensions.swift
+      - path: NIFTYOptionsDataModels.swift
+      - path: NIFTYOptionsDataProvider.swift
+      - path: IntradayPatternEngine.swift
+      - path: HistoricalTrainingManager.swift
+      - path: AITradingOrchestrator.swift
+      - path: OptionsOrderExecutor.swift
+      - path: NIFTYOptionsDashboard.swift
+      - path: AIControlCenterView.swift
+      - path: PatternScannerView.swift
+      - path: RiskManagementDashboard.swift
+      - path: PerformanceAnalyticsView.swift
+      - path: HistorySuggestionCard.swift
     settings:
       base:
         INFOPLIST_FILE: Info.plist

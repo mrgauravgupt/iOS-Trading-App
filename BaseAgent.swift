@@ -1,11 +1,12 @@
 import Foundation
+import SwiftUI
 
 protocol Agent {
     var name: String { get }
     func makeDecision(marketData: MarketData, news: [Article]) -> String
 }
 
-class BaseAgent: Agent, Hashable {
+class BaseAgent: Agent, Hashable, ObservableObject {
     let name: String
     
     init(name: String) {

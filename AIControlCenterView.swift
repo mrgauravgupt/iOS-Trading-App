@@ -2,8 +2,8 @@ import SwiftUI
 
 struct AIControlCenterView: View {
     @StateObject private var aiTrader = AIAgentTrader()
-    @StateObject private var marketAnalyzer = MarketAnalysisAgent()
-    @StateObject private var riskManager = RiskManagementAgent()
+    @StateObject private var marketAnalyzer = MarketAnalysisAgent(name: "Market Analysis Agent")
+    @StateObject private var riskManager = RiskManagementAgent(name: "Risk Management Agent")
     @StateObject private var suggestionManager = TradeSuggestionManager.shared
     
     @State private var isAITradingEnabled = false
@@ -354,7 +354,7 @@ struct AIControlCenterView: View {
             
             HStack(spacing: 20) {
                 VStack {
-                    Text("\(tradeSuggestionManager.suggestionHistory.count)")
+                    Text("\(suggestionManager.suggestionHistory.count)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.blue)
@@ -366,7 +366,7 @@ struct AIControlCenterView: View {
                 Divider()
                 
                 VStack {
-                    Text("\(tradeSuggestionManager.suggestionHistory.filter { $0.isExecuted }.count)")
+                    Text("\(suggestionManager.suggestionHistory.filter { $0.isExecuted }.count)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.green)
@@ -378,9 +378,9 @@ struct AIControlCenterView: View {
                 Divider()
                 
                 VStack {
-                    let executionRate = tradeSuggestionManager.suggestionHistory.isEmpty ? 0.0 : 
-                        Double(tradeSuggestionManager.suggestionHistory.filter { $0.isExecuted }.count) / 
-                        Double(tradeSuggestionManager.suggestionHistory.count) * 100
+                    let executionRate = suggestionManager.suggestionHistory.isEmpty ? 0.0 : 
+                        Double(suggestionManager.suggestionHistory.filter { $0.isExecuted }.count) / 
+                        Double(suggestionManager.suggestionHistory.count) * 100
                     Text("\(Int(executionRate))%")
                         .font(.title2)
                         .fontWeight(.bold)

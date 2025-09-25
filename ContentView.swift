@@ -63,8 +63,8 @@ struct ContentView: View {
                     tradingView
                         .tag(1)
                     
-                    // AI Control Tab
-                    aiControlView
+                    // NIFTY Options AI Tab
+                    NIFTYOptionsDashboard()
                         .tag(2)
                     
                     // Analytics Tab
@@ -569,7 +569,7 @@ struct ContentView: View {
                 selectedTab = 1
             }
             
-            TabBarButton(icon: "brain.head.profile", title: "AI", isSelected: selectedTab == 2) {
+            TabBarButton(icon: "brain.head.profile", title: "NIFTY AI", isSelected: selectedTab == 2) {
                 selectedTab = 2
             }
             

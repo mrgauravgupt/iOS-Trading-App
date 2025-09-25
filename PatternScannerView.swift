@@ -1,9 +1,10 @@
 import SwiftUI
+import UIKit
 
 struct PatternScannerView: View {
-    let multiTimeframeAnalysis: [String: [PatternRecognitionEngine.PatternResult]]
-    let patternAlerts: [PatternRecognitionEngine.PatternAlert]
-    let confluencePatterns: [PatternRecognitionEngine.ConfluencePattern]
+    let multiTimeframeAnalysis: [String: [TechnicalAnalysisEngine.PatternResult]]
+    let patternAlerts: [PatternAlert]
+    let confluencePatterns: [ConfluencePattern]
     
     @State private var selectedTimeframe: String = "1D"
     @State private var sortBy: SortOption = .confidence
@@ -24,6 +25,56 @@ struct PatternScannerView: View {
         case high = "High"
         case medium = "Medium"
         case low = "Low"
+        
+        var priority: Int {
+            switch self {
+            case .critical: return 4
+            case .high: return 3
+            case .medium: return 2
+            case .low: return 1
+            }
+        }
+    }
+    
+    // Add missing types from PatternRecognitionEngine
+    struct PatternAlert: Identifiable {
+        let id = UUID()
+        let pattern: TechnicalAnalysisEngine.PatternResult
+        let timeframe: String
+        let timestamp: Date
+        let urgency: AlertUrgency
+        
+        var patternName: String {
+            return pattern.pattern
+        }
+        
+        var confidence: Double {
+            return pattern.confidence
+        }
+        
+        var message: String? {
+            return "Signal: \(pattern.signal.rawValue)"
+        }
+    }
+    
+    struct ConfluencePattern: Identifiable {
+        let id = UUID()
+        let patterns: [TechnicalAnalysisEngine.PatternResult]
+        let timeframes: [String]
+        let overallConfidence: Double
+        let signal: TechnicalAnalysisEngine.TradingSignal
+        let strength: TechnicalAnalysisEngine.PatternStrength
+        let timestamp: Date
+        
+        var dominantPattern: String {
+            return patterns.first?.pattern ?? "Unknown Pattern"
+        }
+        
+        var confluenceScore: Double {
+            let timeframeBonus = Double(timeframes.count) * 0.1
+            let patternBonus = Double(patterns.count) * 0.05
+            return min(overallConfidence + timeframeBonus + patternBonus, 1.0)
+        }
     }
     
     var body: some View {
@@ -125,7 +176,7 @@ struct PatternScannerView: View {
     
     // MARK: - Computed Properties
     
-    private var filteredAlerts: [PatternRecognitionEngine.PatternAlert] {
+    private var filteredAlerts: [PatternAlert] {
         var alerts = patternAlerts
         
         if let urgency = filterUrgency {
@@ -139,10 +190,10 @@ struct PatternScannerView: View {
             }
         }
         
-        return alerts.sorted { $0.urgency.rawValue < $1.urgency.rawValue }
+        return alerts.sorted { $0.urgency.priority > $1.urgency.priority }
     }
     
-    private var sortedPatterns: [PatternRecognitionEngine.PatternResult] {
+    private var sortedPatterns: [TechnicalAnalysisEngine.PatternResult] {
         let patterns = multiTimeframeAnalysis[selectedTimeframe] ?? []
         
         switch sortBy {
@@ -153,7 +204,7 @@ struct PatternScannerView: View {
         case .urgency:
             return patterns.sorted { $0.confidence > $1.confidence } // Fallback to confidence
         case .alphabetical:
-            return patterns.sorted { $0.patternName < $1.patternName }
+            return patterns.sorted { $0.pattern < $1.pattern }
         }
     }
     
@@ -168,14 +219,17 @@ struct PatternScannerView: View {
     }
     
     private var strongPatterns: Int {
-        return multiTimeframeAnalysis.values.flatMap { $0 }.filter { $0.strength == .strong || $0.strength == .veryStrong }.count
+        let allPatterns = multiTimeframeAnalysis.values.flatMap { $0 }
+        return allPatterns.filter { 
+            $0.strength == .strong || $0.strength == .veryStrong 
+        }.count
     }
 }
 
 // MARK: - Supporting Views
 
 struct PatternAlertsSection: View {
-    let alerts: [PatternRecognitionEngine.PatternAlert]
+    let alerts: [PatternScannerView.PatternAlert]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -199,13 +253,13 @@ struct PatternAlertsSection: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(UIColor.systemGray6))
         .cornerRadius(12)
     }
 }
 
 struct PatternAlertCard: View {
-    let alert: PatternRecognitionEngine.PatternAlert
+    let alert: PatternScannerView.PatternAlert
     
     var body: some View {
         HStack {
@@ -241,7 +295,7 @@ struct PatternAlertCard: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(8)
         .shadow(radius: 1)
     }
@@ -277,7 +331,7 @@ struct PatternAlertCard: View {
 }
 
 struct ConfluencePatternsSection: View {
-    let patterns: [PatternRecognitionEngine.ConfluencePattern]
+    let patterns: [PatternScannerView.ConfluencePattern]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -301,13 +355,13 @@ struct ConfluencePatternsSection: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(UIColor.systemGray6))
         .cornerRadius(12)
     }
 }
 
 struct ConfluencePatternCard: View {
-    let pattern: PatternRecognitionEngine.ConfluencePattern
+    let pattern: PatternScannerView.ConfluencePattern
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -346,14 +400,14 @@ struct ConfluencePatternCard: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(8)
         .shadow(radius: 1)
     }
 }
 
 struct TimeframePatternsSection: View {
-    let patterns: [PatternRecognitionEngine.PatternResult]
+    let patterns: [TechnicalAnalysisEngine.PatternResult]
     let timeframe: String
     
     var body: some View {
@@ -386,18 +440,18 @@ struct TimeframePatternsSection: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(UIColor.systemGray6))
         .cornerRadius(12)
     }
 }
 
 struct PatternCard: View {
-    let pattern: PatternRecognitionEngine.PatternResult
+    let pattern: TechnicalAnalysisEngine.PatternResult
     
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(pattern.patternName)
+                Text(pattern.pattern)
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
@@ -411,11 +465,9 @@ struct PatternCard: View {
                     strengthBadge
                 }
                 
-                if let successRate = pattern.historicalSuccessRate {
-                    Text("Success Rate: \(String(format: "%.1f%%", successRate * 100))")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
+                Text("Success Rate: \(String(format: "%.1f%%", pattern.successRate * 100))")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()
@@ -431,7 +483,7 @@ struct PatternCard: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(8)
         .shadow(radius: 1)
     }

@@ -360,13 +360,18 @@ struct PerformanceAnalyticsView: View {
             }
             
             ForEach(agentPerformance, id: \.agentName) { agent in
-                AgentPerformanceCard(
-                    agent: agent,
-                    onTap: {
-                        selectedAgent = agent.agentName
-                        showDetailedMetrics = true
-                    }
-                )
+                Button(action: {
+                    selectedAgent = agent.agentName
+                    showDetailedMetrics = true
+                }) {
+                    AgentPerformanceCard(
+                        agentName: agent.agentName,
+                        performance: agent.accuracy,
+                        status: agent.accuracy >= 0.7 ? .active : (agent.accuracy >= 0.5 ? .learning : .inactive),
+                        decisions: agent.totalDecisions,
+                        accuracy: agent.accuracy
+                    )
+                }
             }
         }
     }
@@ -390,25 +395,33 @@ struct PerformanceAnalyticsView: View {
                 RiskMetricCard(
                     title: "Value at Risk (1%)",
                     value: "\(String(format: "%.1f", riskMetrics.valueAtRisk))%",
-                    status: riskMetrics.valueAtRisk <= 5 ? .good : .warning
+                    subtitle: "Daily risk exposure",
+                    trend: riskMetrics.valueAtRisk <= 5 ? .down : .up,
+                    trendValue: "\(String(format: "%.1f", riskMetrics.valueAtRisk - 2))%"
                 )
                 
                 RiskMetricCard(
                     title: "Beta",
                     value: String(format: "%.2f", riskMetrics.beta),
-                    status: abs(riskMetrics.beta - 1.0) <= 0.2 ? .good : .warning
+                    subtitle: "Market correlation",
+                    trend: abs(riskMetrics.beta - 1.0) <= 0.2 ? .neutral : (riskMetrics.beta > 1.0 ? .up : .down),
+                    trendValue: String(format: "%.2f", riskMetrics.beta - 1.0)
                 )
                 
                 RiskMetricCard(
                     title: "Correlation",
                     value: String(format: "%.2f", riskMetrics.correlation),
-                    status: abs(riskMetrics.correlation) <= 0.7 ? .good : .warning
+                    subtitle: "Index correlation",
+                    trend: abs(riskMetrics.correlation) <= 0.7 ? .neutral : (riskMetrics.correlation > 0 ? .up : .down),
+                    trendValue: String(format: "%.2f", riskMetrics.correlation - 0.5)
                 )
                 
                 RiskMetricCard(
                     title: "Information Ratio",
                     value: String(format: "%.2f", riskMetrics.informationRatio),
-                    status: riskMetrics.informationRatio >= 0.5 ? .good : .warning
+                    subtitle: "Risk-adjusted returns",
+                    trend: riskMetrics.informationRatio >= 0.5 ? .up : .down,
+                    trendValue: String(format: "%.2f", riskMetrics.informationRatio - 0.3)
                 )
             }
             
@@ -656,107 +669,8 @@ struct PatternPerformanceCard: View {
     }
 }
 
-struct AgentPerformanceCard: View {
-    let agent: AgentPerformanceMetric
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 12) {
-                HStack {
-                    Text(agent.agentName)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    Spacer()
-                    
-                    Text("\(String(format: "%.1f", agent.accuracy))%")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(agent.accuracy >= 80 ? .green : .orange)
-                }
-                
-                HStack(spacing: 15) {
-                    VStack(alignment: .leading) {
-                        Text("Decisions")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("\(agent.totalDecisions)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Confidence")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(String(format: "%.0f%%", agent.averageConfidence * 100))
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Improvement")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("+\(String(format: "%.1f", agent.improvementRate))%")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.green)
-                    }
-                    
-                    Spacer()
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(15)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct RiskMetricCard: View {
-    let title: String
-    let value: String
-    let status: RiskStatus
-    
-    enum RiskStatus {
-        case good, warning, danger
-        
-        var color: Color {
-            switch self {
-            case .good: return .green
-            case .warning: return .orange
-            case .danger: return .red
-            }
-        }
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Circle()
-                    .fill(status.color)
-                    .frame(width: 8, height: 8)
-            }
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(status.color)
-        }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
-    }
-}
+// RiskMetricCard is defined in RiskManagementDashboard.swift
+// AgentPerformanceCard is defined in AIControlCenterView.swift
 
 struct LearningMetricCard: View {
     let metric: LearningMetric
@@ -902,6 +816,12 @@ struct PatternPerformanceMetric {
     let averageHoldingPeriod: Double
 }
 
+enum MetricStatus {
+    case good
+    case warning
+    case poor
+}
+
 struct AgentPerformanceMetric {
     let agentName: String
     let accuracy: Double
@@ -985,7 +905,6 @@ func generateDailyReturnsFromTrades(trades: [Trade]) -> [DailyReturn] {
     
     var returns: [DailyReturn] = []
     var cumulativeReturn: Double = 0
-    let calendar = Calendar.current
     
     // Group trades by date
     let dateFormatter = DateFormatter()
@@ -1000,7 +919,7 @@ func generateDailyReturnsFromTrades(trades: [Trade]) -> [DailyReturn] {
         
         let dailyPnL = dayTrades.reduce(0.0) { sum, trade in
             // Calculate P&L for each trade (simplified)
-            return sum + (trade.quantity * trade.price * 0.001) // Simplified calculation
+            return sum + (Double(trade.quantity) * trade.price * 0.001) // Simplified calculation
         }
         
         let dailyReturn = dailyPnL / 100000.0 * 100 // Convert to percentage

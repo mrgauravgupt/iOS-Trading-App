@@ -39,4 +39,22 @@ class AdvancedRiskManager: ObservableObject {
         }
         return stressedValue
     }
+    
+    func validateOrder(_ order: OptionsOrder) -> Bool {
+        // Basic order validation logic
+        guard order.quantity > 0 else { return false }
+        guard order.price > 0 else { return false }
+        
+        // Check if order size is within risk limits
+        let maxOrderValue = 50000.0 // Max order value in INR
+        let orderValue = Double(order.quantity) * order.price
+        guard orderValue <= maxOrderValue else { return false }
+        
+        // Additional risk checks can be added here
+        // - Portfolio concentration limits
+        // - Maximum position size
+        // - Daily loss limits
+        
+        return true
+    }
 }

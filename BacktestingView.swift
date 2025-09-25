@@ -707,10 +707,10 @@ struct OverviewResultsView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                MetricCard(title: "Total Return", value: "\(String(format: "%.1f%%", results.totalReturn * 100))", color: results.totalReturn > 0 ? .green : .red)
-                MetricCard(title: "Win Rate", value: "\(String(format: "%.1f%%", results.winRate * 100))", color: .blue)
-                MetricCard(title: "Sharpe Ratio", value: String(format: "%.2f", results.sharpeRatio), color: .purple)
-                MetricCard(title: "Max Drawdown", value: "\(String(format: "%.1f%%", results.maxDrawdown * 100))", color: .orange)
+                MetricCard(title: "Total Return", value: "\(String(format: "%.1f%%", results.totalReturn * 100))", change: "", color: results.totalReturn > 0 ? .green : .red)
+                MetricCard(title: "Win Rate", value: "\(String(format: "%.1f%%", results.winRate * 100))", change: "", color: .blue)
+                MetricCard(title: "Sharpe Ratio", value: String(format: "%.2f", results.sharpeRatio), change: "", color: .purple)
+                MetricCard(title: "Max Drawdown", value: "\(String(format: "%.1f%%", results.maxDrawdown * 100))", change: "", color: .orange)
             }
             
             Text("Best Pattern: \(results.bestPerformingPattern)")
@@ -764,12 +764,12 @@ struct MetricsResultsView: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ], spacing: 12) {
-            MetricCard(title: "Sortino Ratio", value: String(format: "%.2f", results.sortinoRatio), color: .green)
-            MetricCard(title: "Calmar Ratio", value: String(format: "%.2f", results.calmarRatio), color: .blue)
-            MetricCard(title: "Volatility", value: "\(String(format: "%.1f%%", results.volatility * 100))", color: .orange)
-            MetricCard(title: "Beta", value: String(format: "%.2f", results.beta), color: .purple)
-            MetricCard(title: "Alpha", value: "\(String(format: "%.1f%%", results.alpha * 100))", color: .green)
-            MetricCard(title: "Profit Factor", value: String(format: "%.2f", results.profitFactor), color: .blue)
+            MetricCard(title: "Sortino Ratio", value: String(format: "%.2f", results.sortinoRatio), change: "", color: .green)
+            MetricCard(title: "Calmar Ratio", value: String(format: "%.2f", results.calmarRatio), change: "", color: .blue)
+            MetricCard(title: "Volatility", value: "\(String(format: "%.1f%%", results.volatility * 100))", change: "", color: .orange)
+            MetricCard(title: "Beta", value: String(format: "%.2f", results.beta), change: "", color: .purple)
+            MetricCard(title: "Alpha", value: "\(String(format: "%.1f%%", results.alpha * 100))", change: "", color: .green)
+            MetricCard(title: "Profit Factor", value: String(format: "%.2f", results.profitFactor), change: "", color: .blue)
         }
     }
 }
@@ -787,10 +787,10 @@ struct MonteCarloResultsView: View {
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    MetricCard(title: "Mean Return", value: "\(String(format: "%.1f%%", mcResults.meanReturn * 100))", color: .blue)
-                    MetricCard(title: "VaR 95%", value: "\(String(format: "%.1f%%", mcResults.valueAtRisk95 * 100))", color: .red)
-                    MetricCard(title: "Prob. of Loss", value: "\(String(format: "%.1f%%", mcResults.probabilityOfLoss * 100))", color: .orange)
-                    MetricCard(title: "Worst Case", value: "\(String(format: "%.1f%%", mcResults.worstCaseScenario * 100))", color: .red)
+                    MetricCard(title: "Mean Return", value: "\(String(format: "%.1f%%", mcResults.meanReturn * 100))", change: "", color: .blue)
+                    MetricCard(title: "VaR 95%", value: "\(String(format: "%.1f%%", mcResults.valueAtRisk95 * 100))", change: "", color: .red)
+                    MetricCard(title: "Prob. of Loss", value: "\(String(format: "%.1f%%", mcResults.probabilityOfLoss * 100))", change: "", color: .orange)
+                    MetricCard(title: "Worst Case", value: "\(String(format: "%.1f%%", mcResults.worstCaseScenario * 100))", change: "", color: .red)
                 }
             }
         } else {
@@ -831,29 +831,7 @@ struct MLInsightsView: View {
     }
 }
 
-struct MetricCard: View {
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-    }
-}
+// MetricCard is defined in PerformanceAnalyticsView.swift
 
 struct DetailedBacktestResultsView: View {
     let results: AdvancedBacktestResult

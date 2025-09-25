@@ -1,35 +1,6 @@
 import Foundation
 import SwiftUI
 
-// Model for trade suggestions
-struct TradeSuggestion: Identifiable, Codable {
-    let id: UUID
-    let symbol: String
-    let action: TradeAction
-    let price: Double
-    let quantity: Int
-    let confidence: Double // 0.0 to 1.0
-    let rationale: String
-    let timestamp: Date
-    var isExecuted: Bool = false
-    
-    init(symbol: String, action: TradeAction, price: Double, quantity: Int, confidence: Double, rationale: String, timestamp: Date, isExecuted: Bool = false) {
-        self.id = UUID()
-        self.symbol = symbol
-        self.action = action
-        self.price = price
-        self.quantity = quantity
-        self.confidence = confidence
-        self.rationale = rationale
-        self.timestamp = timestamp
-        self.isExecuted = isExecuted
-    }
-    
-    enum TradeAction: String, Codable {
-        case buy, sell
-    }
-}
-
 // Manager class for handling trade suggestions
 class TradeSuggestionManager: ObservableObject {
     static let shared = TradeSuggestionManager()
@@ -44,20 +15,6 @@ class TradeSuggestionManager: ObservableObject {
     private let orderExecutor = OrderExecutor()
     private let zerodhaClient = ZerodhaAPIClient()
     private var timer: Timer?
-    
-    enum AITradingMode: String, CaseIterable {
-        case alertOnly = "Alert Only"
-        case autoTrade = "Auto Trade"
-        
-        var description: String {
-            switch self {
-            case .alertOnly:
-                return "Show alerts for trade suggestions"
-            case .autoTrade:
-                return "Automatically execute suggested trades"
-            }
-        }
-    }
     
     private init() {
         // Start the suggestion generation process
@@ -80,7 +37,7 @@ class TradeSuggestionManager: ObservableObject {
     private func generateSuggestion() {
         // Generate suggestion with real market data
         let symbols = ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS", "INFY"]
-        let actions: [TradeSuggestion.TradeAction] = [.buy, .sell]
+        let actions: [TradeAction] = [.buy, .sell]
         
         guard let randomSymbol = symbols.randomElement(),
               let randomAction = actions.randomElement() else { return }

@@ -361,7 +361,7 @@ struct PaperTradingView: View {
                     .padding()
             } else {
                 ForEach(Array(patternAlerts.prefix(3)), id: \.timestamp) { alert in
-                    PatternAlertCard(alert: alert)
+                    PaperTradingPatternAlertCard(alert: alert)
                 }
             }
         }
@@ -1054,7 +1054,8 @@ struct AIDecisionCard: View {
     }
 }
 
-struct PatternAlertCard: View {
+// Custom PatternAlertCard for PaperTradingView
+struct PaperTradingPatternAlertCard: View {
     let alert: PatternRecognitionEngine.PatternAlert
     
     var body: some View {
@@ -1063,43 +1064,63 @@ struct PatternAlertCard: View {
                 HStack {
                     Text(alert.pattern.pattern)
                         .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .fontWeight(.medium)
                     
-                    Circle()
-                        .fill(urgencyColor(alert.urgency))
-                        .frame(width: 8, height: 8)
+                    Spacer()
+                    
+                    urgencyBadge
                 }
                 
-                Text(alert.alertMessage)
+                Text("Confidence: \(String(format: "%.1f%%", alert.pattern.confidence * 100))")
                     .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("Signal: \(alert.pattern.signal.rawValue)")
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }
             
             Spacer()
             
-            VStack(alignment: .trailing) {
-                Text("\(Int(alert.pattern.confidence * 100))%")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.green)
-                
-                Text(alert.timeframe)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+            VStack {
+                Image(systemName: urgencyIcon)
+                    .foregroundColor(urgencyColor)
+                    .font(.title2)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(8)
+        .shadow(radius: 1)
     }
     
-    private func urgencyColor(_ urgency: PatternRecognitionEngine.AlertUrgency) -> Color {
-        switch urgency {
+    private var urgencyBadge: some View {
+        Text(alert.urgency.rawValue.uppercased())
+            .font(.caption2)
+            .fontWeight(.bold)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(urgencyColor.opacity(0.2))
+            .foregroundColor(urgencyColor)
+            .cornerRadius(4)
+    }
+    
+    private var urgencyColor: Color {
+        switch alert.urgency {
         case .critical: return .red
         case .high: return .orange
         case .medium: return .yellow
-        case .low: return .green
+        case .low: return .blue
+        }
+    }
+    
+    private var urgencyIcon: String {
+        switch alert.urgency {
+        case .critical: return "exclamationmark.triangle.fill"
+        case .high: return "exclamationmark.circle.fill"
+        case .medium: return "info.circle.fill"
+        case .low: return "checkmark.circle.fill"
         }
     }
 }
@@ -1275,21 +1296,7 @@ struct AITradingDecision {
     let agent: String
 }
 
-struct RiskAlert {
-    let id: UUID
-    let type: RiskType
-    let severity: Severity
-    let message: String
-    let timestamp: Date
-    
-    enum RiskType {
-        case portfolioExposure, correlationRisk, volatilitySpike, drawdown
-    }
-    
-    enum Severity {
-        case low, medium, high, critical
-    }
-}
+// RiskAlert is defined in RiskManagementDashboard.swift
 
 // MARK: - AI Trading Engine
 
