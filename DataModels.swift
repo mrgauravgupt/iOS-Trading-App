@@ -1,20 +1,28 @@
 import Foundation
 
 struct MarketData: Codable, Identifiable, Hashable {
-    let id = UUID()
+    var id = UUID()
     let symbol: String
     let price: Double
     let volume: Int
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, price, volume, timestamp
+    }
 }
 
 struct TradeData: Codable, Identifiable {
-    let id = UUID()
+    var id = UUID()
     let symbol: String
     let quantity: Int
     let price: Double
     let type: TradeType
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, quantity, price, type, timestamp
+    }
 }
 
 enum TradeType: String, Codable {
@@ -27,8 +35,12 @@ struct Portfolio: Codable {
 }
 
 struct Holding: Codable, Identifiable {
-    let id = UUID()
+    var id = UUID()
     let symbol: String
     let quantity: Int
     let averagePrice: Double
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, quantity, averagePrice
+    }
 }

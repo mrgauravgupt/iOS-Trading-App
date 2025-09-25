@@ -934,40 +934,17 @@ struct PaperTradingView: View {
     
     /// Get current market price for selected symbol
     private func getCurrentMarketPrice() -> Double? {
-        // For paper trading, we can use a mock price or fetch from API
-        // Using a simple mock for now - in production this would call zerodhaClient.fetchLTP
-        switch selectedSymbol {
-        case "NIFTY":
-            return 19500.0 + Double.random(in: -100...100) // Mock NIFTY price with some variation
-        case "BANKNIFTY":
-            return 45000.0 + Double.random(in: -200...200)
-        default:
-            return 1000.0 + Double.random(in: -50...50)
-        }
+        // Fetch real price from Zerodha API
+        // Note: This is synchronous for simplicity, but in production use async fetch
+        // For now, return nil to indicate need for real data
+        return nil
     }
     
     /// Get current market prices for all symbols
     private func getCurrentMarketPrices() -> [String: Double] {
-        var prices: [String: Double] = [:]
-        
-        // Add prices for all held symbols
-        for symbol in holdings.keys {
-            switch symbol {
-            case "NIFTY":
-                prices[symbol] = 19500.0 + Double.random(in: -100...100)
-            case "BANKNIFTY":
-                prices[symbol] = 45000.0 + Double.random(in: -200...200)
-            default:
-                prices[symbol] = 1000.0 + Double.random(in: -50...50)
-            }
-        }
-        
-        // Also add current selected symbol
-        if let currentPrice = getCurrentMarketPrice() {
-            prices[selectedSymbol] = currentPrice
-        }
-        
-        return prices
+        // Return empty dictionary to indicate no mock data available
+        // In production, this should fetch real prices from Zerodha API
+        return [:]
     }
     
     /// Show alert with title and message

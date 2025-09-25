@@ -138,19 +138,13 @@ class ZerodhaAPIClient {
     // MARK: - Trading Methods (Stub implementations for development)
     
     func placeOrder(_ orderRequest: [String: Any]) async throws -> [String: Any] {
-        // Stub implementation - returns mock order ID
-        return [
-            "order_id": "mock_order_\(UUID().uuidString.prefix(8))",
-            "status": "COMPLETE"
-        ]
+        // Real implementation not available - throw error
+        throw NSError(domain: "TradingAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Real trading not implemented. Use paper trading mode."])
     }
     
     func cancelOrder(orderId: String) async throws -> [String: Any] {
-        // Stub implementation
-        return [
-            "order_id": orderId,
-            "status": "CANCELLED"
-        ]
+        // Real implementation not available - throw error
+        throw NSError(domain: "TradingAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Real order cancellation not implemented. Use paper trading mode."])
     }
     
     func getPositions() async throws -> [[String: Any]] {
@@ -158,13 +152,13 @@ class ZerodhaAPIClient {
         return []
     }
     
-    func getQuote(symbol: String) -> MarketData {
-        // Stub implementation - returns mock data
-        return MarketData(symbol: symbol, price: 100.0, volume: 1000, timestamp: Date())
+    func getQuote(symbol: String) -> MarketData? {
+        // Real implementation not available - return nil
+        return nil
     }
     
     func getAvailableFunds() async throws -> Double {
-        // Stub implementation - returns mock available funds
-        return 100000.0 // ₹1,00,000
+        // Real implementation not available - throw error
+        throw NSError(domain: "TradingAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Real funds data not available. Use paper trading mode."])
     }
 }

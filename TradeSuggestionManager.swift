@@ -248,7 +248,7 @@ class TradeSuggestionManager: ObservableObject {
         return currentSuggestions.filter { !$0.isExecuted }
     }
     
-    // For testing purposes
+    // Generate a suggestion based on real market data
     func generateTestSuggestion() {
         generateSuggestion()
     }

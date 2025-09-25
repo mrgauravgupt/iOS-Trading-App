@@ -238,14 +238,15 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         do {
             let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
             guard let type = json?["type"] as? String else { return nil }
-            
+
             if type == "tick" {
                 guard let data = json?["data"] as? [String: Any],
                       let instrumentToken = data["instrument_token"] as? Int,
                       let lastPrice = data["last_price"] as? Double,
                       let volume = data["volume_traded"] as? Int else { return nil }
 
-                let marketData = MarketData(symbol: "NIFTY", price: lastPrice, volume: volume, timestamp: Date())
+                let symbol = tokenToSymbol[UInt32(instrumentToken)] ?? "UNKNOWN"
+                let marketData = MarketData(symbol: symbol, price: lastPrice, volume: volume, timestamp: Date())
                 checkPriceAlerts(for: marketData)
                 return marketData
             }
