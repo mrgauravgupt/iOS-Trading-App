@@ -20,6 +20,7 @@ targets:
       - path: DataModels.swift
       - path: DataSyncManager.swift
       - path: DataValidator.swift
+      - path: DataConnectionManager.swift
       - path: HistoricalDataEngine.swift
       - path: TechnicalAnalysisEngine.swift
       - path: RiskManagementAgent.swift
@@ -52,6 +53,10 @@ targets:
       - path: TradingData+CoreDataProperties.swift
       - path: TradingData.swift
       - path: PatternRecognitionEngine.swift
+      - path: TradeSuggestionManager.swift
+      - path: TradeSuggestionView.swift
+      - path: TradeSuggestionAlert.swift
+      - path: TradeSuggestionExtensions.swift
     settings:
       base:
         INFOPLIST_FILE: Info.plist

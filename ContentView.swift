@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import Combine
 
 struct ContentView: View {
     @State private var selectedTab: Int = 0
@@ -13,9 +14,15 @@ struct ContentView: View {
     @State private var marketQuotes: [String: MarketData] = [:]
     @State private var isLoadingData = true
     @State private var dataError: String?
+    @State private var showTradeSuggestions = false
+    @State private var previousPrice: Double = 0.0
     
     @StateObject private var dataManager = DataConnectionManager()
+    @StateObject private var suggestionManager = TradeSuggestionManager.shared
     private let newsClient = NewsAPIClient()
+    
+    // Timer for auto-refresh
+    @State private var refreshTimer: Timer?
     
     var body: some View {
         GeometryReader { geometry in
@@ -69,9 +76,32 @@ struct ContentView: View {
         }
         .onAppear {
             loadInitialData()
+            startAutoRefresh()
+            
+            // Register for notification to show trade suggestions
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowTradeSuggestions"), object: nil, queue: .main) { _ in
+                showTradeSuggestions = true
+            }
+        }
+        .onDisappear {
+            stopAutoRefresh()
+            NotificationCenter.default.removeObserver(self)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showTradeSuggestions) {
+            TradeSuggestionView()
+        }
+        .alert("New Trade Suggestion", isPresented: $suggestionManager.showSuggestionAlert) {
+            Button("View Details") {
+                showTradeSuggestions = true
+            }
+            Button("Dismiss", role: .cancel) { }
+        } message: {
+            if let suggestion = suggestionManager.latestSuggestion {
+                Text("\(suggestion.action.rawValue.capitalized) \(suggestion.quantity) shares of \(suggestion.symbol) at ₹\(suggestion.price, specifier: "%.2f")")
+            }
         }
     }
     
@@ -247,8 +277,8 @@ struct ContentView: View {
                     selectedTab = 2
                 }
                 
-                QuickActionButton(title: "Analytics", icon: "chart.bar.xaxis", color: .purple) {
-                    selectedTab = 3
+                QuickActionButton(title: "Suggestions", icon: "lightbulb.fill", color: .orange) {
+                    // showTradeSuggestions = true
                 }
             }
         }
@@ -516,6 +546,11 @@ struct ContentView: View {
         Task {
             await loadRealTimeData()
             await loadRealNews()
+            
+            // Generate an initial trade suggestion for demonstration
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                suggestionManager.generateTestSuggestion()
+            }
         }
     }
     
@@ -533,25 +568,64 @@ struct ContentView: View {
                 
                 await MainActor.run {
                     marketQuotes["NIFTY"] = niftyData
+                    
+                    // Calculate price change if we have a previous price
+                    if previousPrice > 0 {
+                        priceChange = niftyData.price - previousPrice
+                        percentChange = (priceChange / previousPrice) * 100
+                    } else {
+                        // For first load, set default values
+                        priceChange = 0.0
+                        percentChange = 0.0
+                    }
+                    
+                    previousPrice = currentPrice
                     currentPrice = niftyData.price
-                    
-                    // Calculate price change - requires historical data for accurate calculation
-                    // Without historical data, we cannot determine price change
-                    priceChange = 0.0 // Will be updated when historical data is available
-                    percentChange = 0.0
-                    
                     isLoadingData = false
+                    
+                    print("NIFTY data updated: Price = \(currentPrice), Change = \(priceChange)")
                 }
             } else {
+                // Fallback to mock data when API is not available
                 await MainActor.run {
-                    dataError = dataManager.errorMessage
+                    // Generate mock NIFTY data for demonstration
+                    let mockPrice = 24500.0 + Double.random(in: -200...200)
+                    let mockChange = Double.random(in: -100...100)
+                    let mockPercentChange = (mockChange / mockPrice) * 100
+                    
+                    if previousPrice == 0 {
+                        previousPrice = mockPrice - mockChange
+                    }
+                    
+                    currentPrice = mockPrice
+                    priceChange = mockChange
+                    percentChange = mockPercentChange
+                    
+                    dataError = "Using demo data - " + dataManager.errorMessage
                     isLoadingData = false
+                    
+                    print("Using mock NIFTY data: Price = \(currentPrice), Change = \(priceChange)")
                 }
             }
         } catch {
             await MainActor.run {
-                dataError = error.localizedDescription
+                // Fallback to mock data when there's an error
+                let mockPrice = 24500.0 + Double.random(in: -200...200)
+                let mockChange = Double.random(in: -100...100)
+                let mockPercentChange = (mockChange / mockPrice) * 100
+                
+                if previousPrice == 0 {
+                    previousPrice = mockPrice - mockChange
+                }
+                
+                currentPrice = mockPrice
+                priceChange = mockChange
+                percentChange = mockPercentChange
+                
+                dataError = "Using demo data - " + error.localizedDescription
                 isLoadingData = false
+                
+                print("Error occurred, using mock NIFTY data: Price = \(currentPrice), Change = \(priceChange)")
             }
         }
     }
@@ -574,6 +648,23 @@ struct ContentView: View {
                 continuation.resume()
             }
         }
+    }
+    
+    // MARK: - Auto Refresh Functions
+    private func startAutoRefresh() {
+        // Refresh data every 30 seconds during market hours
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
+            print("Auto-refresh timer fired - loading real-time data")
+            Task {
+                await loadRealTimeData()
+            }
+        }
+        print("Auto-refresh timer started")
+    }
+    
+    private func stopAutoRefresh() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
     }
 }
 

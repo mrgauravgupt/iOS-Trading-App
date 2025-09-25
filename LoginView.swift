@@ -40,7 +40,9 @@ struct LoginView: View {
         // Present WKWebView-based login; after redirect, auto-exchange request_token -> access_token.
         authManager.startLoginInWebView(present: { webView in
             // Show SwiftUI sheet with the provided webview
-            TemporaryWebLogin.shared.present(webView: webView)
+            DispatchQueue.main.async {
+                TemporaryWebLogin.shared.present(webView: webView)
+            }
         }, completion: { result in
             DispatchQueue.main.async {
                 isLoggingIn = false
