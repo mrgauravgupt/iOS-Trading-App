@@ -34,60 +34,56 @@ struct ContentView: View {
     @State private var refreshTimer: Timer?
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background gradient
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.black,
-                        Color(red: 0.05, green: 0.05, blue: 0.15),
-                        Color.black
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all)
+        ZStack {
+            // Background gradient - Full screen
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.black,
+                    Color(red: 0.05, green: 0.05, blue: 0.15),
+                    Color.black
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // Custom Header - Compact and extends to top
+                headerView
+                    .frame(height: 60) // Further reduced from 70 to 60
+                    .padding(.top, 10) // Add top padding for status bar
                 
-                VStack(spacing: 0) {
-                    // Custom Header
-                    headerView
-                        .frame(height: 100)
+                // Main Content - Expand to fill available space
+                TabView(selection: $selectedTab) {
+                    // Dashboard Tab
+                    dashboardView
+                        .tag(0)
                     
-                    // Main Content - Use available space efficiently
-                    TabView(selection: $selectedTab) {
-                        // Dashboard Tab
-                        dashboardView
-                            .frame(maxHeight: geometry.size.height - 180) // Account for header and tab bar
-                            .tag(0)
-                        
-                        // Trading Tab
-                        tradingView
-                            .frame(maxHeight: geometry.size.height - 180)
-                            .tag(1)
-                        
-                        // AI Control Tab
-                        aiControlView
-                            .frame(maxHeight: geometry.size.height - 180)
-                            .tag(2)
-                        
-                        // Analytics Tab
-                        analyticsView
-                            .frame(maxHeight: geometry.size.height - 180)
-                            .tag(3)
-                        
-                        // Portfolio Tab
-                        portfolioView
-                            .frame(maxHeight: geometry.size.height - 180)
-                            .tag(4)
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    // Trading Tab
+                    tradingView
+                        .tag(1)
                     
-                    // Custom Tab Bar
-                    customTabBar
-                        .frame(height: 80)
+                    // AI Control Tab
+                    aiControlView
+                        .tag(2)
+                    
+                    // Analytics Tab
+                    analyticsView
+                        .tag(3)
+                    
+                    // Portfolio Tab
+                    portfolioView
+                        .tag(4)
                 }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                
+                // Custom Tab Bar - Ultra Compact
+                customTabBar
+                    .frame(height: 50) // Further reduced from 60 to 50
             }
         }
+        .ignoresSafeArea(.all, edges: .bottom) // Allow content to extend to bottom edge
+        .ignoresSafeArea(.container, edges: .top) // Allow content to extend to top edge
         .onAppear {
             loadInitialData()
             setupRealTimeDataStream()
@@ -123,75 +119,68 @@ struct ContentView: View {
     // MARK: - Header View
     private var headerView: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) { // Further reduced spacing from 2 to 1
+                HStack(spacing: 4) { // Further reduced spacing from 6 to 4
                     Text("NIFTY 50")
-                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                        .font(.system(size: 12, weight: .medium, design: .monospaced)) // Further reduced from 14 to 12
                         .foregroundColor(.white.opacity(0.8))
                     
                     // Real-time connection status indicator
-                    HStack(spacing: 4) {
+                    HStack(spacing: 2) { // Further reduced spacing from 3 to 2
                         Circle()
                             .fill(webSocketManager.isConnected ? .green : .orange)
-                            .frame(width: 8, height: 8)
+                            .frame(width: 5, height: 5) // Further reduced from 6x6 to 5x5
                         
                         if webSocketManager.isConnected {
                             Text("LIVE")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.system(size: 7, weight: .bold)) // Further reduced from 8 to 7
                                 .foregroundColor(.green)
                         } else {
                             Text("FALLBACK")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.system(size: 7, weight: .bold)) // Further reduced from 8 to 7
                                 .foregroundColor(.orange)
                         }
                     }
                 }
                 
                 if dataManager.isDataAvailable && currentPrice > 0 {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 4) { // Further reduced spacing from 6 to 4
                         Text("₹\(String(format: "%.2f", currentPrice))")
-                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            .font(.system(size: 18, weight: .bold, design: .monospaced)) // Further reduced from 20 to 18
                             .foregroundColor(.white)
                         
-                        HStack(spacing: 4) {
+                        HStack(spacing: 2) { // Further reduced spacing from 3 to 2
                             Image(systemName: priceChange >= 0 ? "arrow.up.right" : "arrow.down.right")
-                                .font(.system(size: 12, weight: .bold))
+                                .font(.system(size: 9, weight: .bold)) // Further reduced from 10 to 9
                             Text("\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))")
-                                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                                .font(.system(size: 11, weight: .semibold, design: .monospaced)) // Further reduced from 12 to 11
                             Text("(\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", percentChange))%)")
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .font(.system(size: 9, weight: .medium, design: .monospaced)) // Further reduced from 10 to 9
                         }
                         .foregroundColor(priceChange >= 0 ? .green : .red)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 4) // Further reduced from 6 to 4
+                        .padding(.vertical, 1) // Further reduced from 2 to 1
                         .background(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: 3) // Further reduced from 4 to 3
                                 .fill((priceChange >= 0 ? Color.green : Color.red).opacity(0.2))
                         )
                     }
-                    
-                    // Last update time for real-time data
-                    if let lastUpdate = webSocketManager.lastUpdateTime {
-                        Text("Updated \(timeAgoString(from: lastUpdate))")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
                 } else if isLoadingData {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) { // Reduced spacing from 8 to 6
                         ProgressView()
-                            .scaleEffect(0.8)
+                            .scaleEffect(0.7) // Reduced from 0.8 to 0.7
                             .tint(.white)
                         Text("Loading...")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium)) // Reduced from 16 to 14
                             .foregroundColor(.white.opacity(0.6))
                     }
                 } else {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) { // Reduced spacing from 2 to 1
                         Text("Data Unavailable")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold)) // Reduced from 18 to 16
                             .foregroundColor(.red)
                         Text(dataManager.errorMessage)
-                            .font(.system(size: 12))
+                            .font(.system(size: 10)) // Reduced from 12 to 10
                             .foregroundColor(.white.opacity(0.6))
                             .lineLimit(2)
                     }
@@ -202,58 +191,58 @@ struct ContentView: View {
             
             Button(action: { showingSettings = true }) {
                 Image(systemName: "gearshape.fill")
-                    .font(.system(size: 20))
+                    .font(.system(size: 16)) // Reduced from 20 to 16
                     .foregroundColor(.white.opacity(0.8))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 32, height: 32) // Reduced from 40x40 to 32x32
                     .background(
                         Circle()
                             .fill(Color.white.opacity(0.1))
                     )
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
+        .padding(.horizontal, 12) // Further reduced from 16 to 12
+        .padding(.top, 2) // Further reduced from 5 to 2
+        .padding(.bottom, 2) // Further reduced from 5 to 2
     }
     
     // MARK: - Dashboard View
     private var dashboardView: some View {
-        GeometryReader { geometry in
-            ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 12) {
-                    // Market Overview Cards - Compact
-                    marketOverviewSection
-                    
-                    // Quick Actions - Compact
-                    quickActionsSection
-                    
-                    // Live Chart - Reduced height
-                    liveChartSection
-                    
-                    // Recent News - Compact
-                    newsSection
-                    
-                    // Performance Metrics - Compact
-                    performanceSection
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20) // Reduced bottom padding
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 6) { // Further reduced spacing from 8 to 6
+                // Market Overview Cards - Compact
+                marketOverviewSection
+                
+                // Quick Actions - Compact
+                quickActionsSection
+                
+                // Live Chart - Reduced height
+                liveChartSection
+                
+                // Recent News - Compact
+                newsSection
+                
+                // Performance Metrics - Compact
+                performanceSection
             }
+            .padding(.horizontal, 10) // Further reduced from 12 to 10
+            .padding(.top, 4) // Further reduced from 8 to 4
+            .padding(.bottom, 6) // Further reduced from 10 to 6
         }
     }
     
     // MARK: - Market Overview Section
     private var marketOverviewSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) { // Reduced spacing from 12 to 8
             HStack {
                 Text("Market Overview")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold)) // Reduced from 18 to 16
                     .foregroundColor(.white)
                 Spacer()
                 Text("Live")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 10, weight: .medium)) // Reduced from 12 to 10
                     .foregroundColor(.green)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 6) // Reduced from 8 to 6
+                    .padding(.vertical, 2) // Reduced from 4 to 2
                     .background(
                         Capsule()
                             .fill(Color.green.opacity(0.2))
@@ -261,7 +250,7 @@ struct ContentView: View {
             }
             
             if dataManager.isDataAvailable {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) { // Reduced spacing from 12 to 8
                     // NIFTY 50 with real/mock data
                     MarketCard(
                         title: "NIFTY 50", 
@@ -592,12 +581,13 @@ struct ContentView: View {
                 selectedTab = 4
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, 8) // Further reduced from 12 to 8
+        .padding(.top, 2) // Further reduced from 4 to 2
+        .padding(.bottom, 2) // Further reduced from 4 to 2
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 12) // Further reduced from 16 to 12
                 .fill(Color.black.opacity(0.8))
-                .blur(radius: 10)
+                .blur(radius: 6) // Further reduced from 8 to 6
         )
     }
     
@@ -974,17 +964,17 @@ struct TabBarButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 1) { // Further reduced spacing from 2 to 1
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold)) // Further reduced from 14 to 12
                     .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
                 
                 Text(title)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 8, weight: .medium)) // Further reduced from 9 to 8
                     .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
+            .frame(height: 35) // Further reduced from 40 to 35
         }
     }
 }
