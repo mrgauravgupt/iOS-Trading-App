@@ -17,11 +17,20 @@ struct ContentView: View {
     @State private var showTradeSuggestions = false
     @State private var previousPrice: Double = 0.0
     
+    // Simulated market data for other indices
+    @State private var sensexPrice: Double = 81500.0
+    @State private var sensexChange: Double = 0.0
+    @State private var bankNiftyPrice: Double = 52000.0
+    @State private var bankNiftyChange: Double = 0.0
+    @State private var niftyITPrice: Double = 42000.0
+    @State private var niftyITChange: Double = 0.0
+    
     @StateObject private var dataManager = DataConnectionManager()
     @StateObject private var suggestionManager = TradeSuggestionManager.shared
+    @StateObject private var webSocketManager = WebSocketManager()
     private let newsClient = NewsAPIClient()
     
-    // Timer for auto-refresh
+    // Timer for auto-refresh (fallback only)
     @State private var refreshTimer: Timer?
     
     var body: some View {
@@ -44,26 +53,31 @@ struct ContentView: View {
                     headerView
                         .frame(height: 100)
                     
-                    // Main Content
+                    // Main Content - Use available space efficiently
                     TabView(selection: $selectedTab) {
                         // Dashboard Tab
                         dashboardView
+                            .frame(maxHeight: geometry.size.height - 180) // Account for header and tab bar
                             .tag(0)
                         
                         // Trading Tab
                         tradingView
+                            .frame(maxHeight: geometry.size.height - 180)
                             .tag(1)
                         
                         // AI Control Tab
                         aiControlView
+                            .frame(maxHeight: geometry.size.height - 180)
                             .tag(2)
                         
                         // Analytics Tab
                         analyticsView
+                            .frame(maxHeight: geometry.size.height - 180)
                             .tag(3)
                         
                         // Portfolio Tab
                         portfolioView
+                            .frame(maxHeight: geometry.size.height - 180)
                             .tag(4)
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
@@ -76,7 +90,7 @@ struct ContentView: View {
         }
         .onAppear {
             loadInitialData()
-            startAutoRefresh()
+            setupRealTimeDataStream()
             
             // Register for notification to show trade suggestions
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowTradeSuggestions"), object: nil, queue: .main) { _ in
@@ -85,6 +99,7 @@ struct ContentView: View {
         }
         .onDisappear {
             stopAutoRefresh()
+            webSocketManager.disconnect()
             NotificationCenter.default.removeObserver(self)
         }
         .sheet(isPresented: $showingSettings) {
@@ -114,10 +129,22 @@ struct ContentView: View {
                         .font(.system(size: 16, weight: .medium, design: .monospaced))
                         .foregroundColor(.white.opacity(0.8))
                     
-                    // Connection status indicator
-                    Circle()
-                        .fill(dataManager.connectionStatus.color)
-                        .frame(width: 8, height: 8)
+                    // Real-time connection status indicator
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(webSocketManager.isConnected ? .green : .orange)
+                            .frame(width: 8, height: 8)
+                        
+                        if webSocketManager.isConnected {
+                            Text("LIVE")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.green)
+                        } else {
+                            Text("FALLBACK")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.orange)
+                        }
+                    }
                 }
                 
                 if dataManager.isDataAvailable && currentPrice > 0 {
@@ -141,6 +168,13 @@ struct ContentView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill((priceChange >= 0 ? Color.green : Color.red).opacity(0.2))
                         )
+                    }
+                    
+                    // Last update time for real-time data
+                    if let lastUpdate = webSocketManager.lastUpdateTime {
+                        Text("Updated \(timeAgoString(from: lastUpdate))")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
                     }
                 } else if isLoadingData {
                     HStack(spacing: 8) {
@@ -183,25 +217,27 @@ struct ContentView: View {
     
     // MARK: - Dashboard View
     private var dashboardView: some View {
-        ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 16) {
-                // Market Overview Cards
-                marketOverviewSection
-                
-                // Quick Actions
-                quickActionsSection
-                
-                // Live Chart
-                liveChartSection
-                
-                // Recent News
-                newsSection
-                
-                // Performance Metrics
-                performanceSection
+        GeometryReader { geometry in
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 12) {
+                    // Market Overview Cards - Compact
+                    marketOverviewSection
+                    
+                    // Quick Actions - Compact
+                    quickActionsSection
+                    
+                    // Live Chart - Reduced height
+                    liveChartSection
+                    
+                    // Recent News - Compact
+                    newsSection
+                    
+                    // Performance Metrics - Compact
+                    performanceSection
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20) // Reduced bottom padding
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 100)
         }
     }
     
@@ -226,23 +262,39 @@ struct ContentView: View {
             
             if dataManager.isDataAvailable {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
-                    // Only show NIFTY 50 with real data, others show "Data Unavailable"
-                    if let niftyData = marketQuotes["NIFTY"] {
-                        MarketCard(
-                            title: "NIFTY 50", 
-                            value: String(format: "%.2f", niftyData.price),
-                            change: String(format: "%+.2f", priceChange),
-                            changePercent: String(format: "%+.2f%%", percentChange),
-                            isPositive: priceChange >= 0
-                        )
-                    } else {
-                        MarketCard(title: "NIFTY 50", value: "---", change: "---", changePercent: "---", isPositive: true)
-                    }
+                    // NIFTY 50 with real/mock data
+                    MarketCard(
+                        title: "NIFTY 50", 
+                        value: currentPrice > 0 ? String(format: "%.2f", currentPrice) : "Loading...",
+                        change: currentPrice > 0 ? String(format: "%+.2f", priceChange) : "---",
+                        changePercent: currentPrice > 0 ? String(format: "%+.2f%%", percentChange) : "---",
+                        isPositive: priceChange >= 0
+                    )
                     
-                    // Other indices - show unavailable until implemented
-                    MarketCard(title: "SENSEX", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
-                    MarketCard(title: "BANK NIFTY", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
-                    MarketCard(title: "NIFTY IT", value: "Not Available", change: "---", changePercent: "---", isPositive: true)
+                    // Other indices - show simulated data for demo
+                    MarketCard(
+                        title: "SENSEX", 
+                        value: String(format: "%.2f", sensexPrice),
+                        change: String(format: "%+.2f", sensexChange),
+                        changePercent: String(format: "%+.2f%%", (sensexChange / sensexPrice) * 100),
+                        isPositive: sensexChange >= 0
+                    )
+                    
+                    MarketCard(
+                        title: "BANK NIFTY", 
+                        value: String(format: "%.2f", bankNiftyPrice),
+                        change: String(format: "%+.2f", bankNiftyChange),
+                        changePercent: String(format: "%+.2f%%", (bankNiftyChange / bankNiftyPrice) * 100),
+                        isPositive: bankNiftyChange >= 0
+                    )
+                    
+                    MarketCard(
+                        title: "NIFTY IT", 
+                        value: String(format: "%.2f", niftyITPrice),
+                        change: String(format: "%+.2f", niftyITChange),
+                        changePercent: String(format: "%+.2f%%", (niftyITChange / niftyITPrice) * 100),
+                        isPositive: niftyITChange >= 0
+                    )
                 }
             } else {
                 DataErrorView(message: dataManager.errorMessage) {
@@ -300,17 +352,17 @@ struct ContentView: View {
                 }
             }
             
-            // Placeholder for chart
+            // Placeholder for chart - Reduced height
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.05))
-                .frame(height: 200)
+                .frame(height: 150) // Reduced from 200 to 150
                 .overlay(
                     VStack {
                         Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.system(size: 40))
+                            .font(.system(size: 30)) // Reduced icon size
                             .foregroundColor(.white.opacity(0.3))
                         Text("Live Chart")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium)) // Reduced font size
                             .foregroundColor(.white.opacity(0.5))
                     }
                 )
@@ -353,7 +405,7 @@ struct ContentView: View {
                         .fill(Color.white.opacity(0.05))
                 )
             } else {
-                ForEach(articles.prefix(3), id: \.id) { article in
+                ForEach(articles.prefix(2), id: \.id) { article in // Reduced from 3 to 2 articles
                     NewsCard(article: article)
                 }
             }
@@ -399,16 +451,17 @@ struct ContentView: View {
     
     // MARK: - Trading View
     private var tradingView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
                 Text("Trading Terminal")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
+                    .padding(.top, 16)
                 
-                // Trading interface placeholder
+                // Trading interface placeholder - Use available space
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                    .frame(height: 400)
+                    .frame(maxHeight: geometry.size.height - 100) // Use available height
                     .overlay(
                         VStack {
                             Image(systemName: "chart.bar.fill")
@@ -419,24 +472,26 @@ struct ContentView: View {
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     )
+                
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 100)
         }
     }
     
     // MARK: - AI Control View
     private var aiControlView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
                 Text("AI Trading Control")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
+                    .padding(.top, 16)
                 
-                // AI control interface placeholder
+                // AI control interface placeholder - Use available space
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                    .frame(height: 400)
+                    .frame(maxHeight: geometry.size.height - 100)
                     .overlay(
                         VStack {
                             Image(systemName: "brain.head.profile")
@@ -447,24 +502,26 @@ struct ContentView: View {
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     )
+                
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 100)
         }
     }
     
     // MARK: - Analytics View
     private var analyticsView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
                 Text("Analytics & Insights")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
+                    .padding(.top, 16)
                 
-                // Analytics interface placeholder
+                // Analytics interface placeholder - Use available space
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                    .frame(height: 400)
+                    .frame(maxHeight: geometry.size.height - 100)
                     .overlay(
                         VStack {
                             Image(systemName: "chart.bar.xaxis")
@@ -475,24 +532,26 @@ struct ContentView: View {
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     )
+                
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 100)
         }
     }
     
     // MARK: - Portfolio View
     private var portfolioView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
                 Text("Portfolio")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
+                    .padding(.top, 16)
                 
-                // Portfolio interface placeholder
+                // Portfolio interface placeholder - Use available space
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                    .frame(height: 400)
+                    .frame(maxHeight: geometry.size.height - 100)
                     .overlay(
                         VStack {
                             Image(systemName: "briefcase.fill")
@@ -503,9 +562,10 @@ struct ContentView: View {
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     )
+                
+                Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 100)
         }
     }
     
@@ -542,10 +602,30 @@ struct ContentView: View {
     }
     
     // MARK: - Helper Functions
+    private func updateSimulatedMarketData() {
+        // Update SENSEX
+        let sensexVariation = Double.random(in: -50...50)
+        sensexPrice = 81500 + sensexVariation
+        sensexChange = sensexVariation
+        
+        // Update BANK NIFTY
+        let bankNiftyVariation = Double.random(in: -100...100)
+        bankNiftyPrice = 52000 + bankNiftyVariation
+        bankNiftyChange = bankNiftyVariation
+        
+        // Update NIFTY IT
+        let niftyITVariation = Double.random(in: -30...30)
+        niftyITPrice = 42000 + niftyITVariation
+        niftyITChange = niftyITVariation
+    }
+    
     private func loadInitialData() {
         Task {
             await loadRealTimeData()
             await loadRealNews()
+            
+            // Initialize simulated market data
+            updateSimulatedMarketData()
             
             // Generate an initial trade suggestion for demonstration
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -650,21 +730,93 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Auto Refresh Functions
-    private func startAutoRefresh() {
-        // Refresh data every 30 seconds during market hours
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
-            print("Auto-refresh timer fired - loading real-time data")
-            Task {
-                await loadRealTimeData()
+    // MARK: - Real-time Data Stream Setup
+    private func setupRealTimeDataStream() {
+        // Set up WebSocket callbacks for real-time data
+        webSocketManager.onTick = { marketData in
+            DispatchQueue.main.async {
+                self.updateMarketData(marketData)
             }
         }
-        print("Auto-refresh timer started")
+        
+        webSocketManager.onError = { error in
+            print("WebSocket error: \(error)")
+            // Fallback to timer-based refresh if WebSocket fails
+            DispatchQueue.main.async {
+                self.startAutoRefresh(interval: 5.0) // More frequent fallback updates
+            }
+        }
+        
+        // Try to start WebSocket connection
+        webSocketManager.startDataStreaming()
+        
+        // Start fallback timer with shorter interval for better real-time feel
+        startAutoRefresh(interval: 5.0) // Reduced from 10 to 5 seconds
+        
+        print("Real-time data stream setup completed")
+    }
+    
+    private func updateMarketData(_ marketData: MarketData) {
+        // Update the current price and related data
+        previousPrice = currentPrice
+        currentPrice = marketData.price
+        
+        // Calculate price change
+        if previousPrice > 0 {
+            priceChange = currentPrice - previousPrice
+            percentChange = (priceChange / previousPrice) * 100
+        }
+        
+        // Update market quotes
+        marketQuotes[marketData.symbol] = marketData
+        
+        // Update the market data array
+        if let index = self.marketData.firstIndex(where: { $0.symbol == marketData.symbol }) {
+            self.marketData[index] = marketData
+        } else {
+            self.marketData.append(marketData)
+        }
+        
+        print("Real-time update: \(marketData.symbol) = ₹\(String(format: "%.2f", marketData.price))")
+    }
+    
+    // MARK: - Auto Refresh Functions (Fallback)
+    private func startAutoRefresh(interval: TimeInterval = 2.5) {
+        // Stop existing timer
+        stopAutoRefresh()
+        
+        // Start new timer with specified interval
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            print("Fallback timer fired - loading data (interval: \(interval)s)")
+            Task {
+                await loadRealTimeData()
+                // Also update simulated market data
+                await MainActor.run {
+                    updateSimulatedMarketData()
+                }
+            }
+        }
+        print("Fallback refresh timer started with \(interval) second intervals")
     }
     
     private func stopAutoRefresh() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+    }
+    
+    // MARK: - Helper Functions
+    private func timeAgoString(from date: Date) -> String {
+        let interval = Date().timeIntervalSince(date)
+        
+        if interval < 1 {
+            return "just now"
+        } else if interval < 60 {
+            return "\(Int(interval))s ago"
+        } else if interval < 3600 {
+            return "\(Int(interval / 60))m ago"
+        } else {
+            return "\(Int(interval / 3600))h ago"
+        }
     }
 }
 

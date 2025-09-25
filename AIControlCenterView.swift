@@ -4,6 +4,7 @@ struct AIControlCenterView: View {
     @StateObject private var aiTrader = AIAgentTrader()
     @StateObject private var marketAnalyzer = MarketAnalysisAgent()
     @StateObject private var riskManager = RiskManagementAgent()
+    @StateObject private var suggestionManager = TradeSuggestionManager.shared
     
     @State private var isAITradingEnabled = false
     @State private var selectedAgent: AgentType = .trader
@@ -38,6 +39,9 @@ struct AIControlCenterView: View {
                     
                     // Manual Override Panel
                     manualOverrideSection
+                    
+                    // Trade Suggestions Statistics
+                    tradeSuggestionsStatsSection
                     
                     // Real-time Decisions
                     realtimeDecisionsSection
@@ -124,8 +128,27 @@ struct AIControlCenterView: View {
                     
                     Spacer()
                     
-                    Toggle("", isOn: $isAITradingEnabled)
+                    Toggle("", isOn: $suggestionManager.autoTradeEnabled)
                         .scaleEffect(1.2)
+                        .onChange(of: suggestionManager.autoTradeEnabled) { _ in
+                            suggestionManager.toggleAutoTrade()
+                            isAITradingEnabled = suggestionManager.autoTradeEnabled
+                        }
+                }
+                
+                // AI Trading Mode Display
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Current Mode: \(suggestionManager.aiTradingMode.rawValue)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(suggestionManager.autoTradeEnabled ? .green : .orange)
+                        
+                        Text(suggestionManager.aiTradingMode.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
                 }
                 
                 // Risk Level Slider
@@ -310,6 +333,64 @@ struct AIControlCenterView: View {
                     improvement: "+11.7%"
                 )
             }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(15)
+    }
+    
+    // MARK: - Trade Suggestions Statistics Section
+    
+    private var tradeSuggestionsStatsSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "chart.bar.fill")
+                    .foregroundColor(.blue)
+                Text("Trade Suggestions Statistics")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+            }
+            
+            HStack(spacing: 20) {
+                VStack {
+                    Text("\(tradeSuggestionManager.suggestionHistory.count)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                    Text("Total Suggestions")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Divider()
+                
+                VStack {
+                    Text("\(tradeSuggestionManager.suggestionHistory.filter { $0.isExecuted }.count)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.green)
+                    Text("Executed")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Divider()
+                
+                VStack {
+                    let executionRate = tradeSuggestionManager.suggestionHistory.isEmpty ? 0.0 : 
+                        Double(tradeSuggestionManager.suggestionHistory.filter { $0.isExecuted }.count) / 
+                        Double(tradeSuggestionManager.suggestionHistory.count) * 100
+                    Text("\(Int(executionRate))%")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                    Text("Success Rate")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
         .padding()
         .background(Color(.systemGray6))

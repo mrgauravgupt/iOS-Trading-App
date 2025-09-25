@@ -1,7 +1,8 @@
 import Foundation
+import Combine
 
 /// Manages WebSocket connections for real-time data streaming
-class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
+class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private var webSocketTask: URLSessionWebSocketTask?
     private var session: URLSession!
     var onMessageReceived: ((String) -> Void)?
@@ -9,7 +10,10 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     var onError: ((Error) -> Void)?
     private var notificationManager = NotificationManager.shared
     private var priceAlerts: [String: Double] = [:]
-    private var isConnected = false
+    
+    @Published var isConnected = false
+    @Published var connectionStatus: String = "Disconnected"
+    @Published var lastUpdateTime: Date?
 
     override init() {
         super.init()
@@ -24,9 +28,9 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
         
+        connectionStatus = "Connecting..."
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.resume()
-        isConnected = true
         receiveMessage()
     }
 
@@ -34,6 +38,8 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     func disconnect() {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         isConnected = false
+        connectionStatus = "Disconnected"
+        lastUpdateTime = nil
     }
 
     /// Receive messages from WebSocket
@@ -53,11 +59,19 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 case .string(let text):
                     self.onMessageReceived?(text)
                     if let tick = self.parseMessage(text) {
+                        DispatchQueue.main.async {
+                            self.lastUpdateTime = Date()
+                        }
                         self.onTick?(tick)
                     }
                 case .data(let data):
                     print("Received data: \(data.count) bytes")
                     let ticks = self.parseBinaryTicks(data)
+                    if !ticks.isEmpty {
+                        DispatchQueue.main.async {
+                            self.lastUpdateTime = Date()
+                        }
+                    }
                     for t in ticks { self.onTick?(t) }
                 @unknown default:
                     break
@@ -129,13 +143,19 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     /// WebSocket connected handler
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         print("WebSocket connected")
-        isConnected = true
+        DispatchQueue.main.async {
+            self.isConnected = true
+            self.connectionStatus = "Connected"
+        }
     }
 
     /// WebSocket closed handler
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         print("WebSocket closed with code: \(closeCode)")
-        isConnected = false
+        DispatchQueue.main.async {
+            self.isConnected = false
+            self.connectionStatus = "Disconnected"
+        }
     }
 
     /// Connect to Zerodha WebSocket
@@ -167,10 +187,14 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
 
-        // Map to Zerodha instrument token (minimal): NIFTY index -> 256265
+        // Map to Zerodha instrument tokens for major symbols
         let token: Int?
         switch symbol.uppercased() {
         case "NIFTY": token = 256265
+        case "INFY": token = 408065 // Infosys
+        case "TCS": token = 2953217 // Tata Consultancy Services
+        case "RELIANCE": token = 738561 // Reliance Industries
+        case "BANKNIFTY": token = 260105 // Bank Nifty
         default: token = nil
         }
         guard let token = token else {
@@ -240,7 +264,13 @@ class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
         connectToZerodhaWebSocket(apiKey: apiKey, accessToken: access)
+        
+        // Subscribe to all major symbols for real-time data
         subscribeToSymbol("NIFTY")
+        subscribeToSymbol("INFY")
+        subscribeToSymbol("TCS")
+        subscribeToSymbol("RELIANCE")
+        subscribeToSymbol("BANKNIFTY")
     }
 
     // Removed simulator mock method to enforce real-time data only

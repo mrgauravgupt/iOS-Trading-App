@@ -17,6 +17,10 @@ class ZerodhaAPIClient {
     private func quoteIdentifier(for symbol: String) -> String? {
         switch symbol.uppercased() {
         case "NIFTY": return "NSE:NIFTY 50"
+        case "INFY": return "NSE:INFY"
+        case "TCS": return "NSE:TCS"
+        case "RELIANCE": return "NSE:RELIANCE"
+        case "BANKNIFTY": return "NSE:NIFTY BANK"
         default: return nil
         }
     }
