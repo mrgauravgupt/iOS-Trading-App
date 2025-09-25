@@ -20,8 +20,13 @@ class OptionsOrderExecutor: ObservableObject {
     private let executionTimeout: TimeInterval = 30.0
     private let retryAttempts: Int = 3
     
+    // MARK: - UserDefaults Keys
+    private let orderHistoryKey = "OptionsOrderExecutor.orderHistory"
+    private let positionsKey = "OptionsOrderExecutor.positions"
+    
     // MARK: - Initialization
     init() {
+        loadFromUserDefaults()
         setupSubscriptions()
     }
     
@@ -36,6 +41,36 @@ class OptionsOrderExecutor: ObservableObject {
         setupPositionUpdates()
         
         print("✅ Options Order Executor Initialized")
+    }
+    
+    // MARK: - Persistence Methods
+    
+    /// Save data to UserDefaults
+    private func saveToUserDefaults() {
+        // Save order history
+        if let historyData = try? JSONEncoder().encode(orderHistory) {
+            UserDefaults.standard.set(historyData, forKey: orderHistoryKey)
+        }
+        
+        // Save positions
+        if let positionsData = try? JSONEncoder().encode(positions) {
+            UserDefaults.standard.set(positionsData, forKey: positionsKey)
+        }
+    }
+    
+    /// Load data from UserDefaults
+    private func loadFromUserDefaults() {
+        // Load order history
+        if let historyData = UserDefaults.standard.data(forKey: orderHistoryKey),
+           let savedHistory = try? JSONDecoder().decode([OrderRecord].self, from: historyData) {
+            orderHistory = savedHistory
+        }
+        
+        // Load positions
+        if let positionsData = UserDefaults.standard.data(forKey: positionsKey),
+           let savedPositions = try? JSONDecoder().decode([OptionsPosition].self, from: positionsData) {
+            positions = savedPositions
+        }
     }
     
     func executeOrder(_ order: OptionsOrder) async throws -> ExecutionResult {
@@ -333,6 +368,9 @@ class OptionsOrderExecutor: ObservableObject {
             timestamp: Date()
         )
         orderHistory.append(orderRecord)
+        
+        // Save to UserDefaults
+        saveToUserDefaults()
         
         // Notify about execution
         NotificationCenter.default.post(name: .orderExecuted, object: orderRecord)
@@ -650,7 +688,7 @@ enum OrderExecutionError: Error {
     case invalidResponse
 }
 
-struct OrderRecord {
+struct OrderRecord: Codable {
     let id = UUID()
     let order: OptionsOrder
     let result: ExecutionResult

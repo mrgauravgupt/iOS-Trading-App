@@ -425,7 +425,7 @@ struct PerformanceMetrics {
     var profitFactor: Double = 0
 }
 
-struct OptionsPosition: Identifiable {
+struct OptionsPosition: Identifiable, Codable {
     let id = UUID()
     let symbol: String
     let quantity: Int
@@ -439,9 +439,14 @@ struct OptionsPosition: Identifiable {
     var unrealizedPnL: Double {
         return Double(quantity) * (currentPrice - entryPrice) * 50 // NIFTY lot size
     }
+    
+    // Needed for Codable since computed properties aren't automatically encoded/decoded
+    enum CodingKeys: String, CodingKey {
+        case id, symbol, quantity, strikePrice, expiryDate, optionType, entryPrice, currentPrice, timestamp
+    }
 }
 
-struct OptionsOrder {
+struct OptionsOrder: Codable {
     let id = UUID()
     let symbol: String
     let action: TradeAction
@@ -454,13 +459,13 @@ struct OptionsOrder {
     let timestamp: Date = Date()
 }
 
-enum OrderType {
+enum OrderType: String, Codable {
     case market
     case limit
     case stopLoss
 }
 
-struct ExecutionResult {
+struct ExecutionResult: Codable {
     let isSuccessful: Bool
     let orderId: String?
     let executedPrice: Double?

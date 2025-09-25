@@ -7,7 +7,6 @@ struct NIFTYOptionsDashboard: View {
     @StateObject private var aiOrchestrator = AITradingOrchestrator()
     @StateObject private var patternEngine = IntradayPatternEngine()
     
-    @State private var selectedExpiry: Date = Date()
     @State private var selectedTimeframe: PatternTimeframe = .fiveMinute
     @State private var showingSettings = false
     
@@ -17,11 +16,26 @@ struct NIFTYOptionsDashboard: View {
         var dates: [Date] = []
         for i in 0..<4 {
             if let date = calendar.date(byAdding: .weekOfYear, value: i, to: today) {
-                dates.append(date)
+                // Normalize the date to remove time components
+                if let normalizedDate = calendar.date(from: calendar.dateComponents([.year, .month, .day], from: date)) {
+                    dates.append(normalizedDate)
+                }
             }
         }
         return dates
     }
+    
+    // Initialize selectedExpiry after availableExpiries is defined
+    @State private var selectedExpiry: Date = {
+        let calendar = Calendar.current
+        let today = Date()
+        // Use the first available expiry date (current week)
+        if let date = calendar.date(byAdding: .weekOfYear, value: 0, to: today),
+           let normalizedDate = calendar.date(from: calendar.dateComponents([.year, .month, .day], from: date)) {
+            return normalizedDate
+        }
+        return today
+    }()
     
     var body: some View {
         NavigationView {
@@ -253,7 +267,10 @@ struct NIFTYOptionsDashboard: View {
                 
                 Spacer()
                 
-                Picker("Expiry", selection: $selectedExpiry) {
+                Picker("Expiry", selection: Binding(
+                    get: { self.selectedExpiry },
+                    set: { self.selectedExpiry = self.ensureValidExpiryDate($0) }
+                )) {
                     ForEach(availableExpiries, id: \.self) { expiry in
                         Text(formatExpiryDate(expiry))
                             .tag(expiry)
@@ -493,6 +510,21 @@ struct NIFTYOptionsDashboard: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd MMM"
         return formatter.string(from: date)
+    }
+    
+    // This function ensures the date passed to the Picker has a valid tag
+    private func ensureValidExpiryDate(_ date: Date) -> Date {
+        // Find the closest available expiry date
+        let calendar = Calendar.current
+        let normalizedInput = calendar.date(from: calendar.dateComponents([.year, .month, .day], from: date)) ?? date
+        
+        // If the date is in the available expiries, use it
+        if availableExpiries.contains(normalizedInput) {
+            return normalizedInput
+        }
+        
+        // Otherwise, use the first available expiry
+        return availableExpiries.first ?? date
     }
 }
 

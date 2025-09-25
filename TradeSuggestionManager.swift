@@ -16,9 +16,49 @@ class TradeSuggestionManager: ObservableObject {
     private let zerodhaClient = ZerodhaAPIClient()
     private var timer: Timer?
     
+    // UserDefaults keys
+    private let suggestionHistoryKey = "TradeSuggestionManager.suggestionHistory"
+    private let aiTradingModeKey = "TradeSuggestionManager.aiTradingMode"
+    private let autoTradeEnabledKey = "TradeSuggestionManager.autoTradeEnabled"
+    
     private init() {
+        // Load saved data
+        loadFromUserDefaults()
+        
         // Start the suggestion generation process
         startSuggestionGeneration()
+    }
+    
+    // Load data from UserDefaults
+    private func loadFromUserDefaults() {
+        // Load suggestion history
+        if let historyData = UserDefaults.standard.data(forKey: suggestionHistoryKey),
+           let savedHistory = try? JSONDecoder().decode([TradeSuggestion].self, from: historyData) {
+            suggestionHistory = savedHistory
+        }
+        
+        // Load AI trading mode
+        if let savedModeString = UserDefaults.standard.string(forKey: aiTradingModeKey),
+           let savedMode = AITradingMode(rawValue: savedModeString) {
+            aiTradingMode = savedMode
+        }
+        
+        // Load auto trade enabled setting
+        autoTradeEnabled = UserDefaults.standard.bool(forKey: autoTradeEnabledKey)
+    }
+    
+    // Save data to UserDefaults
+    private func saveToUserDefaults() {
+        // Save suggestion history
+        if let historyData = try? JSONEncoder().encode(suggestionHistory) {
+            UserDefaults.standard.set(historyData, forKey: suggestionHistoryKey)
+        }
+        
+        // Save AI trading mode
+        UserDefaults.standard.set(aiTradingMode.rawValue, forKey: aiTradingModeKey)
+        
+        // Save auto trade enabled setting
+        UserDefaults.standard.set(autoTradeEnabled, forKey: autoTradeEnabledKey)
     }
     
     func startSuggestionGeneration() {
@@ -79,6 +119,9 @@ class TradeSuggestionManager: ObservableObject {
                 self.suggestionHistory.append(suggestion)
                 self.latestSuggestion = suggestion
                 
+                // Save updated history to UserDefaults
+                self.saveToUserDefaults()
+                
                 // Handle based on AI trading mode
                 if self.aiTradingMode == .autoTrade && self.autoTradeEnabled {
                     // Auto-execute the trade
@@ -112,15 +155,9 @@ class TradeSuggestionManager: ObservableObject {
     }
     
     private func getFallbackPrice(for symbol: String) -> Double {
-        // Updated fallback prices based on current market values (Jan 2025)
-        switch symbol.uppercased() {
-        case "NIFTY": return 24500.0 + Double.random(in: -200...200)
-        case "BANKNIFTY": return 51000.0 + Double.random(in: -500...500)
-        case "RELIANCE": return 1380.0 + Double.random(in: -50...50)
-        case "TCS": return 4100.0 + Double.random(in: -100...100)
-        case "INFY": return 1482.0 + Double.random(in: -20...20) // Updated to current market price ~₹1482
-        default: return 1000.0 + Double.random(in: -100...100)
-        }
+        // Return 0 to indicate no real data is available
+        print("Error: No real-time price available for \(symbol)")
+        return 0.0
     }
     
     func executeSuggestion(_ suggestion: TradeSuggestion) -> Bool {
@@ -140,6 +177,12 @@ class TradeSuggestionManager: ObservableObject {
             // Update the suggestion as executed
             if let index = currentSuggestions.firstIndex(where: { $0.id == suggestion.id }) {
                 currentSuggestions[index].isExecuted = true
+            }
+            
+            // Also update in history
+            if let historyIndex = suggestionHistory.firstIndex(where: { $0.id == suggestion.id }) {
+                suggestionHistory[historyIndex].isExecuted = true
+                saveToUserDefaults()
             }
         }
         
@@ -177,6 +220,7 @@ class TradeSuggestionManager: ObservableObject {
     func setAITradingMode(_ mode: AITradingMode) {
         aiTradingMode = mode
         autoTradeEnabled = (mode == .autoTrade)
+        saveToUserDefaults()
     }
     
     func toggleAutoTrade() {
@@ -186,12 +230,14 @@ class TradeSuggestionManager: ObservableObject {
         } else {
             aiTradingMode = .alertOnly
         }
+        saveToUserDefaults()
     }
     
     // MARK: - History Management
     
     func clearSuggestionHistory() {
         suggestionHistory.removeAll()
+        saveToUserDefaults()
     }
     
     func getExecutedSuggestions() -> [TradeSuggestion] {

@@ -17,14 +17,6 @@ struct ContentView: View {
     @State private var showTradeSuggestions = false
     @State private var previousPrice: Double = 0.0
     
-    // Simulated market data for other indices
-    @State private var sensexPrice: Double = 81500.0
-    @State private var sensexChange: Double = 0.0
-    @State private var bankNiftyPrice: Double = 52000.0
-    @State private var bankNiftyChange: Double = 0.0
-    @State private var niftyITPrice: Double = 42000.0
-    @State private var niftyITChange: Double = 0.0
-    
     @StateObject private var dataManager = DataConnectionManager()
     @StateObject private var suggestionManager = TradeSuggestionManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
@@ -251,7 +243,7 @@ struct ContentView: View {
             
             if dataManager.isDataAvailable {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) { // Reduced spacing from 12 to 8
-                    // NIFTY 50 with real/mock data
+                    // NIFTY 50 with real data
                     MarketCard(
                         title: "NIFTY 50", 
                         value: currentPrice > 0 ? String(format: "%.2f", currentPrice) : "Loading...",
@@ -260,29 +252,29 @@ struct ContentView: View {
                         isPositive: priceChange >= 0
                     )
                     
-                    // Other indices - show simulated data for demo
-                    MarketCard(
-                        title: "SENSEX", 
-                        value: String(format: "%.2f", sensexPrice),
-                        change: String(format: "%+.2f", sensexChange),
-                        changePercent: String(format: "%+.2f%%", (sensexChange / sensexPrice) * 100),
-                        isPositive: sensexChange >= 0
-                    )
-                    
+                    // Other indices - show real data if available
                     MarketCard(
                         title: "BANK NIFTY", 
-                        value: String(format: "%.2f", bankNiftyPrice),
-                        change: String(format: "%+.2f", bankNiftyChange),
-                        changePercent: String(format: "%+.2f%%", (bankNiftyChange / bankNiftyPrice) * 100),
-                        isPositive: bankNiftyChange >= 0
+                        value: marketQuotes["BANKNIFTY"]?.price != nil ? String(format: "%.2f", marketQuotes["BANKNIFTY"]!.price) : "No Data",
+                        change: marketQuotes["BANKNIFTY"]?.price != nil ? "---" : "",
+                        changePercent: marketQuotes["BANKNIFTY"]?.price != nil ? "---" : "",
+                        isPositive: true
                     )
                     
                     MarketCard(
-                        title: "NIFTY IT", 
-                        value: String(format: "%.2f", niftyITPrice),
-                        change: String(format: "%+.2f", niftyITChange),
-                        changePercent: String(format: "%+.2f%%", (niftyITChange / niftyITPrice) * 100),
-                        isPositive: niftyITChange >= 0
+                        title: "SENSEX", 
+                        value: marketQuotes["SENSEX"]?.price != nil ? String(format: "%.2f", marketQuotes["SENSEX"]!.price) : "No Data",
+                        change: marketQuotes["SENSEX"]?.price != nil ? "---" : "",
+                        changePercent: marketQuotes["SENSEX"]?.price != nil ? "---" : "",
+                        isPositive: true
+                    )
+                    
+                    MarketCard(
+                        title: "RELIANCE", 
+                        value: marketQuotes["RELIANCE"]?.price != nil ? String(format: "%.2f", marketQuotes["RELIANCE"]!.price) : "No Data",
+                        change: marketQuotes["RELIANCE"]?.price != nil ? "---" : "",
+                        changePercent: marketQuotes["RELIANCE"]?.price != nil ? "---" : "",
+                        isPositive: true
                     )
                 }
             } else {
@@ -319,7 +311,7 @@ struct ContentView: View {
                 }
                 
                 QuickActionButton(title: "Suggestions", icon: "lightbulb.fill", color: .orange) {
-                    // showTradeSuggestions = true
+                    showTradeSuggestions = true
                 }
             }
         }
@@ -592,34 +584,17 @@ struct ContentView: View {
     }
     
     // MARK: - Helper Functions
-    private func updateSimulatedMarketData() {
-        // Update SENSEX
-        let sensexVariation = Double.random(in: -50...50)
-        sensexPrice = 81500 + sensexVariation
-        sensexChange = sensexVariation
-        
-        // Update BANK NIFTY
-        let bankNiftyVariation = Double.random(in: -100...100)
-        bankNiftyPrice = 52000 + bankNiftyVariation
-        bankNiftyChange = bankNiftyVariation
-        
-        // Update NIFTY IT
-        let niftyITVariation = Double.random(in: -30...30)
-        niftyITPrice = 42000 + niftyITVariation
-        niftyITChange = niftyITVariation
-    }
     
     private func loadInitialData() {
         Task {
             await loadRealTimeData()
             await loadRealNews()
             
-            // Initialize simulated market data
-            updateSimulatedMarketData()
-            
-            // Generate an initial trade suggestion for demonstration
+            // Generate an initial trade suggestion based on real data
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                suggestionManager.generateTestSuggestion()
+                if dataManager.isDataAvailable {
+                    suggestionManager.generateTestSuggestion()
+                }
             }
         }
     }
@@ -655,47 +630,27 @@ struct ContentView: View {
                     
                     print("NIFTY data updated: Price = \(currentPrice), Change = \(priceChange)")
                 }
+                
+                // Try to fetch other indices if NIFTY was successful
+                if let _ = try? await dataManager.fetchLTPAsync(symbol: "BANKNIFTY") {
+                    // Successfully fetched Bank NIFTY
+                }
+                
+                if let _ = try? await dataManager.fetchLTPAsync(symbol: "SENSEX") {
+                    // Successfully fetched SENSEX
+                }
             } else {
-                // Fallback to mock data when API is not available
                 await MainActor.run {
-                    // Generate mock NIFTY data for demonstration
-                    let mockPrice = 24500.0 + Double.random(in: -200...200)
-                    let mockChange = Double.random(in: -100...100)
-                    let mockPercentChange = (mockChange / mockPrice) * 100
-                    
-                    if previousPrice == 0 {
-                        previousPrice = mockPrice - mockChange
-                    }
-                    
-                    currentPrice = mockPrice
-                    priceChange = mockChange
-                    percentChange = mockPercentChange
-                    
-                    dataError = "Using demo data - " + dataManager.errorMessage
+                    dataError = "Data unavailable: " + dataManager.errorMessage
                     isLoadingData = false
-                    
-                    print("Using mock NIFTY data: Price = \(currentPrice), Change = \(priceChange)")
+                    print("Real-time data unavailable: \(dataManager.errorMessage)")
                 }
             }
         } catch {
             await MainActor.run {
-                // Fallback to mock data when there's an error
-                let mockPrice = 24500.0 + Double.random(in: -200...200)
-                let mockChange = Double.random(in: -100...100)
-                let mockPercentChange = (mockChange / mockPrice) * 100
-                
-                if previousPrice == 0 {
-                    previousPrice = mockPrice - mockChange
-                }
-                
-                currentPrice = mockPrice
-                priceChange = mockChange
-                percentChange = mockPercentChange
-                
-                dataError = "Using demo data - " + error.localizedDescription
+                dataError = "Error fetching data: " + error.localizedDescription
                 isLoadingData = false
-                
-                print("Error occurred, using mock NIFTY data: Price = \(currentPrice), Change = \(priceChange)")
+                print("Error fetching real-time data: \(error.localizedDescription)")
             }
         }
     }
@@ -780,10 +735,6 @@ struct ContentView: View {
             print("Fallback timer fired - loading data (interval: \(interval)s)")
             Task {
                 await loadRealTimeData()
-                // Also update simulated market data
-                await MainActor.run {
-                    updateSimulatedMarketData()
-                }
             }
         }
         print("Fallback refresh timer started with \(interval) second intervals")
