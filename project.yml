@@ -6,17 +6,25 @@ targets:
   iOS-Trading-App:
     type: application
     platform: iOS
-    deploymentTarget: "18.0"
+    deploymentTarget: "17.0"
     sources:
       - path: Sources
-      - path: Models
-      - path: Views
-      - path: ViewModels
-      - path: Services
-      - path: Utils
-      - path: Agents
-      - path: Analytics
-      - path: Trading
+      - path: Core/Protocols
+      - path: Core/Models
+      - path: Core/Extensions
+      - path: Data/Providers
+      - path: Data/Managers
+      - path: Data/Persistence
+      - path: BusinessLogic/Engines
+      - path: BusinessLogic/Orchestrators
+      - path: BusinessLogic/Analyzers
+      - path: Presentation/Views
+      - path: Presentation/ViewModels
+      - path: Presentation/Components
+      - path: Services/Networking
+      - path: Services/Notifications
+      - path: Services/Analytics
+      - path: Utilities
       
     settings:
       base:
@@ -39,11 +47,14 @@ targets:
   iOS-Trading-AppTests:
     type: bundle.unit-test
     platform: iOS
+    deploymentTarget: "17.0"
     sources:
       - path: Tests
     settings:
       base:
+        INFOPLIST_FILE: Tests/Info.plist
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGN_IDENTITY: ""
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: iOS-Trading-App
