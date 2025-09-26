@@ -5,6 +5,14 @@ class AdvancedRiskManager: ObservableObject {
     private let baseStopLossPercentage: Double = 0.02
     private let trailingStopLossPercentage: Double = 0.05
     
+    // MARK: - Initialization
+    
+    func initialize() async throws {
+        // Initialize the risk manager
+        // This could include setting up configurations, loading risk models, etc.
+        print("AdvancedRiskManager initialized")
+    }
+    
     func calculateDynamicStopLoss(currentPrice: Double, entryPrice: Double, volatility: Double) -> Double {
         let baseStopLoss = entryPrice * (1 - baseStopLossPercentage)
         let trailingStopLoss = currentPrice * (1 - trailingStopLossPercentage)

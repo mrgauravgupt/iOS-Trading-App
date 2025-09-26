@@ -2,83 +2,29 @@ import UIKit
 import Foundation
 import Combine
 
-// MARK: - Options Order Executor
-@MainActor
 class OptionsOrderExecutor: ObservableObject {
-    // MARK: - Published Properties
-    @Published var positions: [OptionsPosition] = []
+    @Published var executionResults: [ExecutionResult] = []
+    @Published var pendingOrders: [OptionsOrder] = []
     @Published var orderHistory: [OrderRecord] = []
-    @Published var isExecuting: Bool = false
-    @Published var lastExecutionResult: ExecutionResult?
+    @Published var positions: [OptionsPosition] = []
     
-    // MARK: - Private Properties
-    private var cancellables = Set<AnyCancellable>()
     private let zerodhaClient = ZerodhaAPIClient()
     private let riskManager = AdvancedRiskManager()
-    
-    // MARK: - Configuration
-    private let maxSlippage: Double = 0.02 // 2% max slippage
-    private let executionTimeout: TimeInterval = 30.0
-    private let retryAttempts: Int = 3
-    
-    // MARK: - UserDefaults Keys
-    private let orderHistoryKey = "OptionsOrderExecutor.orderHistory"
-    private let positionsKey = "OptionsOrderExecutor.positions"
+    private let maxSlippage: Double = 0.01 // 1% slippage protection
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
-    init() {
-        loadFromUserDefaults()
-        setupSubscriptions()
+    
+    func initialize() async throws {
+        // Initialize the order executor
+        // This could include setting up connections, loading configurations, etc.
+        print("OptionsOrderExecutor initialized")
     }
     
-    // MARK: - Public Methods
-    func initialize() async {
-        print("🔧 Initializing Options Order Executor...")
-        
-        // Load existing positions
-        await loadExistingPositions()
-        
-        // Setup real-time position updates
-        setupPositionUpdates()
-        
-        print("✅ Options Order Executor Initialized")
-    }
-    
-    // MARK: - Persistence Methods
-    
-    /// Save data to UserDefaults
-    private func saveToUserDefaults() {
-        // Save order history
-        if let historyData = try? JSONEncoder().encode(orderHistory) {
-            UserDefaults.standard.set(historyData, forKey: orderHistoryKey)
-        }
-        
-        // Save positions
-        if let positionsData = try? JSONEncoder().encode(positions) {
-            UserDefaults.standard.set(positionsData, forKey: positionsKey)
-        }
-    }
-    
-    /// Load data from UserDefaults
-    private func loadFromUserDefaults() {
-        // Load order history
-        if let historyData = UserDefaults.standard.data(forKey: orderHistoryKey),
-           let savedHistory = try? JSONDecoder().decode([OrderRecord].self, from: historyData) {
-            orderHistory = savedHistory
-        }
-        
-        // Load positions
-        if let positionsData = UserDefaults.standard.data(forKey: positionsKey),
-           let savedPositions = try? JSONDecoder().decode([OptionsPosition].self, from: positionsData) {
-            positions = savedPositions
-        }
-    }
+    // MARK: - Order Execution
     
     func executeOrder(_ order: OptionsOrder) async throws -> ExecutionResult {
-        print("📋 Executing order: \(order.symbol) - \(order.action) \(order.quantity)")
-        
-        isExecuting = true
-        defer { isExecuting = false }
+        print("Executing order: \(order.symbol) - \(order.action) \(order.quantity)")
         
         do {
             // Pre-execution validation
@@ -93,7 +39,6 @@ class OptionsOrderExecutor: ObservableObject {
             // Post-execution processing
             await processExecutionResult(order, result: result)
             
-            lastExecutionResult = result
             return result
             
         } catch {
@@ -105,13 +50,12 @@ class OptionsOrderExecutor: ObservableObject {
                 errorMessage: error.localizedDescription
             )
             
-            lastExecutionResult = errorResult
             throw error
         }
     }
     
     func cancelOrder(_ orderId: String) async throws -> Bool {
-        print("❌ Cancelling order: \(orderId)")
+        print("Cancelling order: \(orderId)")
         
         // Implementation for order cancellation
         // This would integrate with your broker's API
@@ -175,16 +119,6 @@ class OptionsOrderExecutor: ObservableObject {
     }
     
     // MARK: - Private Methods
-    private func setupSubscriptions() {
-        // Subscribe to market data updates for position valuation
-        NotificationCenter.default.publisher(for: .marketDataUpdated)
-            .sink { [weak self] _ in
-                Task { @MainActor in
-                    await self?.updatePositionValues()
-                }
-            }
-            .store(in: &cancellables)
-    }
     
     private func validateOrder(_ order: OptionsOrder) async throws {
         // Check market hours
@@ -253,12 +187,9 @@ class OptionsOrderExecutor: ObservableObject {
         // Apply slippage protection
         let executionPrice = applySlippageProtection(marketPrice, for: order)
         
-        // Execute the order
+        // Execute the order and parse the response
         let orderRequest = createOrderRequest(order, price: executionPrice)
-        let responseData = try await zerodhaClient.placeOrder(orderRequest)
-        
-        // Parse the response
-        guard let response = responseData as? [String: Any] else {
+        guard let response = try await zerodhaClient.placeOrder(orderRequest) as? [String: Any] else {
             throw OrderExecutionError.invalidResponse
         }
         
@@ -370,13 +301,10 @@ class OptionsOrderExecutor: ObservableObject {
         )
         orderHistory.append(orderRecord)
         
-        // Save to UserDefaults
-        saveToUserDefaults()
-        
         // Notify about execution
         NotificationCenter.default.post(name: .orderExecuted, object: orderRecord)
         
-        print("✅ Order executed successfully: \(order.symbol)")
+        print("Order executed successfully: \(order.symbol)")
     }
     
     private func updatePosition(from order: OptionsOrder, result: ExecutionResult) async {
@@ -435,7 +363,7 @@ class OptionsOrderExecutor: ObservableObject {
             
             // Parse the JSON response
             guard let brokerPositions = brokerPositionsData as? [[String: Any]] else {
-                print("⚠️ Failed to parse positions data")
+                print("Failed to parse positions data")
                 return
             }
             
@@ -444,10 +372,10 @@ class OptionsOrderExecutor: ObservableObject {
                 convertBrokerPosition(brokerPosition)
             }
             
-            print("📊 Loaded \(positions.count) existing positions")
+            print("Loaded \(positions.count) existing positions")
             
         } catch {
-            print("⚠️ Failed to load existing positions: \(error)")
+            print("Failed to load existing positions: \(error)")
         }
     }
     
@@ -475,15 +403,16 @@ class OptionsOrderExecutor: ObservableObject {
                     timestamp: position.timestamp
                 )
             } catch {
-                print("⚠️ Failed to update price for \(position.symbol): \(error)")
+                print("Failed to update price for \(position.symbol): \(error)")
             }
         }
     }
     
     // MARK: - Helper Methods
+    
     private func getCurrentMarketPrice(for symbol: String) async throws -> Double {
         // Get current market price from data provider
-        let quoteData = try await zerodhaClient.getQuote(symbol: symbol)
+        let quoteData = await zerodhaClient.getQuote(symbol: symbol)
         
         // Parse the quote data to get the last price
         guard let quote = quoteData as? [String: Any],
@@ -690,7 +619,7 @@ enum OrderExecutionError: Error {
 }
 
 struct OrderRecord: Codable {
-    let id = UUID()
+    var id = UUID()
     let order: OptionsOrder
     let result: ExecutionResult
     let timestamp: Date

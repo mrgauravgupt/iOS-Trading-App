@@ -3,6 +3,7 @@ import Combine
 import CoreML
 import UIKit
 
+@MainActor
 class HistoricalTrainingManager: ObservableObject {
     // MARK: - Published Properties
     @Published var isTraining = false
@@ -12,8 +13,8 @@ class HistoricalTrainingManager: ObservableObject {
     @Published var testResults: TestResults?
     
     // MARK: - Private Properties
-    private let dataProvider = NIFTYOptionsDataProvider()
-    private let patternEngine = IntradayPatternEngine()
+    private lazy var dataProvider = NIFTYOptionsDataProvider()
+    private lazy var patternEngine = IntradayPatternEngine()
     private let mlModelManager = MLModelManager.shared
     private var cancellables = Set<AnyCancellable>()
     

@@ -22,7 +22,7 @@ struct PortfolioAnalyticsView: View {
         .onAppear {
             analyticsManager.loadAnalyticsData(for: selectedTimeframe)
         }
-        .onChange(of: selectedTimeframe) { newTimeframe in
+        .onChange(of: selectedTimeframe) { _, newTimeframe in
             analyticsManager.loadAnalyticsData(for: newTimeframe)
         }
     }

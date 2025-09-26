@@ -22,7 +22,7 @@ class PerformanceAnalyticsEngine: ObservableObject {
         let volatility = calculateVolatility(from: tradingData)
 
         // Generate daily returns
-        let dailyReturns = generateDailyReturns(from: tradingData)
+        _ = generateDailyReturns(from: tradingData)
 
         return PerformanceData(
             totalReturn: totalReturn,

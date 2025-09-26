@@ -137,7 +137,7 @@ class BacktestingEngine: ObservableObject {
     }
 
     func testAILearning(data: [MarketData]) -> Double {
-        let aiAgentTrader = AIAgentTrader()
+        _ = AIAgentTrader()
         let initialPerformance = mlModelManager.getModelPerformance()
 
         // Test learning process with real data only
@@ -428,7 +428,7 @@ class BacktestingEngine: ObservableObject {
         var regimePerformance: [String: Double] = [:]
         
         // Calculate insights based on actual pattern performance
-        for (index, pattern) in patterns.enumerated() {
+        for (_, pattern) in patterns.enumerated() {
             let patternResult = patternResults.first { $0.patternName == pattern }
             
             // Calculate optimal weight based on win rate and return

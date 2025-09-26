@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class IntradayPatternEngine: ObservableObject {
     @Published var detectedPatterns: [IntradayPattern] = []
     @Published var activeSignals: [IntradayTradingSignal] = []
@@ -12,6 +13,14 @@ class IntradayPatternEngine: ObservableObject {
 
     // Pattern performance tracking
     private var patternPerformanceHistory: [String: PatternPerformance] = [:]
+    
+    // MARK: - Initialization
+    
+    func initialize() async throws {
+        // Initialize the pattern engine
+        // This could include loading models, setting up configurations, etc.
+        print("IntradayPatternEngine initialized")
+    }
 
     // MARK: - Intraday Pattern Detection
 

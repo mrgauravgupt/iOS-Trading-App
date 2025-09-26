@@ -13,6 +13,14 @@ class NIFTYOptionsDataProvider: ObservableObject {
     private let webSocketManager = WebSocketManager()
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Initialization
+    
+    func initialize() async throws {
+        // Initialize the data provider
+        // This could include setting up connections, loading initial data, etc.
+        print("NIFTYOptionsDataProvider initialized")
+    }
+    
     // MARK: - Real-time Data Streaming
     
     func startRealTimeDataStream() {
@@ -181,8 +189,8 @@ class NIFTYOptionsDataProvider: ObservableObject {
         let maxPainPoint = calculateMaxPain(chain: chain)
         
         // Identify support and resistance levels
-        let supportLevels = identifySupportLevels(chain: chain)
-        let resistanceLevels = identifyResistanceLevels(chain: chain)
+        _ = identifySupportLevels(chain: chain)
+        _ = identifyResistanceLevels(chain: chain)
         
         // Create properly initialized analysis object
         let analysis = OptionsChainAnalysis(

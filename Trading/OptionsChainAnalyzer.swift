@@ -93,7 +93,7 @@ class OptionsChainAnalyzer {
 
     /// Analyze market sentiment from options data
     private func analyzeMarketSentiment(chain: NIFTYOptionsChain, underlyingPrice: Double) -> SentimentAnalysis {
-        let atmStrike = chain.getATMStrike()
+        _ = chain.getATMStrike()
 
         // Calculate put/call ratio
         let pcr = chain.calculateMetrics().pcr
@@ -163,9 +163,9 @@ class OptionsChainAnalyzer {
 
     /// Analyze expiration effects
     func analyzeExpirationEffects(chain: NIFTYOptionsChain, daysToExpiry: Int) -> ExpirationAnalysis {
-        let timeDecay = calculateTimeDecay(chain: chain, daysToExpiry: daysToExpiry)
-        let pinRisk = calculatePinRisk(chain: chain)
-        let gammaScalping = analyzeGammaScalping(chain: chain)
+        _ = calculateTimeDecay(chain: chain, daysToExpiry: daysToExpiry)
+        _ = calculatePinRisk(chain: chain)
+        _ = analyzeGammaScalping(chain: chain)
 
         // Create expiration metrics for different time periods
         let nearTerm = ExpirationMetrics(
@@ -282,8 +282,8 @@ class OptionsChainAnalyzer {
 
         return scenarios.map { scenario in
             let (name, priceMultiplier, ivMultiplier) = scenario
-            let stressedPrice = underlyingPrice * priceMultiplier
-            let stressedIV = 0.2 * ivMultiplier
+            _ = underlyingPrice * priceMultiplier
+            _ = 0.2 * ivMultiplier
 
             // Calculate P&L impact
             let basePnL = 0.0 // Simplified for this example

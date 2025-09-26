@@ -54,7 +54,7 @@ struct TradeSuggestionView: View {
                 Spacer()
                 
                 Toggle("Auto Trade", isOn: $suggestionManager.autoTradeEnabled)
-                    .onChange(of: suggestionManager.autoTradeEnabled) { value in
+                    .onChange(of: suggestionManager.autoTradeEnabled) { _, _ in
                         suggestionManager.toggleAutoTrade()
                     }
             }

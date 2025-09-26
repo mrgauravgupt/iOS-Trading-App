@@ -336,7 +336,7 @@ struct RiskAnalyticsView: View {
         .onAppear {
             riskAnalytics.loadRiskData(for: selectedTimeframe)
         }
-        .onChange(of: selectedTimeframe) { newTimeframe in
+        .onChange(of: selectedTimeframe) { _, newTimeframe in
             riskAnalytics.loadRiskData(for: newTimeframe)
         }
     }
@@ -578,7 +578,7 @@ struct AIInsightsView: View {
         .onAppear {
             aiInsights.loadInsightsData(for: selectedTimeframe)
         }
-        .onChange(of: selectedTimeframe) { newTimeframe in
+        .onChange(of: selectedTimeframe) { _, newTimeframe in
             aiInsights.loadInsightsData(for: newTimeframe)
         }
     }

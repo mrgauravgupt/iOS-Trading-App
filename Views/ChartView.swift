@@ -57,7 +57,7 @@ struct ChartView: View {
             analyzePatterns()
             calculateIndicators()
         }
-        .onChange(of: selectedTimeframe) { _ in
+        .onChange(of: selectedTimeframe) { _, _ in
             analyzePatterns()
             calculateIndicators()
         }
@@ -390,7 +390,7 @@ struct ChartView: View {
     
     private func analyzePatterns() {
         let prices = data.map { $0.price }
-        let volumes = data.map { $0.volume }
+        _ = data.map { $0.volume }
         
         // Simulate pattern detection with enhanced algorithms
         detectedPatterns = [

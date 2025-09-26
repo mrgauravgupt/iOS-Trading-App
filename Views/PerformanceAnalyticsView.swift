@@ -80,7 +80,7 @@ struct PerformanceAnalyticsView: View {
             .onAppear {
                 loadAnalyticsData()
             }
-            .onChange(of: selectedTimeRange) { _ in
+            .onChange(of: selectedTimeRange) { _, _ in
                 loadAnalyticsData()
             }
             .sheet(isPresented: $showDetailedMetrics) {

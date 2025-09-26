@@ -96,7 +96,7 @@ struct PaperTradingView: View {
                 loadPortfolioData()
                 startAIAnalysis()
             }
-            .onChange(of: isAITradingEnabled) { enabled in
+            .onChange(of: isAITradingEnabled) { _, enabled in
                 if enabled {
                     aiTradingEngine.startAutoTrading()
                 } else {

@@ -318,10 +318,10 @@ struct TradingAnalyticsView: View {
         .onAppear {
             tradingAnalytics.loadAnalyticsData(for: selectedTimeframe, strategy: selectedStrategy)
         }
-        .onChange(of: selectedTimeframe) { newTimeframe in
+        .onChange(of: selectedTimeframe) { _, newTimeframe in
             tradingAnalytics.loadAnalyticsData(for: newTimeframe, strategy: selectedStrategy)
         }
-        .onChange(of: selectedStrategy) { newStrategy in
+        .onChange(of: selectedStrategy) { _, newStrategy in
             tradingAnalytics.loadAnalyticsData(for: selectedTimeframe, strategy: newStrategy)
         }
     }

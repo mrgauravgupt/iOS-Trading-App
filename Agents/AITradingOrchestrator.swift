@@ -151,16 +151,16 @@ class AITradingOrchestrator: ObservableObject {
         Task {
             do {
                 // Initialize data provider
-                // await dataProvider.initialize()
+                try await dataProvider.initialize()
                 
                 // Initialize pattern engine
-                // await patternEngine.initialize()
+                try await patternEngine.initialize()
                 
                 // Initialize risk manager
-                // await riskManager.initialize()
+                try await riskManager.initialize()
                 
                 // Initialize order executor
-                // await orderExecutor.initialize()
+                try await orderExecutor.initialize()
                 
                 isInitialized = true
                 print("✅ AI Trading System Initialized")
@@ -218,7 +218,7 @@ class AITradingOrchestrator: ObservableObject {
             let patterns: [IntradayPattern] = []
             
             // Generate trading signals
-            let signals = await generateTradingSignals(from: patterns, optionsChain: optionsChain)
+            let signals = generateTradingSignals(from: patterns, optionsChain: optionsChain)
             
             // Execute trades based on signals
             for signal in signals {

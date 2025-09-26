@@ -1273,7 +1273,7 @@ class TechnicalAnalysisEngine: ObservableObject {
     // Pattern Quality Scoring
     func calculatePatternQuality(patterns: [PatternResult]) -> [PatternResult] {
         return patterns.map { pattern in
-            var updatedPattern = pattern
+            let updatedPattern = pattern
             
             // Adjust confidence based on multiple factors
             var qualityScore = pattern.confidence
@@ -1314,7 +1314,7 @@ class TechnicalAnalysisEngine: ObservableObject {
         var confluencePatterns: [PatternResult] = []
         
         // Find patterns that appear across multiple timeframes
-        for (timeframe, patterns) in multiTimeframeResults {
+        for (_, patterns) in multiTimeframeResults {
             for pattern in patterns {
                 let similarPatterns = multiTimeframeResults.values.flatMap { $0 }.filter {
                     $0.pattern == pattern.pattern && $0.signal == pattern.signal

@@ -130,7 +130,7 @@ struct AIControlCenterView: View {
                     
                     Toggle("", isOn: $suggestionManager.autoTradeEnabled)
                         .scaleEffect(1.2)
-                        .onChange(of: suggestionManager.autoTradeEnabled) { _ in
+                        .onChange(of: suggestionManager.autoTradeEnabled) { _, _ in
                             suggestionManager.toggleAutoTrade()
                             isAITradingEnabled = suggestionManager.autoTradeEnabled
                         }
