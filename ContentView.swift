@@ -135,7 +135,7 @@ struct ContentView: View {
             NotificationCenter.default.removeObserver(self)
         }
         .sheet(isPresented: $showingSettings) {
-            SettingsView()
+            SettingsView(isPresented: $showingSettings)
         }
         .sheet(isPresented: $showTradeSuggestions) {
             TradeSuggestionView()

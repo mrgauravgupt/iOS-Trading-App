@@ -15,7 +15,7 @@ struct iOS_Trading_AppApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(isDarkMode ? .dark : .light)
-                .fullScreenCover(isPresented: $webLogin.isPresented) {
+                .sheet(isPresented: $webLogin.isPresented) {
                     NavigationView {
                         if let wv = webLogin.webView {
                             WebViewContainer(webView: wv)

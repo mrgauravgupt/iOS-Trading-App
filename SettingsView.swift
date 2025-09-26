@@ -4,6 +4,7 @@ import UIKit
 import CryptoKit
 
 struct SettingsView: View {
+    @Binding var isPresented: Bool
     // Existing API keys
     @State private var apiKey = Config.newsAPIKey
     @State private var zerodhaAPIKeyText = Config.zerodhaAPIKey()
@@ -45,6 +46,7 @@ struct SettingsView: View {
     @State private var infoAlertTitle = ""
     @State private var infoAlertMessage = ""
     @State private var selectedSettingsTab: SettingsTab = .general
+    @State private var isExchangingToken = false
     
     // Connection test
     @State private var connectionStatus: String = ""
@@ -230,11 +232,16 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.bordered)
 
-                        Button(action: { startZerodhaLoginInWebView() }) {
-                            Label("Login with Zerodha", systemImage: "link")
+                        if isExchangingToken {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Button(action: { startZerodhaLoginInWebView() }) {
+                                Label("Login with Zerodha", systemImage: "link")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(zerodhaAPIKeyText.isEmpty || zerodhaAPISecretText.isEmpty || !isValidURL(zerodhaRedirectURLText))
                         }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(zerodhaAPIKeyText.isEmpty || zerodhaAPISecretText.isEmpty || !isValidURL(zerodhaRedirectURLText))
                     }
                 }
             }
@@ -637,8 +644,13 @@ struct SettingsView: View {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let requestToken):
+                    // Dismiss web view immediately after getting request token
+                    TemporaryWebLogin.shared.isPresented = false
+                    // Start exchanging token
+                    isExchangingToken = true
                     exchangeRequestToken(requestToken)
                 case .failure(let error):
+                    TemporaryWebLogin.shared.isPresented = false
                     infoAlert(title: "Login Failed", message: error.localizedDescription)
                 }
             }
@@ -649,6 +661,7 @@ struct SettingsView: View {
         let apiKey = zerodhaAPIKeyText
         let secret = zerodhaAPISecretText
         guard !apiKey.isEmpty, !secret.isEmpty else {
+            isExchangingToken = false
             infoAlert(title: "Missing Keys", message: "Save API Key/Secret first.")
             return
         }
@@ -662,22 +675,22 @@ struct SettingsView: View {
         req.httpBody = body.data(using: .utf8)
 
         URLSession.shared.dataTask(with: req) { data, resp, err in
-            if let err = err {
-                DispatchQueue.main.async { infoAlert(title: "Exchange Failed", message: err.localizedDescription) }
-                return
-            }
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let dataObj = json["data"] as? [String: Any],
-                  let access = dataObj["access_token"] as? String else {
-                DispatchQueue.main.async { infoAlert(title: "Exchange Failed", message: "Invalid response.") }
-                return
-            }
             DispatchQueue.main.async {
+                self.isExchangingToken = false
+                if let err = err {
+                    self.infoAlert(title: "Exchange Failed", message: err.localizedDescription)
+                    return
+                }
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let dataObj = json["data"] as? [String: Any],
+                      let access = dataObj["access_token"] as? String else {
+                    self.infoAlert(title: "Exchange Failed", message: "Invalid response.")
+                    return
+                }
                 do {
                     _ = try KeychainHelper.shared.save(access, forKey: "ZerodhaAccessToken")
                     self.zerodhaAccessTokenText = access
-                    TemporaryWebLogin.shared.isPresented = false
                     self.infoAlert(title: "Connected", message: "Access token saved. Connection ready.")
                 } catch {
                     self.infoAlert(title: "Save Failed", message: error.localizedDescription)

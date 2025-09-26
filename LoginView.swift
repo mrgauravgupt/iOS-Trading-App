@@ -8,6 +8,7 @@ struct LoginView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var isLoggingIn = false
     @State private var showSuccess = false
+    @State private var isExchangingToken = false
     private let authManager = ZerodhaAuthManager()
 
     var body: some View {
@@ -48,8 +49,13 @@ struct LoginView: View {
                 isLoggingIn = false
                 switch result {
                 case .success(let requestToken):
+                    // Dismiss web view immediately after getting request token
+                    TemporaryWebLogin.shared.isPresented = false
+                    // Start exchanging token
+                    isExchangingToken = true
                     exchangeRequestToken(requestToken)
                 case .failure(let error):
+                    TemporaryWebLogin.shared.isPresented = false
                     print("Login failed: \(error.localizedDescription)")
                 }
             }
@@ -61,6 +67,7 @@ struct LoginView: View {
         let apiKey = Config.zerodhaAPIKey()
         let secret = Config.zerodhaAPISecret()
         guard !apiKey.isEmpty, !secret.isEmpty else {
+            isExchangingToken = false
             print("Missing API Key/Secret; save them in Settings first.")
             return
         }
@@ -74,19 +81,20 @@ struct LoginView: View {
         req.httpBody = body.data(using: .utf8)
 
         URLSession.shared.dataTask(with: req) { data, resp, err in
-            if let err = err { print("Exchange failed: \(err.localizedDescription)"); return }
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let dataObj = json["data"] as? [String: Any],
-                  let access = dataObj["access_token"] as? String else {
-                print("Exchange failed: Invalid response")
-                return
-            }
             DispatchQueue.main.async {
+                self.isExchangingToken = false
+                if let err = err { print("Exchange failed: \(err.localizedDescription)"); return }
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let dataObj = json["data"] as? [String: Any],
+                      let access = dataObj["access_token"] as? String else {
+                    print("Exchange failed: Invalid response")
+                    return
+                }
                 do {
                     _ = try KeychainHelper.shared.save(access, forKey: "ZerodhaAccessToken")
                     // Show success alert; dismiss on OK
-                    showSuccess = true
+                    self.showSuccess = true
                 } catch {
                     print("Keychain save error: \(error.localizedDescription)")
                 }
