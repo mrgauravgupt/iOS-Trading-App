@@ -32,65 +32,64 @@ struct ContentView: View {
     @State private var refreshTimer: Timer?
     
     var body: some View {
-        ZStack {
-            // Background gradient - Full screen
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.black,
-                    Color(red: 0.05, green: 0.05, blue: 0.15),
-                    Color.black
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-                // Custom Header - Flexible height
-                headerView
-                    .padding(.top, 2)
+        GeometryReader { geometry in
+            ZStack {
+                // Background gradient - True full screen
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.black,
+                        Color(red: 0.05, green: 0.05, blue: 0.15),
+                        Color.black
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(.all)
                 
-                // Main Content - Takes remaining space
-                TabView(selection: $selectedTab) {
-                    // Dashboard Tab
-                    dashboardView
-                        .tag(0)
+                VStack(spacing: 0) {
+                    // Custom Header - Responsive height based on screen size
+                    headerView(geometry: geometry)
+                        .padding(.top, geometry.safeAreaInsets.top)
                     
-                    // Trading Tab
-                    tradingView
-                        .tag(1)
+                    // Main Content - Takes all remaining space
+                    TabView(selection: $selectedTab) {
+                        // Dashboard Tab
+                        dashboardView(geometry: geometry)
+                            .tag(0)
+                        
+                        // Trading Tab
+                        tradingView(geometry: geometry)
+                            .tag(1)
+                        
+                        // NIFTY Options AI Tab
+                        NIFTYOptionsDashboard()
+                            .tag(2)
+                        
+                        // Analytics Tab
+                        analyticsView(geometry: geometry)
+                            .tag(3)
+                        
+                        // Portfolio Tab
+                        portfolioView(geometry: geometry)
+                            .tag(4)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
-                    // NIFTY Options AI Tab
-                    NIFTYOptionsDashboard()
-                        .tag(2)
-                    
-                    // Analytics Tab
-                    analyticsView
-                        .tag(3)
-                    
-                    // Portfolio Tab
-                    portfolioView
-                        .tag(4)
+                    // Custom Tab Bar - Responsive sizing
+                    customTabBar(geometry: geometry)
+                        .padding(.bottom, geometry.safeAreaInsets.bottom)
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .frame(maxHeight: .infinity)
-                
-                // Custom Tab Bar - Flexible height
-                customTabBar
-                    .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .ignoresSafeArea(.all, edges: .bottom) // Allow content to extend to bottom edge
-        .ignoresSafeArea(.container, edges: .top) // Allow content to extend to top edge
+        .ignoresSafeArea(.all)
         .onAppear {
             // Set up WebSocketManager for TimeframeDataManager
             timeframeDataManager.setupWebSocketManager(webSocketManager)
-
+            
             loadInitialData()
             setupRealTimeDataStream()
-
+            
             // Register for notification to show trade suggestions
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowTradeSuggestions"), object: nil, queue: .main) { _ in
                 self.showTradeSuggestions = true
@@ -99,33 +98,43 @@ struct ContentView: View {
             // Register for connection status request
             NotificationCenter.default.addObserver(forName: NSNotification.Name("RequestConnectionStatus"), object: nil, queue: .main) { _ in
                 // Update TradeSuggestionManager with current connection status
-                self.suggestionManager.updateConnectionStatus(
-                    dataAvailable: self.dataManager.isDataAvailable,
-                    webSocketConnected: self.webSocketManager.isConnected
-                )
-            }
-            
-            // Initial update of connection status
-            suggestionManager.updateConnectionStatus(
-                dataAvailable: dataManager.isDataAvailable,
-                webSocketConnected: webSocketManager.isConnected
-            )
-            
-            // Set up observers for connection status changes
-            dataConnectionObserver = dataManager.$connectionStatus
-                .sink { status in
+                Task { @MainActor in
                     self.suggestionManager.updateConnectionStatus(
                         dataAvailable: self.dataManager.isDataAvailable,
                         webSocketConnected: self.webSocketManager.isConnected
                     )
                 }
+            }
+            
+            // Initial update of connection status
+            Task { @MainActor in
+                suggestionManager.updateConnectionStatus(
+                    dataAvailable: dataManager.isDataAvailable,
+                    webSocketConnected: webSocketManager.isConnected
+                )
+            }
+            
+            // Set up observers for connection status changes
+            dataConnectionObserver = dataManager.$connectionStatus
+                .receive(on: DispatchQueue.main)
+                .sink { status in
+                    Task { @MainActor in
+                        self.suggestionManager.updateConnectionStatus(
+                            dataAvailable: self.dataManager.isDataAvailable,
+                            webSocketConnected: self.webSocketManager.isConnected
+                        )
+                    }
+                }
             
             webSocketObserver = webSocketManager.$isConnected
+                .receive(on: DispatchQueue.main)
                 .sink { isConnected in
-                    self.suggestionManager.updateConnectionStatus(
-                        dataAvailable: self.dataManager.isDataAvailable,
-                        webSocketConnected: isConnected
-                    )
+                    Task { @MainActor in
+                        self.suggestionManager.updateConnectionStatus(
+                            dataAvailable: self.dataManager.isDataAvailable,
+                            webSocketConnected: isConnected
+                        )
+                    }
                 }
         }
         .onDisappear {
@@ -155,43 +164,47 @@ struct ContentView: View {
     }
     
     // MARK: - Header View
-    private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 1) { // Further reduced spacing from 2 to 1
-                HStack(spacing: 4) { // Further reduced spacing from 6 to 4
+    private func headerView(geometry: GeometryProxy) -> some View {
+        let isCompact = geometry.size.height < 700
+        let horizontalPadding = max(16, geometry.size.width * 0.04)
+        let fontSize = isCompact ? 10 : 12
+        
+        return HStack {
+            VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
+                HStack(spacing: isCompact ? 3 : 4) {
                     Text("NIFTY 50")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced)) // Further reduced from 14 to 12
+                        .font(.system(size: CGFloat(fontSize), weight: .medium, design: .monospaced))
                         .foregroundColor(.white.opacity(0.8))
                     
                     // Real-time connection status indicator
-                    HStack(spacing: 2) { // Further reduced spacing from 3 to 2
+                    HStack(spacing: 2) {
                         Circle()
                             .fill(webSocketManager.isConnected ? .green : .orange)
-                            .frame(width: 5, height: 5) // Further reduced from 6x6 to 5x5
+                            .frame(width: isCompact ? 4 : 5, height: isCompact ? 4 : 5)
                         
                         if webSocketManager.isConnected {
                             Text("LIVE")
-                                .font(.system(size: 8, weight: .bold, design: .monospaced)) // Further reduced from 9 to 8
+                                .font(.system(size: CGFloat(fontSize - 2), weight: .bold, design: .monospaced))
                                 .foregroundColor(.green)
                         } else {
                             Text("DELAYED")
-                                .font(.system(size: 8, weight: .bold, design: .monospaced)) // Further reduced from 9 to 8
+                                .font(.system(size: CGFloat(fontSize - 2), weight: .bold, design: .monospaced))
                                 .foregroundColor(.orange)
                         }
                     }
                 }
                 
-                HStack(spacing: 4) { // Further reduced spacing from 6 to 4
+                HStack(spacing: isCompact ? 3 : 4) {
                     Text("₹\(String(format: "%.2f", currentPrice))")
-                        .font(.system(size: 14, weight: .bold, design: .monospaced)) // Further reduced from 16 to 14
+                        .font(.system(size: CGFloat(fontSize + 2), weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                     
-                    HStack(spacing: 2) { // Further reduced spacing from 3 to 2
+                    HStack(spacing: 2) {
                         Image(systemName: priceChange >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.system(size: 8, weight: .bold)) // Further reduced from 9 to 8
+                            .font(.system(size: CGFloat(fontSize - 2), weight: .bold))
                         
                         Text("\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange)) (\(String(format: "%.2f", percentChange))%)")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced)) // Further reduced from 11 to 10
+                            .font(.system(size: CGFloat(fontSize - 1), weight: .medium, design: .monospaced))
                     }
                     .foregroundColor(priceChange >= 0 ? .green : .red)
                 }
@@ -200,69 +213,73 @@ struct ContentView: View {
             Spacer()
             
             // Connection status and settings button
-            HStack(spacing: 8) { // Further reduced spacing from 10 to 8
+            HStack(spacing: isCompact ? 6 : 8) {
                 // Data connection status
                 Circle()
                     .fill(dataManager.isDataAvailable ? .green : .red)
-                    .frame(width: 6, height: 6) // Further reduced from 8x8 to 6x6
+                    .frame(width: isCompact ? 5 : 6, height: isCompact ? 5 : 6)
                 
                 Button(action: {
                     showingSettings = true
                 }) {
                     Image(systemName: "gear")
-                        .font(.system(size: 14, weight: .medium)) // Further reduced from 16 to 14
+                        .font(.system(size: CGFloat(fontSize + 2), weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
         }
-        .padding(.horizontal, 12) // Further reduced from 16 to 12
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, isCompact ? 6 : 8)
         .background(Color.black.opacity(0.3))
     }
     
     // MARK: - Dashboard View
-    private var dashboardView: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                Spacer(minLength: 0)
+    private func dashboardView(geometry: GeometryProxy) -> some View {
+        let isCompact = geometry.size.height < 700
+        let contentPadding = max(8, geometry.size.width * 0.02)
+        
+        return ScrollView {
+            VStack(spacing: isCompact ? 6 : 8) {
                 // Market Overview Cards
-                HStack(spacing: 12) {
+                HStack(spacing: isCompact ? 8 : 12) {
                     MarketCard(
                         title: "NIFTY 50",
                         value: "₹\(String(format: "%.2f", currentPrice))",
                         change: "\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))",
                         changePercent: "(\(String(format: "%.2f", percentChange))%)",
-                        isPositive: priceChange >= 0
+                        isPositive: priceChange >= 0,
+                        isCompact: isCompact
                     )
                     
-                    // Since MarketData doesn't have change/changePercent fields, we'll use placeholders
                     MarketCard(
                         title: "BANK NIFTY",
                         value: "₹\(String(format: "%.2f", marketQuotes["BANKNIFTY"]?.price ?? 0))",
                         change: "+0.00",
                         changePercent: "(0.00%)",
-                        isPositive: true
+                        isPositive: true,
+                        isCompact: isCompact
                     )
                 }
                 
                 // Chart Section
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                     HStack {
                         Text("NIFTY 50 Chart")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Spacer()
                         
                         // Time frame selector
-                        HStack(spacing: 8) {
-                            ChartTimeButton(title: "1D", isSelected: true)
-                            ChartTimeButton(title: "1W", isSelected: false)
-                            ChartTimeButton(title: "1M", isSelected: false)
-                            ChartTimeButton(title: "3M", isSelected: false)
+                        HStack(spacing: isCompact ? 6 : 8) {
+                            ChartTimeButton(title: "1D", isSelected: true, isCompact: isCompact)
+                            ChartTimeButton(title: "1W", isSelected: false, isCompact: isCompact)
+                            ChartTimeButton(title: "1M", isSelected: false, isCompact: isCompact)
+                            ChartTimeButton(title: "3M", isSelected: false, isCompact: isCompact)
                         }
                     }
                     
-                    // Chart placeholder
+                    // Chart placeholder - Responsive height
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white.opacity(0.05))
@@ -270,12 +287,12 @@ struct ContentView: View {
                         // Placeholder chart
                         VStack {
                             HStack(spacing: 0) {
-                                ForEach(0..<20) { i in
+                                ForEach(0..<Int(geometry.size.width / 20)) { i in
                                     VStack {
                                         Rectangle()
                                             .fill(Color.green.opacity(0.7))
                                             .frame(width: 3, height: CGFloat(30 + Int.random(in: 0...40)))
-                                        
+
                                         Rectangle()
                                             .fill(Color.red.opacity(0.7))
                                             .frame(width: 3, height: CGFloat(Int.random(in: 0...20)))
@@ -293,20 +310,20 @@ struct ContentView: View {
                                 Spacer()
                                 Text("15:30")
                             }
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: isCompact ? 9 : 10, weight: .medium))
                             .foregroundColor(.white.opacity(0.6))
                             .padding(.horizontal)
                         }
                         .padding()
                     }
-                    .frame(height: 200)
+                    .frame(height: isCompact ? 160 : 200)
                 }
                 
                 // Market News Section
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                     HStack {
                         Text("Market News")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Spacer()
@@ -315,66 +332,70 @@ struct ContentView: View {
                             // View all news
                         }) {
                             Text("View All")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: isCompact ? 10 : 12, weight: .medium))
                                 .foregroundColor(.blue)
                         }
                     }
                     
                     if isLoading {
                         // News placeholders
-                        VStack(spacing: 8) {
+                        VStack(spacing: isCompact ? 6 : 8) {
                             ForEach(0..<3) { _ in
-                                NewsCardPlaceholder()
+                                NewsCardPlaceholder(isCompact: isCompact)
                             }
                         }
                     } else if articles.isEmpty {
                         Text("No news available")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.7))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
                     } else {
                         // News cards
-                        VStack(spacing: 8) {
+                        VStack(spacing: isCompact ? 6 : 8) {
                             ForEach(articles.prefix(3), id: \.id) { article in
-                                NewsCard(article: article)
+                                NewsCard(article: article, isCompact: isCompact)
                             }
                         }
                     }
                 }
                 
                 // Performance Overview
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                     Text("Performance Overview")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: isCompact ? 8 : 12) {
                         PerformanceRow(
                             title: "Today's Return",
                             value: "₹1,245.00 (0.78%)",
-                            isPositive: true
+                            isPositive: true,
+                            isCompact: isCompact
                         )
                         
                         PerformanceRow(
                             title: "This Week",
                             value: "₹3,567.00 (2.14%)",
-                            isPositive: true
+                            isPositive: true,
+                            isCompact: isCompact
                         )
                         
                         PerformanceRow(
                             title: "This Month",
                             value: "-₹1,890.00 (-1.12%)",
-                            isPositive: false
+                            isPositive: false,
+                            isCompact: isCompact
                         )
                         
                         PerformanceRow(
                             title: "This Year",
                             value: "₹24,680.00 (15.67%)",
-                            isPositive: true
+                            isPositive: true,
+                            isCompact: isCompact
                         )
                     }
-                    .padding(12)
+                    .padding(isCompact ? 10 : 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white.opacity(0.05))
@@ -382,39 +403,39 @@ struct ContentView: View {
                 }
                 
                 // AI Insights
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                     Text("AI Trading Insights")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                         HStack {
                             Image(systemName: "chart.line.uptrend.xyaxis")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.blue)
                             
                             Text("NIFTY showing bullish divergence on RSI")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
                         
                         HStack {
                             Image(systemName: "chart.bar.fill")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.green)
                             
                             Text("Volume spike detected in IT sector")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
                         
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.orange)
                             
                             Text("Volatility increasing ahead of options expiry")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
                         
@@ -423,31 +444,31 @@ struct ContentView: View {
                             showTradeSuggestions = true
                         }) {
                             Text("View Trade Suggestions")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
+                                .padding(.vertical, isCompact ? 8 : 10)
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
                                         .fill(Color.blue)
                                 )
                         }
                     }
-                    .padding(12)
+                    .padding(isCompact ? 10 : 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white.opacity(0.05))
                     )
                 }
             }
-            .padding(8)
+            .padding(contentPadding)
         }
-        .frame(maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.2))
     }
     
     // MARK: - Trading View
-    private var tradingView: some View {
+    private func tradingView(geometry: GeometryProxy) -> some View {
         VStack {
             Text("Trading View")
                 .font(.title)
@@ -456,11 +477,12 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.2))
     }
     
     // MARK: - Analytics View
-    private var analyticsView: some View {
+    private func analyticsView(geometry: GeometryProxy) -> some View {
         VStack {
             Text("Analytics View")
                 .font(.title)
@@ -469,11 +491,12 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.2))
     }
     
     // MARK: - Portfolio View
-    private var portfolioView: some View {
+    private func portfolioView(geometry: GeometryProxy) -> some View {
         VStack {
             Text("Portfolio View")
                 .font(.title)
@@ -482,16 +505,24 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.2))
     }
     
     // MARK: - Custom Tab Bar
-    private var customTabBar: some View {
-        HStack(spacing: 0) {
+    private func customTabBar(geometry: GeometryProxy) -> some View {
+        let isCompact = geometry.size.height < 700
+        let horizontalPadding = max(8, geometry.size.width * 0.02)
+        let verticalPadding = isCompact ? 3 : 4
+        let tabHeight: CGFloat = isCompact ? 30 : 35
+        
+        return HStack(spacing: 0) {
             TabBarButton(
                 icon: "chart.bar.fill",
                 title: "Dashboard",
-                isSelected: selectedTab == 0
+                isSelected: selectedTab == 0,
+                isCompact: isCompact,
+                tabHeight: tabHeight
             ) {
                 selectedTab = 0
             }
@@ -499,7 +530,9 @@ struct ContentView: View {
             TabBarButton(
                 icon: "arrow.left.arrow.right",
                 title: "Trading",
-                isSelected: selectedTab == 1
+                isSelected: selectedTab == 1,
+                isCompact: isCompact,
+                tabHeight: tabHeight
             ) {
                 selectedTab = 1
             }
@@ -507,7 +540,9 @@ struct ContentView: View {
             TabBarButton(
                 icon: "brain",
                 title: "AI Options",
-                isSelected: selectedTab == 2
+                isSelected: selectedTab == 2,
+                isCompact: isCompact,
+                tabHeight: tabHeight
             ) {
                 selectedTab = 2
             }
@@ -515,7 +550,9 @@ struct ContentView: View {
             TabBarButton(
                 icon: "chart.xyaxis.line",
                 title: "Analytics",
-                isSelected: selectedTab == 3
+                isSelected: selectedTab == 3,
+                isCompact: isCompact,
+                tabHeight: tabHeight
             ) {
                 selectedTab = 3
             }
@@ -523,13 +560,15 @@ struct ContentView: View {
             TabBarButton(
                 icon: "briefcase.fill",
                 title: "Portfolio",
-                isSelected: selectedTab == 4
+                isSelected: selectedTab == 4,
+                isCompact: isCompact,
+                tabHeight: tabHeight
             ) {
                 selectedTab = 4
             }
         }
-        .padding(.horizontal, 8) // Further reduced from 10 to 8
-        .padding(.vertical, 4) // Further reduced from 6 to 4
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, CGFloat(verticalPadding))
         .background(Color.black.opacity(0.3))
     }
     
@@ -639,7 +678,7 @@ struct ContentView: View {
                 self.updateMarketData(marketData)
             }
         }
-
+        
         webSocketManager.onError = { error in
             print("WebSocket error: \(error)")
             // Fallback to timer-based refresh if WebSocket fails
@@ -654,7 +693,7 @@ struct ContentView: View {
         
         // Set up fallback timer (will be used only if WebSocket fails)
         startAutoRefresh(interval: 5.0) // Reduced from 10 to 5 seconds
-
+        
         print("Real-time data stream setup completed with multi-timeframe support")
     }
     
@@ -726,28 +765,31 @@ struct MarketCard: View {
     let change: String
     let changePercent: String
     let isPositive: Bool
+    let isCompact: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: isCompact ? 6 : 8) {
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: isCompact ? 10 : 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
             
             Text(value)
-                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .font(.system(size: isCompact ? 14 : 16, weight: .bold, design: .monospaced))
                 .foregroundColor(.white)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
             
             HStack(spacing: 4) {
                 Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: isCompact ? 8 : 10, weight: .bold))
                 Text(change)
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .font(.system(size: isCompact ? 10 : 12, weight: .semibold, design: .monospaced))
                 Text(changePercent)
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(.system(size: isCompact ? 8 : 10, weight: .medium, design: .monospaced))
             }
             .foregroundColor(isPositive ? .green : .red)
         }
-        .padding(12)
+        .padding(isCompact ? 10 : 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -759,13 +801,14 @@ struct MarketCard: View {
 struct ChartTimeButton: View {
     let title: String
     let isSelected: Bool
+    let isCompact: Bool
     
     var body: some View {
         Text(title)
-            .font(.system(size: 12, weight: .medium))
+            .font(.system(size: isCompact ? 10 : 12, weight: .medium))
             .foregroundColor(isSelected ? .black : .white.opacity(0.7))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, isCompact ? 10 : 12)
+            .padding(.vertical, isCompact ? 4 : 6)
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(isSelected ? Color.white : Color.clear)
@@ -775,26 +818,27 @@ struct ChartTimeButton: View {
 
 struct NewsCard: View {
     let article: Article
+    let isCompact: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: isCompact ? 6 : 8) {
             Text(article.title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                 .foregroundColor(.white)
                 .lineLimit(2)
             
             if let description = article.description {
                 Text(description)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: isCompact ? 10 : 12, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(2)
             }
             
             Text(timeAgo(from: article.publishedAt))
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: isCompact ? 8 : 10, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
         }
-        .padding(12)
+        .padding(isCompact ? 10 : 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -814,23 +858,25 @@ struct NewsCard: View {
 }
 
 struct NewsCardPlaceholder: View {
+    let isCompact: Bool
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: isCompact ? 6 : 8) {
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.white.opacity(0.1))
-                .frame(height: 16)
+                .frame(height: isCompact ? 14 : 16)
             
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.white.opacity(0.1))
-                .frame(height: 12)
+                .frame(height: isCompact ? 10 : 12)
                 .frame(width: 200)
             
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.white.opacity(0.1))
-                .frame(height: 10)
+                .frame(height: isCompact ? 8 : 10)
                 .frame(width: 80)
         }
-        .padding(12)
+        .padding(isCompact ? 10 : 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -843,21 +889,24 @@ struct PerformanceRow: View {
     let title: String
     let value: String
     let isPositive: Bool?
+    let isCompact: Bool
     
     var body: some View {
         HStack {
             Text(title)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.8))
             
             Spacer()
             
             Text(value)
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .font(.system(size: isCompact ? 12 : 14, weight: .semibold, design: .monospaced))
                 .foregroundColor(
                     isPositive == nil ? .white :
                     isPositive! ? .green : .red
                 )
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
         }
     }
 }
@@ -866,21 +915,25 @@ struct TabBarButton: View {
     let icon: String
     let title: String
     let isSelected: Bool
+    let isCompact: Bool
+    let tabHeight: CGFloat
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 1) { // Further reduced spacing from 2 to 1
+            VStack(spacing: 1) {
                 Image(systemName: icon)
-                    .font(.system(size: 12, weight: .semibold)) // Further reduced from 14 to 12
+                    .font(.system(size: isCompact ? 10 : 12, weight: .semibold))
                     .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
                 
                 Text(title)
-                    .font(.system(size: 8, weight: .medium)) // Further reduced from 9 to 8
+                    .font(.system(size: isCompact ? 7 : 8, weight: .medium))
                     .foregroundColor(isSelected ? .blue : .white.opacity(0.6))
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 35) // Further reduced from 40 to 35
+            .frame(height: tabHeight)
         }
     }
 }
@@ -888,5 +941,14 @@ struct TabBarButton: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .previewDevice("iPhone 14 Pro")
+        
+        ContentView()
+            .previewDevice("iPhone SE (3rd generation)")
+            .previewDisplayName("iPhone SE")
+        
+        ContentView()
+            .previewDevice("iPhone 14 Pro Max")
+            .previewDisplayName("iPhone 14 Pro Max")
     }
 }
