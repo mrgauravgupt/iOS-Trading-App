@@ -28,6 +28,6 @@ struct Config {
 
     static func zerodhaRedirectURL() -> String {
         // Must match the Redirect URL configured in Zerodha console
-        KeychainHelper.shared.readWithFallback("ZerodhaRedirectURL") ?? "https://yourapp.com/kite-redirect"
+        KeychainHelper.shared.readWithFallback("ZerodhaRedirectURL") ?? "https://trading-app.com/kite-redirect"
     }
 }

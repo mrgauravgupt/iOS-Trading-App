@@ -45,21 +45,12 @@ struct SettingsView: View {
     @State private var showInfoAlert = false
     @State private var infoAlertTitle = ""
     @State private var infoAlertMessage = ""
-    @State private var selectedSettingsTab: SettingsTab = .general
     @State private var isExchangingToken = false
-    
+
     // Connection test
     @State private var connectionStatus: String = ""
     private let client = ZerodhaAPIClient()
     private let authManager = ZerodhaAuthManager()
-    
-    enum SettingsTab: String, CaseIterable {
-        case general = "General"
-        case aiTrading = "AI Trading"
-        case patterns = "Patterns"
-        case risk = "Risk"
-        case agents = "Agents"
-    }
     
     private var aiTradingMode: AITradingMode {
         get { AITradingMode(rawValue: aiTradingModeRaw) ?? .conservative }
@@ -86,34 +77,34 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-                
-                // Tab Navigation
-                tabNavigationSection
-                
-                // Main Content
-                ScrollView {
-                    VStack(spacing: 20) {
-                        switch selectedSettingsTab {
-                        case .general:
-                            generalSettingsSection
-                        case .aiTrading:
-                            aiTradingSettingsSection
-                        case .patterns:
-                            patternRecognitionSettingsSection
-                        case .risk:
-                            riskControlsSection
-                        case .agents:
-                            agentBehaviorSection
-                        }
-                    }
-                    .padding()
+            List {
+                // General Settings Section
+                Section(header: Text("General")) {
+                    generalSettingsSection
+                }
+
+                // AI Trading Section
+                Section(header: Text("AI Trading")) {
+                    aiTradingSettingsSection
+                }
+
+                // Pattern Recognition Section
+                Section(header: Text("Pattern Recognition")) {
+                    patternRecognitionSettingsSection
+                }
+
+                // Risk Controls Section
+                Section(header: Text("Risk Controls")) {
+                    riskControlsSection
+                }
+
+                // Agent Behavior Section
+                Section(header: Text("Agent Behavior")) {
+                    agentBehaviorSection
                 }
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("Advanced Settings")
+            .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
         }
         .onAppear {
@@ -124,107 +115,31 @@ struct SettingsView: View {
         } message: { Text(infoAlertMessage) }
     }
     
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text("Advanced Settings")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Configure AI Trading & Pattern Recognition")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // AI Status Indicator
-                VStack {
-                    Circle()
-                        .fill(isAITradingEnabled ? Color.green : Color.red)
-                        .frame(width: 12, height: 12)
-                    
-                    Text(isAITradingEnabled ? "AI ON" : "AI OFF")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(isAITradingEnabled ? .green : .red)
-                }
-            }
-            
-            Divider()
-        }
-        .padding()
-        .background(Color(.systemGray6))
-    }
-    
-    // MARK: - Tab Navigation
-    
-    private var tabNavigationSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
-                ForEach(SettingsTab.allCases, id: \.self) { tab in
-                    Button(action: {
-                        selectedSettingsTab = tab
-                    }) {
-                        VStack(spacing: 4) {
-                            Text(tab.rawValue)
-                                .font(.subheadline)
-                                .fontWeight(selectedSettingsTab == tab ? .semibold : .regular)
-                            
-                            Rectangle()
-                                .fill(selectedSettingsTab == tab ? Color.blue : Color.clear)
-                                .frame(height: 2)
-                        }
-                        .foregroundColor(selectedSettingsTab == tab ? .blue : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-        }
-        .background(Color(.systemBackground))
-    }
+
     
     // MARK: - General Settings Section
-    
+
     private var generalSettingsSection: some View {
-        VStack(spacing: 20) {
+        Group {
             // Zerodha Credentials
-            SettingsCard("Zerodha Credentials") {
+            DisclosureGroup("Zerodha Credentials") {
                 VStack(spacing: 12) {
                     TextField("API Key", text: $zerodhaAPIKeyText)
                         .textContentType(.username)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
+
                     SecureField("API Secret", text: $zerodhaAPISecretText)
                         .textContentType(.password)
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
+
                     TextField("Redirect URL", text: $zerodhaRedirectURLText)
                         .keyboardType(.URL)
                         .textContentType(.URL)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
+
                     SecureField("Access Token (auto after login)", text: $zerodhaAccessTokenText)
                         .textContentType(.password)
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     HStack {
                         Button(action: { saveZerodhaCreds() }) {
@@ -244,10 +159,11 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Connection Test
-            SettingsCard("Connection Test") {
+            DisclosureGroup("Connection Test") {
                 VStack(spacing: 12) {
                     Button(action: testConnection) {
                         Label("Test NIFTY LTP", systemImage: "antenna.radiowaves.left.and.right")
@@ -260,45 +176,44 @@ struct SettingsView: View {
                             .foregroundStyle(connectionStatus.contains("Success") ? .green : .secondary)
                     }
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // General Settings
-            SettingsCard("General Settings") {
+            DisclosureGroup("General Settings") {
                 VStack(spacing: 12) {
                     TextField("NewsAPI Key", text: $apiKey)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
+
                     Button("Save NewsAPI Key") { saveNewsKey() }
                         .buttonStyle(.bordered)
-                    
+
                     Toggle("Dark Mode", isOn: $isDarkMode)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
                 }
+                .padding(.vertical, 8)
             }
         }
     }
     
     // MARK: - AI Trading Settings Section
-    
+
     private var aiTradingSettingsSection: some View {
-        VStack(spacing: 20) {
+        Group {
             // Master AI Controls
-            SettingsCard("AI Trading Controls") {
+            DisclosureGroup("AI Trading Controls") {
                 VStack(spacing: 16) {
                     Toggle("Enable AI Auto-Trading", isOn: $isAITradingEnabled)
                         .font(.headline)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
-                    
+
                     if isAITradingEnabled {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Trading Mode")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            
+
                             Picker("Trading Mode", selection: Binding(
                                 get: { self.aiTradingMode },
                                 set: { self.aiTradingModeRaw = $0.rawValue }
@@ -309,7 +224,7 @@ struct SettingsView: View {
                             }
                             .pickerStyle(SegmentedPickerStyle())
                         }
-                        
+
                         SettingsSlider(
                             title: "Risk Tolerance",
                             value: $riskTolerance,
@@ -317,7 +232,7 @@ struct SettingsView: View {
                             step: 0.1,
                             format: "%.1f"
                         )
-                        
+
                         SettingsSlider(
                             title: "Max Position Size",
                             value: $maxPositionSize,
@@ -326,7 +241,7 @@ struct SettingsView: View {
                             format: "%.1f%%",
                             multiplier: 100
                         )
-                        
+
                         SettingsSlider(
                             title: "Daily Loss Limit",
                             value: $dailyLossLimit,
@@ -337,14 +252,15 @@ struct SettingsView: View {
                         )
                     }
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Emergency Controls
-            SettingsCard("Emergency Controls") {
+            DisclosureGroup("Emergency Controls") {
                 VStack(spacing: 16) {
                     Toggle("Enable Emergency Stop", isOn: $enableEmergencyStop)
                         .toggleStyle(SwitchToggleStyle(tint: .red))
-                    
+
                     Button(action: {
                         emergencyStopAllTrading()
                     }) {
@@ -361,16 +277,17 @@ struct SettingsView: View {
                     }
                     .disabled(!isAITradingEnabled)
                 }
+                .padding(.vertical, 8)
             }
         }
     }
     
     // MARK: - Pattern Recognition Settings Section
-    
+
     private var patternRecognitionSettingsSection: some View {
-        VStack(spacing: 20) {
+        Group {
             // Pattern Detection Settings
-            SettingsCard("Pattern Detection") {
+            DisclosureGroup("Pattern Detection") {
                 VStack(spacing: 16) {
                     SettingsSlider(
                         title: "Pattern Confidence Threshold",
@@ -380,7 +297,7 @@ struct SettingsView: View {
                         format: "%.0f%%",
                         multiplier: 100
                     )
-                    
+
                     SettingsSlider(
                         title: "Pattern Sensitivity",
                         value: $patternSensitivity,
@@ -388,61 +305,64 @@ struct SettingsView: View {
                         step: 0.1,
                         format: "%.1f"
                     )
-                    
+
                     Toggle("Multi-Timeframe Analysis", isOn: $enableMultiTimeframe)
                         .toggleStyle(SwitchToggleStyle(tint: .green))
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Pattern Types
-            SettingsCard("Pattern Types") {
+            DisclosureGroup("Pattern Types") {
                 VStack(spacing: 12) {
                     Toggle("Chart Patterns", isOn: $enableChartPatterns)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
-                    
+
                     Toggle("Candlestick Patterns", isOn: $enableCandlestickPatterns)
                         .toggleStyle(SwitchToggleStyle(tint: .orange))
-                    
+
                     Toggle("Harmonic Patterns", isOn: $enableHarmonicPatterns)
                         .toggleStyle(SwitchToggleStyle(tint: .purple))
-                    
+
                     Toggle("Volume Analysis", isOn: $enableVolumeAnalysis)
                         .toggleStyle(SwitchToggleStyle(tint: .green))
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Custom Pattern Creation
-            SettingsCard("Custom Patterns") {
+            DisclosureGroup("Custom Patterns") {
                 VStack(spacing: 12) {
                     Button("Create Custom Pattern") {
                         // TODO: Implement custom pattern creation
                         infoAlert(title: "Coming Soon", message: "Custom pattern creation will be available in the next update.")
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Button("Import Pattern Library") {
                         // TODO: Implement pattern import
                         infoAlert(title: "Coming Soon", message: "Pattern library import will be available in the next update.")
                     }
                     .buttonStyle(.bordered)
                 }
+                .padding(.vertical, 8)
             }
         }
     }
     
     // MARK: - Risk Controls Section
-    
+
     private var riskControlsSection: some View {
-        VStack(spacing: 20) {
+        Group {
             // Real-time Risk Monitoring
-            SettingsCard("Real-time Risk Monitoring") {
+            DisclosureGroup("Real-time Risk Monitoring") {
                 VStack(spacing: 16) {
                     Toggle("Enable Real-time Risk Monitoring", isOn: $enableRealTimeRiskMonitoring)
                         .toggleStyle(SwitchToggleStyle(tint: .red))
-                    
+
                     Toggle("Portfolio Heat Mapping", isOn: $enablePortfolioHeatMapping)
                         .toggleStyle(SwitchToggleStyle(tint: .orange))
-                    
+
                     SettingsSlider(
                         title: "Value at Risk (VaR) Threshold",
                         value: $varThreshold,
@@ -452,10 +372,11 @@ struct SettingsView: View {
                         multiplier: 100
                     )
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Correlation Controls
-            SettingsCard("Correlation Controls") {
+            DisclosureGroup("Correlation Controls") {
                 VStack(spacing: 16) {
                     SettingsSlider(
                         title: "Max Correlation Exposure",
@@ -464,35 +385,37 @@ struct SettingsView: View {
                         step: 0.1,
                         format: "%.1f"
                     )
-                    
+
                     Text("Limits exposure to highly correlated assets")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Circuit Breakers
-            SettingsCard("Circuit Breakers") {
+            DisclosureGroup("Circuit Breakers") {
                 VStack(spacing: 12) {
                     Text("Automatic trading halts when risk thresholds are breached")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    
+
                     Button("Test Circuit Breaker") {
                         testCircuitBreaker()
                     }
                     .buttonStyle(.bordered)
                 }
+                .padding(.vertical, 8)
             }
         }
     }
     
     // MARK: - Agent Behavior Section
-    
+
     private var agentBehaviorSection: some View {
-        VStack(spacing: 20) {
+        Group {
             // Learning Configuration
-            SettingsCard("Learning Configuration") {
+            DisclosureGroup("Learning Configuration") {
                 VStack(spacing: 16) {
                     SettingsSlider(
                         title: "Agent Learning Rate",
@@ -501,10 +424,10 @@ struct SettingsView: View {
                         step: 0.01,
                         format: "%.2f"
                     )
-                    
+
                     Toggle("Enable Agent Collaboration", isOn: $enableAgentCollaboration)
                         .toggleStyle(SwitchToggleStyle(tint: .purple))
-                    
+
                     SettingsSlider(
                         title: "Agent Decision Weight",
                         value: $agentDecisionWeight,
@@ -513,26 +436,28 @@ struct SettingsView: View {
                         format: "%.1f"
                     )
                 }
+                .padding(.vertical, 8)
             }
-            
+
             // Agent Performance
-            SettingsCard("Agent Performance") {
+            DisclosureGroup("Agent Performance") {
                 VStack(spacing: 12) {
                     Button("Reset Agent Learning") {
                         resetAgentLearning()
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Button("Export Agent Performance") {
                         exportAgentPerformance()
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Button("View Learning Curves") {
                         viewLearningCurves()
                     }
                     .buttonStyle(.borderedProminent)
                 }
+                .padding(.vertical, 8)
             }
         }
     }
@@ -637,6 +562,8 @@ struct SettingsView: View {
     private func startZerodhaLoginInWebView() {
         // Persist values first (silently)
         saveZerodhaCreds(silent: true)
+        // Dismiss the settings sheet before presenting the login sheet
+        isPresented = false
         authManager.startLoginInWebView(present: { webView in
             // Present globally via TemporaryWebLogin sheet defined in App
             TemporaryWebLogin.shared.present(webView: webView)

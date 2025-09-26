@@ -321,7 +321,7 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
             return
         }
         connectToZerodhaWebSocket(apiKey: apiKey, accessToken: access)
-        
+
         // Subscribe to all major symbols for real-time data
         subscribeToSymbol("NIFTY")
         subscribeToSymbol("INFY")

@@ -86,9 +86,12 @@ struct ContentView: View {
         .onAppear {
             // Set up WebSocketManager for TimeframeDataManager
             timeframeDataManager.setupWebSocketManager(webSocketManager)
-            
+
             loadInitialData()
             setupRealTimeDataStream()
+
+            // Start Zerodha WebSocket streaming
+            webSocketManager.startDataStreaming()
             
             // Register for notification to show trade suggestions
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowTradeSuggestions"), object: nil, queue: .main) { _ in
@@ -187,9 +190,9 @@ struct ContentView: View {
                                 .font(.system(size: CGFloat(fontSize - 2), weight: .bold, design: .monospaced))
                                 .foregroundColor(.green)
                         } else {
-                            Text("DELAYED")
+                            Text("OFFLINE")
                                 .font(.system(size: CGFloat(fontSize - 2), weight: .bold, design: .monospaced))
-                                .foregroundColor(.orange)
+                                .foregroundColor(.gray)
                         }
                     }
                 }
@@ -244,18 +247,18 @@ struct ContentView: View {
                 HStack(spacing: isCompact ? 8 : 12) {
                     MarketCard(
                         title: "NIFTY 50",
-                        value: "₹\(String(format: "%.2f", currentPrice))",
-                        change: "\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))",
-                        changePercent: "(\(String(format: "%.2f", percentChange))%)",
+                        value: webSocketManager.isConnected && currentPrice > 0 ? "₹\(String(format: "%.2f", currentPrice))" : "N/A",
+                        change: webSocketManager.isConnected && currentPrice > 0 ? "\(priceChange >= 0 ? "+" : "")\(String(format: "%.2f", priceChange))" : "N/A",
+                        changePercent: webSocketManager.isConnected && currentPrice > 0 ? "(\(String(format: "%.2f", percentChange))%)" : "",
                         isPositive: priceChange >= 0,
                         isCompact: isCompact
                     )
-                    
+
                     MarketCard(
                         title: "BANK NIFTY",
-                        value: "₹\(String(format: "%.2f", marketQuotes["BANKNIFTY"]?.price ?? 0))",
-                        change: "+0.00",
-                        changePercent: "(0.00%)",
+                        value: webSocketManager.isConnected && (marketQuotes["BANKNIFTY"]?.price ?? 0) > 0 ? "₹\(String(format: "%.2f", marketQuotes["BANKNIFTY"]?.price ?? 0))" : "N/A",
+                        change: webSocketManager.isConnected ? "+0.00" : "N/A",
+                        changePercent: webSocketManager.isConnected ? "(0.00%)" : "",
                         isPositive: true,
                         isCompact: isCompact
                     )
@@ -588,11 +591,18 @@ struct ContentView: View {
         dataError = nil
         
         do {
-            // Simulate fetching market data since the actual method doesn't exist
-            let data = [
-                MarketData(symbol: "NIFTY", price: 22500.50, volume: 1250000, timestamp: Date()),
-                MarketData(symbol: "BANKNIFTY", price: 48750.25, volume: 850000, timestamp: Date())
-            ]
+            // Load static fallback data or NA when not connected
+            let data: [MarketData]
+            if webSocketManager.isConnected {
+                // Real data would be loaded here
+                data = [] // Placeholder for real data
+            } else {
+                // Static fallback or empty for NA display
+                data = [
+                    MarketData(symbol: "NIFTY", price: 0.0, volume: 0, timestamp: Date()),
+                    MarketData(symbol: "BANKNIFTY", price: 0.0, volume: 0, timestamp: Date())
+                ]
+            }
             
             // Update UI on main thread
             DispatchQueue.main.async {
@@ -603,10 +613,13 @@ struct ContentView: View {
                     self.previousPrice = self.currentPrice
                     self.currentPrice = niftyData.price
                     
-                    // Calculate price change
-                    if self.previousPrice > 0 {
+                    // Calculate price change only if real data
+                    if self.previousPrice > 0 && self.currentPrice > 0 {
                         self.priceChange = self.currentPrice - self.previousPrice
                         self.percentChange = (self.priceChange / self.previousPrice) * 100
+                    } else {
+                        self.priceChange = 0.0
+                        self.percentChange = 0.0
                     }
                 }
                 
@@ -618,10 +631,12 @@ struct ContentView: View {
                 self.isLoadingData = false
             }
             
-            // Subscribe to real-time data for key symbols
-            timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .oneMinute)
-            timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .fiveMinute)
-            timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .fifteenMinute)
+            // Subscribe to real-time data for key symbols (only if WebSocket connected)
+            if webSocketManager.isConnected {
+                timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .oneMinute)
+                timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .fiveMinute)
+                timeframeDataManager.subscribeToSymbol("NIFTY", timeframe: .fifteenMinute)
+            }
             
             print("Real-time data loaded successfully")
         } catch {
@@ -686,10 +701,6 @@ struct ContentView: View {
                 self.startAutoRefresh(interval: 5.0) // More frequent fallback updates
             }
         }
-        
-        // Connect to WebSocket with a default URL
-        let defaultURL = URL(string: "wss://stream.zerodha.com/v1")!
-        webSocketManager.connect(to: defaultURL)
         
         // Set up fallback timer (will be used only if WebSocket fails)
         startAutoRefresh(interval: 5.0) // Reduced from 10 to 5 seconds

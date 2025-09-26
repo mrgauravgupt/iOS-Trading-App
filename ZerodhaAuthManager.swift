@@ -66,6 +66,12 @@ final class ZerodhaAuthManager: NSObject, ZerodhaAuthenticator, WKNavigationDele
         let host = url.host ?? ""
         let path = url.path.isEmpty ? "/" : url.path
 
+        // Debug logging
+        print("ZerodhaAuth: Navigating to: \(url.absoluteString)")
+        if let queryItems = comps?.queryItems {
+            print("ZerodhaAuth: Query items: \(queryItems)")
+        }
+
         // Normalize configured redirect path (treat empty as "/" and trim trailing slash)
         let configuredPath = redirectPath.isEmpty ? "/" : redirectPath
         func normalize(_ p: String) -> String { p == "/" ? "/" : p.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
@@ -80,8 +86,12 @@ final class ZerodhaAuthManager: NSObject, ZerodhaAuthenticator, WKNavigationDele
         // Treat any non-http(s) URL as the final redirect we should intercept.
         let isCustomSchemeRedirect = !isHTTPOrHTTPS
 
-        if looksLikeConfiguredHTTPS || isCustomSchemeRedirect {
+        // More lenient check: any URL containing request_token parameter
+        let hasRequestToken = comps?.queryItems?.contains(where: { $0.name == "request_token" }) ?? false
+
+        if looksLikeConfiguredHTTPS || isCustomSchemeRedirect || hasRequestToken {
             if let requestToken = comps?.queryItems?.first(where: { $0.name == "request_token" })?.value {
+                print("ZerodhaAuth: Found request_token: \(requestToken)")
                 decisionHandler(.cancel)
                 completion?(.success(requestToken))
                 self.completion = nil
