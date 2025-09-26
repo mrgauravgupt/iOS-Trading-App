@@ -9,6 +9,7 @@ struct MarketData: Codable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case symbol, price, volume, timestamp
+        // id is excluded as it's generated locally
     }
 }
 
@@ -22,6 +23,7 @@ struct TradeData: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case symbol, quantity, price, type, timestamp
+        // id is excluded as it's generated locally
     }
 }
 
@@ -42,5 +44,6 @@ struct Holding: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case symbol, quantity, averagePrice
+        // id is excluded as it's generated locally
     }
 }

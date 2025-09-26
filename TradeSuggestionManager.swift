@@ -21,12 +21,53 @@ class TradeSuggestionManager: ObservableObject {
     private let aiTradingModeKey = "TradeSuggestionManager.aiTradingMode"
     private let autoTradeEnabledKey = "TradeSuggestionManager.autoTradeEnabled"
     
+    private var connectionObserver: NSObjectProtocol?
+    private var webSocketObserver: NSObjectProtocol?
+    
     private init() {
         // Load saved data
         loadFromUserDefaults()
         
-        // Start the suggestion generation process
-        startSuggestionGeneration()
+        // Set up observers for connection status changes
+        connectionObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("DataConnectionStatusChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleConnectionStatusChanged()
+        }
+        
+        webSocketObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("WebSocketStatusChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleConnectionStatusChanged()
+        }
+        
+        // Start the suggestion generation process if we have real-time data
+        handleConnectionStatusChanged()
+    }
+    
+    deinit {
+        if let observer = connectionObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = webSocketObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+    
+    private func handleConnectionStatusChanged() {
+        // Stop any existing timer
+        stopSuggestionGeneration()
+        
+        // Get references to the shared instances from ContentView
+        // We need to find a way to access the shared instances
+        DispatchQueue.main.async {
+            // Use NotificationCenter to request the current connection status
+            NotificationCenter.default.post(name: NSNotification.Name("RequestConnectionStatus"), object: nil)
+        }
     }
     
     // Load data from UserDefaults
@@ -61,11 +102,31 @@ class TradeSuggestionManager: ObservableObject {
         UserDefaults.standard.set(autoTradeEnabled, forKey: autoTradeEnabledKey)
     }
     
+    // Properties to track connection status
+    private var isDataAvailable = false
+    private var isWebSocketConnected = false
+    
+    // Method to update connection status
+    func updateConnectionStatus(dataAvailable: Bool, webSocketConnected: Bool) {
+        isDataAvailable = dataAvailable
+        isWebSocketConnected = webSocketConnected
+        
+        // If both are available, start generating suggestions
+        if isDataAvailable && isWebSocketConnected {
+            startSuggestionGeneration()
+        } else {
+            stopSuggestionGeneration()
+        }
+    }
+    
     func startSuggestionGeneration() {
-        // Generate suggestions more frequently for real-time trading
-        // Real-time suggestions every 60 seconds based on live market data
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.generateSuggestion()
+        // Only start if not already running
+        if timer == nil {
+            print("Starting trade suggestion generation with real-time data")
+            // Generate suggestions every 60 seconds based on live market data
+            timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                self?.generateSuggestion()
+            }
         }
     }
     
@@ -75,6 +136,18 @@ class TradeSuggestionManager: ObservableObject {
     }
     
     private func generateSuggestion() {
+        // Check if we have real-time data available using stored status
+        guard isDataAvailable else {
+            print("Trade suggestions disabled: No real-time data available")
+            return
+        }
+        
+        // Check if WebSocket is connected using stored status
+        guard isWebSocketConnected else {
+            print("Trade suggestions disabled: WebSocket not connected")
+            return
+        }
+        
         // Generate suggestion with real market data
         let symbols = ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS", "INFY"]
         let actions: [TradeAction] = [.buy, .sell]
@@ -86,7 +159,12 @@ class TradeSuggestionManager: ObservableObject {
         fetchRealMarketPrice(for: randomSymbol) { [weak self] realPrice in
             guard let self = self else { return }
             
-            let price = realPrice ?? self.getFallbackPrice(for: randomSymbol)
+            // Only proceed if we have a real price
+            guard let price = realPrice, price > 0 else {
+                print("Trade suggestion skipped: No real price available for \(randomSymbol)")
+                return
+            }
+            
             let quantity = Int.random(in: 1...10)
             let confidence = Double.random(in: 0.7...0.95)
             
@@ -154,10 +232,10 @@ class TradeSuggestionManager: ObservableObject {
         }
     }
     
-    private func getFallbackPrice(for symbol: String) -> Double {
-        // Return 0 to indicate no real data is available
+    private func getFallbackPrice(for symbol: String) -> Double? {
+        // We no longer use fallback prices - return nil to indicate no data
         print("Error: No real-time price available for \(symbol)")
-        return 0.0
+        return nil
     }
     
     func executeSuggestion(_ suggestion: TradeSuggestion) -> Bool {

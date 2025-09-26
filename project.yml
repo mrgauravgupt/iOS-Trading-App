@@ -68,13 +68,25 @@ targets:
       - path: PatternScannerView.swift
       - path: RiskManagementDashboard.swift
       - path: PerformanceAnalyticsView.swift
-      - path: HistorySuggestionCard.swift
+      - path: TechnicalIndicatorsManager.swift
+      - path: TimeframeDataManager.swift
     settings:
       base:
         INFOPLIST_FILE: Info.plist
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGN_IDENTITY: ""
         VALID_ARCHS: arm64 x86_64
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.iOS-Trading-App
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 54Z85P52PZ
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "-"
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGNING_REQUIRED: NO
+          CODE_SIGNING_ALLOWED: NO
+        Release:
+          CODE_SIGN_STYLE: Automatic
+          DEVELOPMENT_TEAM: 54Z85P52PZ
 
   iOS-Trading-AppTests:
     type: bundle.unit-test

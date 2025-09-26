@@ -21,6 +21,10 @@ struct NIFTYOptionContract: Codable, Identifiable, Hashable {
     let theta: Double
     let vega: Double
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, underlyingSymbol, strikePrice, expiryDate, optionType, lotSize, currentPrice, bid, ask, volume, openInterest, impliedVolatility, delta, gamma, theta, vega, timestamp
+    }
 }
 
 enum OptionType: String, Codable, CaseIterable {
@@ -60,6 +64,10 @@ struct IntradayOptionsData: Codable, Identifiable {
     let volumeProfile: [VolumeLevel]
     let orderBookData: OrderBookSnapshot?
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case contract, ohlcData, volumeProfile, orderBookData, timestamp
+    }
 }
 
 struct OHLCData: Codable, Identifiable {
@@ -71,6 +79,10 @@ struct OHLCData: Codable, Identifiable {
     let close: Double
     let volume: Int
     let timeframe: Timeframe
+
+    enum CodingKeys: String, CodingKey {
+        case timestamp, open, high, low, close, volume, timeframe
+    }
 }
 
 enum Timeframe: String, Codable, CaseIterable {
@@ -96,6 +108,10 @@ struct VolumeLevel: Codable, Identifiable {
     let price: Double
     let volume: Int
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case price, volume, timestamp
+    }
 }
 
 struct OrderBookSnapshot: Codable {
@@ -109,6 +125,10 @@ struct OrderBookLevel: Codable, Identifiable {
     let price: Double
     let quantity: Int
     let orders: Int
+
+    enum CodingKeys: String, CodingKey {
+        case price, quantity, orders
+    }
 }
 
 // MARK: - Intraday Trading Signals
@@ -126,6 +146,10 @@ struct IntradayTradingSignal: Codable, Identifiable {
     let technicalIndicators: [String: Double]
     let timestamp: Date
     let expiryTime: Date // Signal validity
+
+    enum CodingKeys: String, CodingKey {
+        case contract, signalType, confidence, entryPrice, targetPrice, stopLoss, timeframe, patterns, technicalIndicators, timestamp, expiryTime
+    }
 }
 
 // MARK: - IntradayTradingSignal Extensions
@@ -170,6 +194,10 @@ struct OptionsStrategy: Codable, Identifiable {
     let breakEvenPoints: [Double]
     let marginRequired: Double
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case name, type, legs, maxProfit, maxLoss, breakEvenPoints, marginRequired, timestamp
+    }
 }
 
 enum OptionsStrategyType: String, Codable, CaseIterable {
@@ -193,6 +221,10 @@ struct OptionsLeg: Codable, Identifiable {
     let action: TradeAction
     let quantity: Int
     let price: Double
+
+    enum CodingKeys: String, CodingKey {
+        case contract, action, quantity, price
+    }
 }
 
 // MARK: - Historical Training Data
@@ -204,6 +236,10 @@ struct HistoricalTrainingData: Codable, Identifiable {
     let optionsData: [IntradayOptionsData]
     let marketEvents: [MarketEvent]
     let tradingOutcomes: [TrainingOutcome]
+
+    enum CodingKeys: String, CodingKey {
+        case date, underlyingData, optionsData, marketEvents, tradingOutcomes
+    }
 }
 
 struct MarketEvent: Codable, Identifiable {
@@ -212,6 +248,10 @@ struct MarketEvent: Codable, Identifiable {
     let timestamp: Date
     let impact: EventImpact
     let description: String
+
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp, impact, description
+    }
 }
 
 enum MarketEventType: String, Codable {
@@ -238,6 +278,10 @@ struct TrainingOutcome: Codable, Identifiable {
     let success: Bool
     let duration: TimeInterval
     let slippageImpact: Double
+
+    enum CodingKeys: String, CodingKey {
+        case signal, actualEntry, actualExit, pnl, success, duration, slippageImpact
+    }
 }
 
 // MARK: - Real-time Market Data
@@ -292,6 +336,10 @@ struct KeyLevel: Codable, Identifiable {
     let type: KeyLevelType
     let strength: Double
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case price, type, strength, timestamp
+    }
 }
 
 enum KeyLevelType: String, Codable {
@@ -352,6 +400,10 @@ struct DetectedPattern: Identifiable, Codable {
     let description: String
     let confidence: Double
     let timestamp: Date
+
+    enum CodingKeys: String, CodingKey {
+        case timeframe, patternType, description, confidence, timestamp
+    }
 }
 
 // MARK: - General App Models
@@ -435,14 +487,14 @@ struct OptionsPosition: Identifiable, Codable {
     let entryPrice: Double
     let currentPrice: Double
     let timestamp: Date
-    
+
     var unrealizedPnL: Double {
         return Double(quantity) * (currentPrice - entryPrice) * 50 // NIFTY lot size
     }
-    
+
     // Needed for Codable since computed properties aren't automatically encoded/decoded
     enum CodingKeys: String, CodingKey {
-        case id, symbol, quantity, strikePrice, expiryDate, optionType, entryPrice, currentPrice, timestamp
+        case symbol, quantity, strikePrice, expiryDate, optionType, entryPrice, currentPrice, timestamp
     }
 }
 
@@ -457,6 +509,10 @@ struct OptionsOrder: Codable {
     let expiryDate: Date
     let optionType: OptionType
     let timestamp: Date = Date()
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, action, quantity, orderType, price, strikePrice, expiryDate, optionType, timestamp
+    }
 }
 
 enum OrderType: String, Codable {

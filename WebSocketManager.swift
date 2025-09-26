@@ -11,7 +11,12 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     private var notificationManager = NotificationManager.shared
     private var priceAlerts: [String: Double] = [:]
     
-    @Published var isConnected = false
+    @Published var isConnected = false {
+        didSet {
+            // Post notification when connection status changes
+            NotificationCenter.default.post(name: NSNotification.Name("WebSocketStatusChanged"), object: self)
+        }
+    }
     @Published var connectionStatus: String = "Disconnected"
     @Published var lastUpdateTime: Date?
 
@@ -179,11 +184,19 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         connect(to: url)
     }
 
+    private var subscribedSymbols: Set<String> = []
+
     /// Subscribe to a symbol for real-time updates
     /// - Parameter symbol: Trading symbol
     func subscribeToSymbol(_ symbol: String) {
         guard isConnected else {
             print("Not connected to WebSocket")
+            return
+        }
+
+        // Check if already subscribed
+        guard !subscribedSymbols.contains(symbol) else {
+            print("Already subscribed to: \(symbol)")
             return
         }
 
@@ -207,6 +220,7 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         let mode = ["a": "mode", "v": ["ltp", [token]]] as [String : Any]
         // Keep reverse map for binary decoding
         tokenToSymbol[UInt32(token)] = symbol
+
         if let sData = try? JSONSerialization.data(withJSONObject: subscribe),
            let sText = String(data: sData, encoding: .utf8) {
             sendMessage(sText)
@@ -215,7 +229,47 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
            let mText = String(data: mData, encoding: .utf8) {
             sendMessage(mText)
         }
+
+        subscribedSymbols.insert(symbol)
         print("Requested subscription for: \(symbol) [token: \(token)]")
+    }
+
+    /// Unsubscribe from a symbol
+    /// - Parameter symbol: Trading symbol
+    func unsubscribeFromSymbol(_ symbol: String) {
+        guard isConnected else {
+            print("Not connected to WebSocket")
+            return
+        }
+
+        guard subscribedSymbols.contains(symbol) else {
+            print("Not subscribed to: \(symbol)")
+            return
+        }
+
+        // Find token for symbol
+        let token = tokenToSymbol.first(where: { $0.value == symbol })?.key
+        guard let token = token else {
+            print("Could not find token for symbol: \(symbol)")
+            return
+        }
+
+        // Send unsubscribe message
+        let unsubscribe = ["a": "unsubscribe", "v": [token]] as [String : Any]
+        if let uData = try? JSONSerialization.data(withJSONObject: unsubscribe),
+           let uText = String(data: uData, encoding: .utf8) {
+            sendMessage(uText)
+        }
+
+        // Remove from tracking
+        tokenToSymbol.removeValue(forKey: token)
+        subscribedSymbols.remove(symbol)
+        print("Unsubscribed from: \(symbol)")
+    }
+
+    /// Get list of currently subscribed symbols
+    func getSubscribedSymbols() -> [String] {
+        return Array(subscribedSymbols)
     }
 
     /// Send a message through WebSocket
@@ -241,14 +295,16 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
 
             if type == "tick" {
                 guard let data = json?["data"] as? [String: Any],
-                      let instrumentToken = data["instrument_token"] as? Int,
                       let lastPrice = data["last_price"] as? Double,
                       let volume = data["volume_traded"] as? Int else { return nil }
 
-                let symbol = tokenToSymbol[UInt32(instrumentToken)] ?? "UNKNOWN"
-                let marketData = MarketData(symbol: symbol, price: lastPrice, volume: volume, timestamp: Date())
-                checkPriceAlerts(for: marketData)
-                return marketData
+                // Use instrument token to look up symbol
+                if let instrumentToken = data["instrument_token"] as? Int {
+                    let symbol = tokenToSymbol[UInt32(instrumentToken)] ?? "UNKNOWN"
+                    let marketData = MarketData(symbol: symbol, price: lastPrice, volume: volume, timestamp: Date())
+                    checkPriceAlerts(for: marketData)
+                    return marketData
+                }
             }
         } catch {
             print("Error parsing message: \(error)")

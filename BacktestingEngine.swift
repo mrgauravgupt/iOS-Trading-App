@@ -28,27 +28,27 @@ class BacktestingEngine: ObservableObject {
                 // Use real pattern recognition if patterns are specified
                 if !patterns.isEmpty {
                     let patternResults = analyzePatternsWithData(marketData: marketData, patterns: patterns)
-                    
+
                     // Make trading decisions based on real pattern analysis
                     for result in patternResults {
                         if result.confidence > 0.7 { // Only trade on high-confidence patterns
                             let tradeAmount = currentValue * 0.1 // Risk 10% per trade
-                            
+
                             if result.signal == .buy || result.signal == .strongBuy {
                                 // Calculate actual trade return based on pattern confidence and success rate
                                 let baseReturn = (result.confidence * result.successRate) - 0.5
                                 let tradeReturn = baseReturn * 0.1 // Scale to reasonable return range
-                                
+
                                 currentValue += tradeAmount * tradeReturn
                                 totalReturn += tradeReturn
                                 trades += 1
                                 if tradeReturn > 0 { wins += 1 }
-                                
+
                             } else if result.signal == .sell || result.signal == .strongSell {
                                 // Calculate actual trade return for short positions
                                 let baseReturn = (result.confidence * result.successRate) - 0.5
                                 let tradeReturn = baseReturn * 0.08 // Slightly lower for short trades
-                                
+
                                 currentValue += tradeAmount * tradeReturn
                                 totalReturn += tradeReturn
                                 trades += 1
@@ -56,8 +56,8 @@ class BacktestingEngine: ObservableObject {
                             }
                         }
                     }
+                }
             }
-        }
 
         let winRate = trades > 0 ? Double(wins) / Double(trades) : 0.0
         let finalReturn = trades > 0 ? ((currentValue - initialValue) / initialValue) * 100 : 0.0
@@ -182,7 +182,6 @@ class BacktestingEngine: ObservableObject {
         var equity: [Double] = [initialCapital]
         var returns: [Double] = []
         var drawdowns: [Double] = []
-        var _: [BacktestTrade] = []
         var patternResults: [String: PatternBacktestResult] = [:]
         
         var currentEquity = initialCapital

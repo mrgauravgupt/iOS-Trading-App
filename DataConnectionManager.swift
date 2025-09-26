@@ -4,7 +4,12 @@ import SwiftUI
 /// Centralized manager for handling real-time data connections and error states
 @MainActor
 class DataConnectionManager: ObservableObject {
-    @Published var connectionStatus: ConnectionStatus = .disconnected
+    @Published var connectionStatus: ConnectionStatus = .disconnected {
+        didSet {
+            // Post notification when connection status changes
+            NotificationCenter.default.post(name: NSNotification.Name("DataConnectionStatusChanged"), object: self)
+        }
+    }
     @Published var lastError: String?
     @Published var isRetrying: Bool = false
     

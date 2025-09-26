@@ -1,0 +1,44 @@
+// Fix for ContentView.swift
+// Replace the following lines:
+
+// Line 115-117: Remove [weak self] since ContentView is a struct
+dataConnectionObserver = dataManager.$connectionStatus
+    .sink { status in
+        self.suggestionManager.updateConnectionStatus(
+            dataAvailable: self.dataManager.isDataAvailable,
+            webSocketConnected: self.webSocketManager.isConnected
+        )
+    }
+
+// Line 124-126: Remove [weak self] since ContentView is a struct
+webSocketObserver = webSocketManager.$isConnected
+    .sink { isConnected in
+        self.suggestionManager.updateConnectionStatus(
+            dataAvailable: self.dataManager.isDataAvailable,
+            webSocketConnected: isConnected
+        )
+    }
+
+// Line 729-730: Remove [weak self] since ContentView is a struct
+webSocketManager.onTick = { marketData in
+    DispatchQueue.main.async {
+        self.updateMarketData(marketData)
+    }
+}
+
+// Line 736-739: Remove [weak self] since ContentView is a struct
+webSocketManager.onError = { error in
+    print("WebSocket error: \(error)")
+    // Fallback to timer-based refresh if WebSocket fails
+    DispatchQueue.main.async {
+        self.startAutoRefresh(interval: 5.0) // More frequent fallback updates
+    }
+}
+
+// Line 789-790: Remove [weak self] since ContentView is a struct
+refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+    print("Fallback timer fired - loading data (interval: \(interval)s)")
+    Task {
+        await self.loadRealTimeData()
+    }
+}

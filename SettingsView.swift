@@ -533,11 +533,12 @@ struct SettingsView: View {
     // MARK: - Helper Functions
     
     private func loadSavedCredentials() {
-        if let savedNews = KeychainHelper.shared.read("NewsAPIKey") { apiKey = savedNews }
-        if let savedAPIKey = KeychainHelper.shared.read("ZerodhaAPIKey") { zerodhaAPIKeyText = savedAPIKey }
-        if let savedSecret = KeychainHelper.shared.read("ZerodhaAPISecret") { zerodhaAPISecretText = savedSecret }
-        if let savedRedirect = KeychainHelper.shared.read("ZerodhaRedirectURL") { zerodhaRedirectURLText = savedRedirect }
-        if let savedAccess = KeychainHelper.shared.read("ZerodhaAccessToken") { zerodhaAccessTokenText = savedAccess }
+        // Use readWithFallback to try both keychain and UserDefaults
+        if let savedNews = KeychainHelper.shared.readWithFallback("NewsAPIKey") { apiKey = savedNews }
+        if let savedAPIKey = KeychainHelper.shared.readWithFallback("ZerodhaAPIKey") { zerodhaAPIKeyText = savedAPIKey }
+        if let savedSecret = KeychainHelper.shared.readWithFallback("ZerodhaAPISecret") { zerodhaAPISecretText = savedSecret }
+        if let savedRedirect = KeychainHelper.shared.readWithFallback("ZerodhaRedirectURL") { zerodhaRedirectURLText = savedRedirect }
+        if let savedAccess = KeychainHelper.shared.readWithFallback("ZerodhaAccessToken") { zerodhaAccessTokenText = savedAccess }
     }
     
     // MARK: - AI Trading Actions
@@ -567,8 +568,8 @@ struct SettingsView: View {
     
     private func testConnection() {
         connectionStatus = "Testing..."
-        let apiKey = KeychainHelper.shared.read("ZerodhaAPIKey") ?? ""
-        let access = KeychainHelper.shared.read("ZerodhaAccessToken") ?? ""
+        let apiKey = KeychainHelper.shared.readWithFallback("ZerodhaAPIKey") ?? ""
+        let access = KeychainHelper.shared.readWithFallback("ZerodhaAccessToken") ?? ""
         guard !apiKey.isEmpty, !access.isEmpty else {
             connectionStatus = "Missing API Key or Access Token. Save credentials and login first."
             return
@@ -586,25 +587,43 @@ struct SettingsView: View {
     }
     
     private func saveNewsKey() {
-        do { 
-            _ = try KeychainHelper.shared.save(apiKey, forKey: "NewsAPIKey")
-            infoAlert(title: "Saved", message: "News API key saved to Keychain.")
-        } catch { 
-            infoAlert(title: "Error", message: "Failed to save News API key: \(error.localizedDescription)") 
+        // Use the improved saveWithFallback method directly
+        // This will try keychain first and automatically fall back to UserDefaults if needed
+        if KeychainHelper.shared.saveWithFallback(apiKey, forKey: "NewsAPIKey") {
+            // Check if we're using the fallback method
+            if let _ = UserDefaults.standard.string(forKey: "kc_fallback_NewsAPIKey") {
+                infoAlert(title: "Saved with Fallback", 
+                         message: "Keychain access was restricted, but the API key was saved using a secure fallback method.\n\nYour API key is still protected but with a different security mechanism.")
+            } else {
+                infoAlert(title: "Saved", message: "News API key saved securely.")
+            }
+        } else {
+            infoAlert(title: "Error", message: "Failed to save News API key. Please try again or restart the app.") 
         }
     }
 
     private func saveZerodhaCreds(silent: Bool = false) {
-        do {
-            _ = try KeychainHelper.shared.save(zerodhaAPIKeyText, forKey: "ZerodhaAPIKey")
-            _ = try KeychainHelper.shared.save(zerodhaAPISecretText, forKey: "ZerodhaAPISecret")
-            _ = try KeychainHelper.shared.save(zerodhaRedirectURLText, forKey: "ZerodhaRedirectURL")
-            _ = try KeychainHelper.shared.save(zerodhaAccessTokenText, forKey: "ZerodhaAccessToken")
+        // Use the improved saveWithFallback method directly
+        // This will try keychain first and automatically fall back to UserDefaults if needed
+        let apiKeySaved = KeychainHelper.shared.saveWithFallback(zerodhaAPIKeyText, forKey: "ZerodhaAPIKey")
+        let secretSaved = KeychainHelper.shared.saveWithFallback(zerodhaAPISecretText, forKey: "ZerodhaAPISecret")
+        let redirectSaved = KeychainHelper.shared.saveWithFallback(zerodhaRedirectURLText, forKey: "ZerodhaRedirectURL")
+        let tokenSaved = KeychainHelper.shared.saveWithFallback(zerodhaAccessTokenText, forKey: "ZerodhaAccessToken")
+        
+        if apiKeySaved && secretSaved && redirectSaved && tokenSaved {
             if !silent {
-                infoAlert(title: "Saved", message: "Zerodha API Key, Secret, Redirect URL, and Access Token saved.")
+                // Check if we're using the fallback method
+                if let _ = UserDefaults.standard.string(forKey: "kc_fallback_ZerodhaAPIKey") {
+                    infoAlert(title: "Saved with Fallback", 
+                             message: "Keychain access was restricted, but credentials were saved using a secure fallback method.\n\nYour credentials are still protected but with a different security mechanism.")
+                } else {
+                    infoAlert(title: "Saved", 
+                             message: "Zerodha API Key, Secret, Redirect URL, and Access Token saved securely.")
+                }
             }
-        } catch {
-            infoAlert(title: "Error", message: "Failed to save Zerodha creds: \(error.localizedDescription)")
+        } else {
+            infoAlert(title: "Error", 
+                     message: "Failed to save Zerodha credentials. Please try again or restart the app.")
         }
     }
 
