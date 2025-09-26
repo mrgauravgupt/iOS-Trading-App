@@ -143,7 +143,7 @@ struct RiskManagementDashboard: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                RiskMetricCard(
+                RiskOverviewCard(
                     title: "Portfolio VaR",
                     value: "N/A",
                     subtitle: "1-Day 95% VaR",
@@ -151,7 +151,7 @@ struct RiskManagementDashboard: View {
                     trendValue: "0%"
                 )
                 
-                RiskMetricCard(
+                RiskOverviewCard(
                     title: "Max Drawdown",
                     value: "N/A",
                     subtitle: "Current Period",
@@ -159,7 +159,7 @@ struct RiskManagementDashboard: View {
                     trendValue: "0%"
                 )
                 
-                RiskMetricCard(
+                RiskOverviewCard(
                     title: "Sharpe Ratio",
                     value: "N/A",
                     subtitle: "Risk-Adjusted Return",
@@ -167,7 +167,7 @@ struct RiskManagementDashboard: View {
                     trendValue: "0"
                 )
                 
-                RiskMetricCard(
+                RiskOverviewCard(
                     title: "Beta",
                     value: "N/A",
                     subtitle: "Market Correlation",
@@ -308,7 +308,7 @@ struct RiskManagementDashboard: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else {
-                CorrelationMatrixView(correlations: sampleCorrelations)
+                RiskCorrelationMatrixView(correlations: sampleCorrelations)
             }
         }
         .padding()
@@ -468,7 +468,7 @@ struct RiskAlert: Identifiable {
 
 // MARK: - Supporting Views
 
-struct RiskMetricCard: View {
+struct RiskOverviewCard: View {
     let title: String
     let value: String
     let subtitle: String
@@ -622,10 +622,10 @@ struct RiskGauge: View {
     }
 }
 
-struct CorrelationMatrixView: View {
+struct RiskCorrelationMatrixView: View {
     let correlations: [[Double]]
     private let symbols = ["NIFTY", "BANK", "IT", "PHARMA"]
-    
+
     var body: some View {
         VStack(spacing: 4) {
             ForEach(0..<correlations.count, id: \.self) { row in
@@ -673,15 +673,15 @@ struct CorrelationCell: View {
     }
 }
 
-struct StressTestCard: View {
+struct RiskStressTestCard: View {
     let scenario: String
     let portfolioImpact: String
     let worstPosition: String
     let status: TestStatus
-    
+
     enum TestStatus {
         case safe, caution, warning, critical
-        
+
         var color: Color {
             switch self {
             case .safe: return .green
@@ -691,14 +691,14 @@ struct StressTestCard: View {
             }
         }
     }
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(scenario)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 HStack {
                     Text("Portfolio:")
                         .font(.caption)
@@ -708,7 +708,7 @@ struct StressTestCard: View {
                         .fontWeight(.bold)
                         .foregroundColor(.red)
                 }
-                
+
                 HStack {
                     Text("Worst:")
                         .font(.caption)
@@ -719,9 +719,9 @@ struct StressTestCard: View {
                         .foregroundColor(.red)
                 }
             }
-            
+
             Spacer()
-            
+
             Circle()
                 .fill(status.color)
                 .frame(width: 12, height: 12)

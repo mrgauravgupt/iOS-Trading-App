@@ -6,7 +6,7 @@ targets:
   iOS-Trading-App:
     type: application
     platform: iOS
-    deploymentTarget: "16.0"
+    deploymentTarget: "18.0"
     sources:
       - path: iOS-Trading-AppApp.swift
       - path: ContentView.swift

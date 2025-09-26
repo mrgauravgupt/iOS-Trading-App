@@ -32,11 +32,29 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
             print("Already connected to WebSocket")
             return
         }
-        
+
         connectionStatus = "Connecting..."
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.resume()
         receiveMessage()
+
+        // Set up connection timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            if self?.connectionStatus == "Connecting..." {
+                print("WebSocket connection timeout")
+                self?.connectionStatus = "Connection Timeout"
+                self?.disconnect()
+                // Attempt reconnection after timeout
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                    let apiKey = Config.zerodhaAPIKey()
+                    let accessToken = Config.zerodhaAccessToken()
+                    if !apiKey.isEmpty && !accessToken.isEmpty {
+                        print("Attempting reconnection after timeout...")
+                        self?.connectToZerodhaWebSocket(apiKey: apiKey, accessToken: accessToken)
+                    }
+                }
+            }
+        }
     }
 
     /// Disconnect from WebSocket
@@ -159,15 +177,33 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         DispatchQueue.main.async {
             self.isConnected = true
             self.connectionStatus = "Connected"
+            self.lastUpdateTime = Date()
         }
     }
 
     /// WebSocket closed handler
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         print("WebSocket closed with code: \(closeCode)")
+        if let reason = reason, let reasonString = String(data: reason, encoding: .utf8) {
+            print("Close reason: \(reasonString)")
+        }
+
         DispatchQueue.main.async {
             self.isConnected = false
             self.connectionStatus = "Disconnected"
+            self.lastUpdateTime = nil
+        }
+
+        // Attempt reconnection if not manually disconnected and we have credentials
+        if closeCode != .goingAway {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                let apiKey = Config.zerodhaAPIKey()
+                let accessToken = Config.zerodhaAccessToken()
+                if !apiKey.isEmpty && !accessToken.isEmpty {
+                    print("Attempting reconnection after unexpected disconnect...")
+                    self?.connectToZerodhaWebSocket(apiKey: apiKey, accessToken: accessToken)
+                }
+            }
         }
     }
 

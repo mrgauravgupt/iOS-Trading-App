@@ -331,7 +331,7 @@ struct PerformanceAnalyticsView: View {
             }
             
             ForEach(patternPerformance.prefix(10), id: \.patternName) { pattern in
-                PatternPerformanceCard(
+                PatternPerformanceMetricCard(
                     pattern: pattern,
                     onTap: {
                         selectedPattern = pattern.patternName
@@ -392,31 +392,31 @@ struct PerformanceAnalyticsView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 16) {
-                RiskMetricCard(
+                RiskOverviewCard(
                     title: "Value at Risk (1%)",
                     value: "\(String(format: "%.1f", riskMetrics.valueAtRisk))%",
                     subtitle: "Daily risk exposure",
                     trend: riskMetrics.valueAtRisk <= 5 ? .down : .up,
                     trendValue: "\(String(format: "%.1f", riskMetrics.valueAtRisk - 2))%"
                 )
-                
-                RiskMetricCard(
+
+                RiskOverviewCard(
                     title: "Beta",
                     value: String(format: "%.2f", riskMetrics.beta),
                     subtitle: "Market correlation",
                     trend: abs(riskMetrics.beta - 1.0) <= 0.2 ? .neutral : (riskMetrics.beta > 1.0 ? .up : .down),
                     trendValue: String(format: "%.2f", riskMetrics.beta - 1.0)
                 )
-                
-                RiskMetricCard(
+
+                RiskOverviewCard(
                     title: "Correlation",
                     value: String(format: "%.2f", riskMetrics.correlation),
                     subtitle: "Index correlation",
                     trend: abs(riskMetrics.correlation) <= 0.7 ? .neutral : (riskMetrics.correlation > 0 ? .up : .down),
                     trendValue: String(format: "%.2f", riskMetrics.correlation - 0.5)
                 )
-                
-                RiskMetricCard(
+
+                RiskOverviewCard(
                     title: "Information Ratio",
                     value: String(format: "%.2f", riskMetrics.informationRatio),
                     subtitle: "Risk-adjusted returns",
@@ -610,10 +610,10 @@ struct StatItem: View {
     }
 }
 
-struct PatternPerformanceCard: View {
+struct PatternPerformanceMetricCard: View {
     let pattern: PatternPerformanceMetric
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 12) {
@@ -621,15 +621,15 @@ struct PatternPerformanceCard: View {
                     Text(pattern.patternName)
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     Spacer()
-                    
+
                     Text("\(String(format: "%.1f", pattern.successRate))%")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(pattern.successRate >= 70 ? .green : .orange)
                 }
-                
+
                 HStack(spacing: 20) {
                     VStack(alignment: .leading) {
                         Text("Avg Return")
@@ -639,7 +639,7 @@ struct PatternPerformanceCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    
+
                     VStack(alignment: .leading) {
                         Text("Trades")
                             .font(.caption)
@@ -648,7 +648,7 @@ struct PatternPerformanceCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    
+
                     VStack(alignment: .leading) {
                         Text("Profit Factor")
                             .font(.caption)
@@ -657,7 +657,7 @@ struct PatternPerformanceCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    
+
                     Spacer()
                 }
             }
@@ -669,7 +669,7 @@ struct PatternPerformanceCard: View {
     }
 }
 
-// RiskMetricCard is defined in RiskManagementDashboard.swift
+// RiskOverviewCard is defined in RiskManagementDashboard.swift
 // AgentPerformanceCard is defined in AIControlCenterView.swift
 
 struct LearningMetricCard: View {

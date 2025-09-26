@@ -494,16 +494,8 @@ struct ContentView: View {
     
     // MARK: - Analytics View
     private func analyticsView(geometry: GeometryProxy) -> some View {
-        VStack {
-            Text("Analytics View")
-                .font(.title)
-                .foregroundColor(.white)
-            
-            Spacer()
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.2))
+        AnalyticsDashboardView()
+            .frame(maxWidth: CGFloat.infinity, maxHeight: CGFloat.infinity)
     }
     
     // MARK: - Portfolio View
@@ -717,17 +709,7 @@ struct ContentView: View {
     }
     
     private func updateMarketData(_ marketData: MarketData) {
-        // Update the current price and related data
-        previousPrice = currentPrice
-        currentPrice = marketData.price
-
-        // Calculate price change
-        if previousPrice > 0 {
-            priceChange = currentPrice - previousPrice
-            percentChange = (priceChange / previousPrice) * 100
-        }
-
-        // Update market quotes
+        // Update market quotes for all symbols
         marketQuotes[marketData.symbol] = marketData
 
         // Update the market data array
@@ -737,9 +719,26 @@ struct ContentView: View {
             self.marketData.append(marketData)
         }
 
+        // Only update NIFTY 50 price and change calculations for the header
+        // Check for both "NIFTY" and "NSE:NIFTY 50" formats
+        if marketData.symbol == "NIFTY" || marketData.symbol == "NSE:NIFTY 50" {
+            let oldPrice = currentPrice
+            previousPrice = oldPrice
+            currentPrice = marketData.price
+
+            // Calculate price change
+            if previousPrice > 0 {
+                priceChange = currentPrice - previousPrice
+                percentChange = (priceChange / previousPrice) * 100
+            }
+
+            print("NIFTY PRICE UPDATE: \(marketData.symbol) - Old: ₹\(String(format: "%.2f", oldPrice)), New: ₹\(String(format: "%.2f", currentPrice)), Change: ₹\(String(format: "%.2f", priceChange)) (\(String(format: "%.2f", percentChange))%)")
+        }
+
         print("Real-time update: \(marketData.symbol) = ₹\(String(format: "%.2f", marketData.price))")
         print("WebSocket connected: \(webSocketManager.isConnected)")
         print("Market quotes count: \(marketQuotes.count)")
+        print("Current NIFTY price: ₹\(String(format: "%.2f", currentPrice))")
         print("Current market quotes: \(marketQuotes.map { "\($0.key): ₹\($0.value.price)" }.joined(separator: ", "))")
     }
     

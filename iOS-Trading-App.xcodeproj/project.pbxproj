@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		062BD270EC5E92C8B18E8B3B /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3065CA9918A2C3219F880AC6 /* Persistence.swift */; };
+		8F9E0D1C2B3A4567890ABCDE /* AnalyticsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1B2C3D4E5F678901234567 /* AnalyticsDashboardView.swift */; };
+		210FEDCBA9876543210FEDCB /* AnalyticsEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCDEF1234567890ABCDEF12 /* AnalyticsEnums.swift */; };
+		87654321FEDCBA0987654321 /* PortfolioAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34567890ABCDEF1234567890 /* PortfolioAnalyticsView.swift */; };
+		CBA987654321FEDCBA987654 /* TradingAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ABCDEF1234567890ABCDEF1 /* TradingAnalyticsView.swift */; };
 		0CCB15DA9C043D1F1722DF30 /* DataProviders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6098FCFB91061E89AEB4E765 /* DataProviders.swift */; };
 		100B0993D5A48A6BA341C56F /* BacktestingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3889F0C8E65008F9EF7B62 /* BacktestingEngine.swift */; };
 		10D43D8B5B4827A811B73C3D /* DataValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95963B99A13DC1E0446A4744 /* DataValidator.swift */; };
@@ -152,6 +156,10 @@
 		F6174E1AB961FCA0A2A88799 /* TradingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradingData.swift; sourceTree = "<group>"; };
 		F67A7112DD423B4ADEAE6207 /* NIFTYOptionsDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIFTYOptionsDashboard.swift; sourceTree = "<group>"; };
 		FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "iOS-Trading-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A1B2C3D4E5F678901234567 /* AnalyticsDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsDashboardView.swift; sourceTree = "<group>"; };
+		ABCDEF1234567890ABCDEF12 /* AnalyticsEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEnums.swift; sourceTree = "<group>"; };
+		34567890ABCDEF1234567890 /* PortfolioAnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioAnalyticsView.swift; sourceTree = "<group>"; };
+		9ABCDEF1234567890ABCDEF1 /* TradingAnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradingAnalyticsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -168,6 +176,10 @@
 			isa = PBXGroup;
 			children = (
 				BE3E84E2BE35B7120394D850 /* AdvancedRiskManager.swift */,
+				0A1B2C3D4E5F678901234567 /* AnalyticsDashboardView.swift */,
+				ABCDEF1234567890ABCDEF12 /* AnalyticsEnums.swift */,
+				34567890ABCDEF1234567890 /* PortfolioAnalyticsView.swift */,
+				9ABCDEF1234567890ABCDEF1 /* TradingAnalyticsView.swift */,
 				619D82785F031AA10C6DF835 /* AgentCoordinator.swift */,
 				F033B3A76AC3EF02D84CC3AF /* AIAgentTrader.swift */,
 				2C4E2866E533C922F4EF2D52 /* AIControlCenterView.swift */,
@@ -385,6 +397,14 @@
 				4867BF79416D000052FB2575 /* ZerodhaAPIClient.swift in Sources */,
 				E6F2F9EE3381A2E5D674830A /* ZerodhaAuthManager.swift in Sources */,
 				B87466629C9B6A2B95B88354 /* iOS-Trading-AppApp.swift in Sources */,
+				8F9E0D1C2B3A4567890ABCDE /* AnalyticsDashboardView.swift in Sources */,
+
+				210FEDCBA9876543210FEDCB /* AnalyticsEnums.swift in Sources */,
+
+				87654321FEDCBA0987654321 /* PortfolioAnalyticsView.swift in Sources */,
+
+				CBA987654321FEDCBA987654 /* TradingAnalyticsView.swift in Sources */,
+
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
