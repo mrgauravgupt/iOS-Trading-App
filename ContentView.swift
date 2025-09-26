@@ -43,15 +43,15 @@ struct ContentView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .ignoresSafeArea(.all)
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Custom Header - Compact and extends to top
+                Spacer(minLength: 0)
+                // Custom Header - Flexible height
                 headerView
-                    .frame(height: 48) // Reduced from 60 to 48
-                    .padding(.top, 2) // Reduced from 10 to 2
+                    .padding(.top, 2)
                 
-                // Main Content - Expand to fill available space
+                // Main Content - Takes remaining space
                 TabView(selection: $selectedTab) {
                     // Dashboard Tab
                     dashboardView
@@ -74,11 +74,13 @@ struct ContentView: View {
                         .tag(4)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .frame(maxHeight: .infinity)
                 
-                // Custom Tab Bar - Ultra Compact
+                // Custom Tab Bar - Flexible height
                 customTabBar
-                    .frame(height: 50) // Further reduced from 60 to 50
+                    .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .ignoresSafeArea(.all, edges: .bottom) // Allow content to extend to bottom edge
         .ignoresSafeArea(.container, edges: .top) // Allow content to extend to top edge
