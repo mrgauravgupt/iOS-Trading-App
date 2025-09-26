@@ -1,0 +1,51 @@
+# SwiftLint Configuration
+
+# Basic settings
+opt_in_rules:
+  - empty_count
+  - empty_string
+
+disabled_rules:
+  - identifier_name
+  - line_length
+  - type_body_length
+  - function_body_length
+  - file_length
+  - cyclomatic_complexity
+  - force_try
+  - force_cast
+  - todo
+
+# Rule configurations
+trailing_whitespace:
+  ignores_empty_lines: true
+  ignores_comments: true
+
+identifier_name:
+  min_length: 2
+  max_length: 60
+  excluded:
+    - id
+    - URL
+    - url
+    - GlobalAPIKey
+
+type_name:
+  min_length: 2
+  max_length: 60
+
+# Directory configurations
+excluded:
+  - Carthage
+  - Pods
+  - DerivedData
+  - .build
+
+# Custom rules can be added here
+custom_rules:
+  # Prefer let over var when variable is not modified
+  prefer_let_over_var:
+    included: ".*\\.swift"
+    regex: "var\\s+\\w+\\s*:.*[^=]*$"
+    message: "Prefer 'let' over 'var' when variable is not modified"
+    severity: warning
