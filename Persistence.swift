@@ -15,6 +15,11 @@ struct PersistenceController {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
+        // Enable lightweight migration
+        let description = NSPersistentStoreDescription()
+        description.shouldMigrateStoreAutomatically = true
+        description.shouldInferMappingModelAutomatically = true
+        container.persistentStoreDescriptions = [description]
         container.viewContext.automaticallyMergesChangesFromParent = true
     }
 
@@ -55,15 +60,5 @@ struct PersistenceController {
         }
     }
 
-    // TODO: The NewsArticle Core Data entity seems to be missing from the project.
-    // This function is commented out to resolve build errors.
-    // func saveNewsArticle(_ article: Article) {
-    //     let context = container.viewContext
-    //     let newsEntity = NewsArticle(context: context)
-    //     newsEntity.title = article.title
-    //     newsEntity.descriptionText = article.description
-    //     newsEntity.url = article.url
-    //     newsEntity.publishedAt = article.publishedAt
-    //     saveContext()
-    // }
+
 }

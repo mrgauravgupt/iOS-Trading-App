@@ -46,6 +46,8 @@ targets:
       - path: Persistence.swift
       - path: NotificationManager.swift
       - path: SettingsView.swift
+      - path: CustomPatternCreationView.swift
+      - path: PatternImportView.swift
       - path: LoginView.swift
       - path: ChartView.swift
       - path: UIHelpers.swift
@@ -68,6 +70,10 @@ targets:
       - path: PatternScannerView.swift
       - path: RiskManagementDashboard.swift
       - path: PerformanceAnalyticsView.swift
+      - path: AnalyticsDashboardView.swift
+      - path: AnalyticsEnums.swift
+      - path: PortfolioAnalyticsView.swift
+      - path: TradingAnalyticsView.swift
       - path: TechnicalIndicatorsManager.swift
       - path: TimeframeDataManager.swift
     settings:

@@ -47,6 +47,10 @@ struct SettingsView: View {
     @State private var infoAlertMessage = ""
     @State private var isExchangingToken = false
 
+    // Custom pattern views
+    @State private var showCustomPatternCreation = false
+    @State private var showPatternImport = false
+
     // Connection test
     @State private var connectionStatus: String = ""
     private let client = ZerodhaAPIClient()
@@ -151,6 +155,12 @@ struct SettingsView: View {
         .alert(infoAlertTitle, isPresented: $showInfoAlert) {
             Button("OK", role: .cancel) {}
         } message: { Text(infoAlertMessage) }
+        .sheet(isPresented: $showCustomPatternCreation) {
+            CustomPatternCreationView()
+        }
+        .sheet(isPresented: $showPatternImport) {
+            PatternImportView()
+        }
     }
     
 
@@ -372,14 +382,12 @@ struct SettingsView: View {
             DisclosureGroup("Custom Patterns") {
                 VStack(spacing: 12) {
                     Button("Create Custom Pattern") {
-                        // TODO: Implement custom pattern creation
-                        infoAlert(title: "Coming Soon", message: "Custom pattern creation will be available in the next update.")
+                        showCustomPatternCreation = true
                     }
                     .buttonStyle(.bordered)
 
                     Button("Import Pattern Library") {
-                        // TODO: Implement pattern import
-                        infoAlert(title: "Coming Soon", message: "Pattern library import will be available in the next update.")
+                        showPatternImport = true
                     }
                     .buttonStyle(.bordered)
                 }
