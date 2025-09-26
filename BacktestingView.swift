@@ -514,32 +514,7 @@ struct AdvancedBacktestResult {
     let equityCurve: [EquityPoint]
     let drawdownCurve: [DrawdownPoint]
     
-    static let mock = AdvancedBacktestResult(
-        totalReturn: 0.124,
-        annualizedReturn: 0.156,
-        winRate: 0.68,
-        totalTrades: 247,
-        profitableTrades: 168,
-        sharpeRatio: 1.85,
-        sortinoRatio: 2.34,
-        calmarRatio: 1.51,
-        maxDrawdown: 0.082,
-        averageDrawdown: 0.032,
-        volatility: 0.142,
-        beta: 0.92,
-        alpha: 0.034,
-        patternResults: [],
-        bestPerformingPattern: "Bullish Flag",
-        worstPerformingPattern: "Head and Shoulders",
-        monteCarloResults: nil,
-        mlInsights: nil,
-        valueAtRisk: 0.045,
-        expectedShortfall: 0.067,
-        profitFactor: 1.68,
-        recoveryFactor: 3.2,
-        equityCurve: [],
-        drawdownCurve: []
-    )
+
 }
 
 struct PatternBacktestResult {

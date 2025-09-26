@@ -4,8 +4,8 @@ struct RiskManagementDashboard: View {
     @StateObject private var riskManager = AdvancedRiskManager()
     @State private var selectedTimeframe: RiskTimeframe = .daily
     @State private var showStressTest = false
-    @State private var portfolioValue: Double = 100000
-    @State private var maxDrawdown: Double = 0.15
+    @State private var portfolioValue: Double = 0.0
+    @State private var maxDrawdown: Double = 0.0
     
     enum RiskTimeframe: String, CaseIterable {
         case realtime = "Real-time"
@@ -123,7 +123,7 @@ struct RiskManagementDashboard: View {
     
     private var currentRiskScore: Double {
         // Calculate based on multiple factors
-        return 0.45 // Placeholder
+        return 0.0 // No real data available
     }
     
     // MARK: - Risk Overview Section
@@ -145,34 +145,34 @@ struct RiskManagementDashboard: View {
             ], spacing: 12) {
                 RiskMetricCard(
                     title: "Portfolio VaR",
-                    value: "$4,250",
+                    value: "N/A",
                     subtitle: "1-Day 95% VaR",
-                    trend: .down,
-                    trendValue: "2.3%"
+                    trend: .neutral,
+                    trendValue: "0%"
                 )
                 
                 RiskMetricCard(
                     title: "Max Drawdown",
-                    value: "12.4%",
+                    value: "N/A",
                     subtitle: "Current Period",
-                    trend: .up,
-                    trendValue: "1.8%"
+                    trend: .neutral,
+                    trendValue: "0%"
                 )
                 
                 RiskMetricCard(
                     title: "Sharpe Ratio",
-                    value: "1.85",
+                    value: "N/A",
                     subtitle: "Risk-Adjusted Return",
-                    trend: .up,
-                    trendValue: "0.15"
+                    trend: .neutral,
+                    trendValue: "0"
                 )
                 
                 RiskMetricCard(
                     title: "Beta",
-                    value: "0.92",
+                    value: "N/A",
                     subtitle: "Market Correlation",
-                    trend: .down,
-                    trendValue: "0.05"
+                    trend: .neutral,
+                    trendValue: "0"
                 )
             }
         }
@@ -198,9 +198,18 @@ struct RiskManagementDashboard: View {
                     .foregroundColor(.secondary)
             }
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
-                ForEach(samplePositions, id: \.symbol) { position in
-                    PositionHeatCell(position: position)
+            if samplePositions.isEmpty {
+                Text("No positions available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: 80)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(6)
+            } else {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
+                    ForEach(samplePositions, id: \.symbol) { position in
+                        PositionHeatCell(position: position)
+                    }
                 }
             }
             
@@ -241,28 +250,28 @@ struct RiskManagementDashboard: View {
             VStack(spacing: 12) {
                 RiskGauge(
                     title: "Value at Risk (VaR)",
-                    current: 0.045,
+                    current: 0.0,
                     threshold: 0.05,
                     format: .percentage
                 )
                 
                 RiskGauge(
                     title: "Expected Shortfall",
-                    current: 0.067,
+                    current: 0.0,
                     threshold: 0.08,
                     format: .percentage
                 )
                 
                 RiskGauge(
                     title: "Portfolio Volatility",
-                    current: 0.18,
+                    current: 0.0,
                     threshold: 0.25,
                     format: .percentage
                 )
                 
                 RiskGauge(
                     title: "Concentration Risk",
-                    current: 0.32,
+                    current: 0.0,
                     threshold: 0.40,
                     format: .percentage
                 )
@@ -292,7 +301,15 @@ struct RiskManagementDashboard: View {
                 .foregroundColor(.blue)
             }
             
-            CorrelationMatrixView(correlations: sampleCorrelations)
+            if sampleCorrelations.isEmpty {
+                Text("No correlation data available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                CorrelationMatrixView(correlations: sampleCorrelations)
+            }
         }
         .padding()
         .background(Color(.systemGray6))
@@ -318,26 +335,11 @@ struct RiskManagementDashboard: View {
             }
             
             VStack(spacing: 12) {
-                StressTestCard(
-                    scenario: "Market Crash (-20%)",
-                    portfolioImpact: "-15.2%",
-                    worstPosition: "TECH: -28%",
-                    status: .warning
-                )
-                
-                StressTestCard(
-                    scenario: "Interest Rate Shock (+2%)",
-                    portfolioImpact: "-8.7%",
-                    worstPosition: "REITS: -18%",
-                    status: .caution
-                )
-                
-                StressTestCard(
-                    scenario: "Currency Crisis",
-                    portfolioImpact: "-11.3%",
-                    worstPosition: "INT: -22%",
-                    status: .warning
-                )
+                Text("No stress test data available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
             }
         }
         .padding()
@@ -366,19 +368,11 @@ struct RiskManagementDashboard: View {
                     .cornerRadius(8)
             }
             
-            if activeAlerts.isEmpty {
-                Text("No active risk alerts")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(activeAlerts, id: \.id) { alert in
-                        RiskAlertCard(alert: alert)
-                    }
-                }
-            }
+            Text("No active risk alerts")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding()
         }
         .padding()
         .background(Color(.systemGray6))
@@ -399,33 +393,11 @@ struct RiskManagementDashboard: View {
             }
             
             VStack(spacing: 12) {
-                PositionLimitBar(
-                    title: "Single Position Limit",
-                    current: 0.08,
-                    limit: 0.10,
-                    symbol: "RELIANCE"
-                )
-                
-                PositionLimitBar(
-                    title: "Sector Concentration",
-                    current: 0.35,
-                    limit: 0.40,
-                    symbol: "TECHNOLOGY"
-                )
-                
-                PositionLimitBar(
-                    title: "Daily Loss Limit",
-                    current: 0.02,
-                    limit: 0.05,
-                    symbol: "PORTFOLIO"
-                )
-                
-                PositionLimitBar(
-                    title: "Leverage Ratio",
-                    current: 0.65,
-                    limit: 1.00,
-                    symbol: "MARGIN"
-                )
+                Text("No position limits data available")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
             }
         }
         .padding()
@@ -433,23 +405,10 @@ struct RiskManagementDashboard: View {
         .cornerRadius(15)
     }
     
-    // MARK: - Sample Data
+    // MARK: - Real Data (Empty until integrated with API)
     
     private var samplePositions: [PositionData] {
-        [
-            PositionData(symbol: "NIFTY", risk: 0.25),
-            PositionData(symbol: "SENSEX", risk: 0.30),
-            PositionData(symbol: "RELI", risk: 0.15),
-            PositionData(symbol: "TCS", risk: 0.20),
-            PositionData(symbol: "INFY", risk: 0.35),
-            PositionData(symbol: "HDFC", risk: 0.40),
-            PositionData(symbol: "ICICI", risk: 0.28),
-            PositionData(symbol: "SBI", risk: 0.45),
-            PositionData(symbol: "ITC", risk: 0.12),
-            PositionData(symbol: "COAL", risk: 0.60),
-            PositionData(symbol: "ONGC", risk: 0.55),
-            PositionData(symbol: "IOC", risk: 0.38)
-        ]
+        [] // No real data available
     }
     
     private var riskLevels: [RiskLevel] {
@@ -462,31 +421,11 @@ struct RiskManagementDashboard: View {
     }
     
     private var sampleCorrelations: [[Double]] {
-        [
-            [1.0, 0.85, 0.72, 0.45],
-            [0.85, 1.0, 0.68, 0.52],
-            [0.72, 0.68, 1.0, 0.38],
-            [0.45, 0.52, 0.38, 1.0]
-        ]
+        [] // No real data available
     }
     
     private var activeAlerts: [RiskAlert] {
-        [
-            RiskAlert(
-                id: 1,
-                type: .concentrationRisk,
-                message: "Technology sector concentration above 30%",
-                severity: .high,
-                timestamp: Date()
-            ),
-            RiskAlert(
-                id: 2,
-                type: .volatilitySpike,
-                message: "Portfolio volatility increased 15% in last hour",
-                severity: .medium,
-                timestamp: Date().addingTimeInterval(-300)
-            )
-        ]
+        [] // No real alerts available
     }
 }
 

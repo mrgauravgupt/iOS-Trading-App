@@ -148,17 +148,17 @@ class ZerodhaAPIClient {
     }
     
     func getPositions() async throws -> [[String: Any]] {
-        // Stub implementation - returns empty positions
+        // Real implementation not available - return empty positions
         return []
     }
     
     func getQuote(symbol: String) -> MarketData? {
-        // Real implementation not available - return nil
+        // Real implementation not available - return nil to indicate no data
         return nil
     }
     
     func getAvailableFunds() async throws -> Double {
-        // Real implementation not available - throw error
+        // Real implementation not available - throw error to indicate no data
         throw NSError(domain: "TradingAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Real funds data not available. Use paper trading mode."])
     }
 }
