@@ -62,22 +62,30 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
             case .success(let message):
                 switch message {
                 case .string(let text):
+                    print("Received string message: \(text)")
                     self.onMessageReceived?(text)
                     if let tick = self.parseMessage(text) {
+                        print("Parsed tick: \(tick.symbol) = ₹\(tick.price)")
                         DispatchQueue.main.async {
                             self.lastUpdateTime = Date()
                         }
                         self.onTick?(tick)
+                    } else {
+                        print("Failed to parse message as tick")
                     }
                 case .data(let data):
-                    print("Received data: \(data.count) bytes")
+                    print("Received binary data: \(data.count) bytes")
                     let ticks = self.parseBinaryTicks(data)
+                    print("Parsed \(ticks.count) binary ticks")
                     if !ticks.isEmpty {
                         DispatchQueue.main.async {
                             self.lastUpdateTime = Date()
                         }
                     }
-                    for t in ticks { self.onTick?(t) }
+                    for t in ticks {
+                        print("Binary tick: \(t.symbol) = ₹\(t.price)")
+                        self.onTick?(t)
+                    }
                 @unknown default:
                     break
                 }
@@ -147,7 +155,7 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
 
     /// WebSocket connected handler
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
-        print("WebSocket connected")
+        print("WebSocket connected successfully")
         DispatchQueue.main.async {
             self.isConnected = true
             self.connectionStatus = "Connected"
@@ -316,6 +324,8 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     func startDataStreaming() {
         let apiKey = Config.zerodhaAPIKey()
         let access = Config.zerodhaAccessToken()
+        print("startDataStreaming - API Key: '\(apiKey)', Access Token: '\(access)'")
+        print("startDataStreaming - API Key present: \(!apiKey.isEmpty), Access Token present: \(!access.isEmpty)")
         guard !apiKey.isEmpty, !access.isEmpty else {
             print("Missing creds for startDataStreaming")
             return

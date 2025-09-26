@@ -564,27 +564,32 @@ struct SettingsView: View {
         saveZerodhaCreds(silent: true)
         // Dismiss the settings sheet before presenting the login sheet
         isPresented = false
-        authManager.startLoginInWebView(present: { webView in
-            // Present globally via TemporaryWebLogin sheet defined in App
-            TemporaryWebLogin.shared.present(webView: webView)
-        }, completion: { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let requestToken):
-                    // Dismiss web view immediately after getting request token
-                    TemporaryWebLogin.shared.isPresented = false
-                    // Start exchanging token
-                    isExchangingToken = true
-                    exchangeRequestToken(requestToken)
-                case .failure(let error):
-                    TemporaryWebLogin.shared.isPresented = false
-                    infoAlert(title: "Login Failed", message: error.localizedDescription)
+
+        // Add a small delay to ensure the settings sheet is fully dismissed before presenting the login sheet
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.authManager.startLoginInWebView(present: { webView in
+                // Present globally via TemporaryWebLogin sheet defined in App
+                TemporaryWebLogin.shared.present(webView: webView)
+            }, completion: { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let requestToken):
+                        // Dismiss web view immediately after getting request token
+                        TemporaryWebLogin.shared.isPresented = false
+                        // Start exchanging token
+                        self.isExchangingToken = true
+                        self.exchangeRequestToken(requestToken)
+                    case .failure(let error):
+                        TemporaryWebLogin.shared.isPresented = false
+                        self.infoAlert(title: "Login Failed", message: error.localizedDescription)
+                    }
                 }
-            }
-        })
+            })
+        }
     }
 
     private func exchangeRequestToken(_ requestToken: String) {
+        print("exchangeRequestToken called with requestToken: \(requestToken)")
         let apiKey = zerodhaAPIKeyText
         let secret = zerodhaAPISecretText
         guard !apiKey.isEmpty, !secret.isEmpty else {
@@ -594,33 +599,59 @@ struct SettingsView: View {
         }
         let payload = apiKey + requestToken + secret
         let checksum = sha256Hex(payload)
+        print("Generated checksum: \(checksum)")
 
         var req = URLRequest(url: URL(string: "https://api.kite.trade/session/token")!)
         req.httpMethod = "POST"
         req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let body = "api_key=\(apiKey)&request_token=\(requestToken)&checksum=\(checksum)"
+        print("Request body: \(body)")
         req.httpBody = body.data(using: .utf8)
 
         URLSession.shared.dataTask(with: req) { data, resp, err in
             DispatchQueue.main.async {
                 self.isExchangingToken = false
                 if let err = err {
+                    print("Token exchange error: \(err.localizedDescription)")
                     self.infoAlert(title: "Exchange Failed", message: err.localizedDescription)
                     return
                 }
-                guard let data = data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                guard let data = data else {
+                    print("No data received from token exchange")
+                    self.infoAlert(title: "Exchange Failed", message: "No data received.")
+                    return
+                }
+
+                print("Received response: \(String(describing: resp))")
+                if let httpResponse = resp as? HTTPURLResponse {
+                    print("HTTP Status Code: \(httpResponse.statusCode)")
+                }
+
+                print("Response data: \(String(data: data, encoding: .utf8) ?? "Invalid UTF8")")
+
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let dataObj = json["data"] as? [String: Any],
                       let access = dataObj["access_token"] as? String else {
+                    print("Invalid response format for token exchange")
                     self.infoAlert(title: "Exchange Failed", message: "Invalid response.")
                     return
                 }
-                do {
-                    _ = try KeychainHelper.shared.save(access, forKey: "ZerodhaAccessToken")
+
+                print("Extracted access_token: \(access)")
+
+                let saveResult = KeychainHelper.shared.saveWithFallback(access, forKey: "ZerodhaAccessToken")
+                print("Save result: \(saveResult)")
+                if saveResult {
                     self.zerodhaAccessTokenText = access
+                    // Reload credentials to ensure Config reads the new value
+                    self.loadSavedCredentials()
                     self.infoAlert(title: "Connected", message: "Access token saved. Connection ready.")
-                } catch {
-                    self.infoAlert(title: "Save Failed", message: error.localizedDescription)
+                    // Notify ContentView to restart WebSocket streaming
+                    print("Posting ZerodhaLoginSuccess notification")
+                    NotificationCenter.default.post(name: NSNotification.Name("ZerodhaLoginSuccess"), object: nil)
+                } else {
+                    print("Failed to save access token")
+                    self.infoAlert(title: "Save Failed", message: "Failed to save access token. Please try again.")
                 }
             }
         }.resume()

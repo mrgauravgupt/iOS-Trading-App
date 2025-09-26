@@ -90,12 +90,20 @@ struct ContentView: View {
             loadInitialData()
             setupRealTimeDataStream()
 
-            // Start Zerodha WebSocket streaming
-            webSocketManager.startDataStreaming()
+            // Start Zerodha WebSocket streaming only if credentials are available
+            startWebSocketIfCredentialsAvailable()
             
             // Register for notification to show trade suggestions
             NotificationCenter.default.addObserver(forName: NSNotification.Name("ShowTradeSuggestions"), object: nil, queue: .main) { _ in
                 self.showTradeSuggestions = true
+            }
+
+            // Register for login success notification to restart WebSocket
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ZerodhaLoginSuccess"), object: nil, queue: .main) { _ in
+                print("Login success notification received - restarting WebSocket streaming")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.startWebSocketIfCredentialsAvailable()
+                }
             }
             
             // Register for connection status request
@@ -712,24 +720,27 @@ struct ContentView: View {
         // Update the current price and related data
         previousPrice = currentPrice
         currentPrice = marketData.price
-        
+
         // Calculate price change
         if previousPrice > 0 {
             priceChange = currentPrice - previousPrice
             percentChange = (priceChange / previousPrice) * 100
         }
-        
+
         // Update market quotes
         marketQuotes[marketData.symbol] = marketData
-        
+
         // Update the market data array
         if let index = self.marketData.firstIndex(where: { $0.symbol == marketData.symbol }) {
             self.marketData[index] = marketData
         } else {
             self.marketData.append(marketData)
         }
-        
+
         print("Real-time update: \(marketData.symbol) = ₹\(String(format: "%.2f", marketData.price))")
+        print("WebSocket connected: \(webSocketManager.isConnected)")
+        print("Market quotes count: \(marketQuotes.count)")
+        print("Current market quotes: \(marketQuotes.map { "\($0.key): ₹\($0.value.price)" }.joined(separator: ", "))")
     }
     
     // MARK: - Auto Refresh Functions (Fallback)
@@ -755,7 +766,7 @@ struct ContentView: View {
     // MARK: - Helper Functions
     private func timeAgoString(from date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
-        
+
         if interval < 1 {
             return "just now"
         } else if interval < 60 {
@@ -764,6 +775,19 @@ struct ContentView: View {
             return "\(Int(interval / 60))m ago"
         } else {
             return "\(Int(interval / 3600))h ago"
+        }
+    }
+
+    private func startWebSocketIfCredentialsAvailable() {
+        let apiKey = Config.zerodhaAPIKey()
+        let accessToken = Config.zerodhaAccessToken()
+        let hasCreds = !apiKey.isEmpty && !accessToken.isEmpty
+        print("startWebSocketIfCredentialsAvailable - API Key: '\(apiKey)', Access Token: '\(accessToken)', Has Creds: \(hasCreds)")
+        if hasCreds {
+            print("Credentials available - starting WebSocket streaming")
+            webSocketManager.startDataStreaming()
+        } else {
+            print("Credentials not available - skipping WebSocket streaming")
         }
     }
 }
