@@ -3,29 +3,172 @@ import SwiftUI
 
 public class PatternRecognitionEngine: ObservableObject {
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
-    
+    private let mlModelManager = MLModelManager.shared
+
+    // ML-based adaptive thresholds
+    private var adaptiveThresholds: [String: Double] = [:]
+    private var patternPerformanceHistory: [String: [PatternPerformance]] = [:]
+    private var marketConditionHistory: [MarketCondition] = []
+
     // Use the enhanced TradingSignal from TechnicalAnalysisEngine
     typealias TradingSignal = TechnicalAnalysisEngine.TradingSignal
     typealias PatternResult = TechnicalAnalysisEngine.PatternResult
     typealias PatternStrength = TechnicalAnalysisEngine.PatternStrength
+
+    // MARK: - ML-Based Pattern Enhancement
+
+    struct PatternPerformance {
+        let pattern: String
+        let confidence: Double
+        let marketRegime: MarketRegime
+        let outcome: Bool // true if profitable
+        let timestamp: Date
+        let holdingPeriod: Int // in minutes
+        let features: [Double] // ML features used for prediction
+    }
+
+    struct MarketCondition {
+        let regime: MarketRegime
+        let volatility: Double
+        let volume: Double
+        let timestamp: Date
+        let sentimentScore: Double // Market sentiment
+        let momentum: Double // Momentum indicator
+    }
+
+    // ML-based pattern detection features
+    private var patternFeatureExtractor = PatternFeatureExtractor()
+    private var neuralNetworkPredictor = NeuralNetworkPredictor()
+    private var ensembleModel = EnsemblePatternModel()
     
     // MARK: - Pattern Alert Structure
 
-    // MARK: - Multi-Timeframe Pattern Analysis
+    // MARK: - ML-Enhanced Pattern Analysis
     
     func analyzeComprehensivePatterns(marketData: [MarketData]) -> [String: [PatternResult]] {
         // Use the enhanced multi-timeframe analysis from TechnicalAnalysisEngine
         let multiTimeframeResults = technicalAnalysisEngine.analyzeMultiTimeframe(data: marketData)
         
-        // Apply pattern quality scoring
-        var qualityAdjustedResults: [String: [PatternResult]] = [:]
+        // Apply ML-based confidence adjustment
+        var mlAdjustedResults: [String: [PatternResult]] = [:]
         
         for (timeframe, patterns) in multiTimeframeResults {
-            let qualityPatterns = technicalAnalysisEngine.calculatePatternQuality(patterns: patterns)
-            qualityAdjustedResults[timeframe] = qualityPatterns
+            let mlPatterns = adjustPatternConfidenceWithML(patterns: patterns, marketData: marketData)
+            let qualityPatterns = technicalAnalysisEngine.calculatePatternQuality(patterns: mlPatterns)
+            mlAdjustedResults[timeframe] = qualityPatterns
         }
         
-        return qualityAdjustedResults
+        // Update adaptive thresholds based on recent performance
+        updateAdaptiveThresholds()
+        
+        return mlAdjustedResults
+    }
+    
+    private func adjustPatternConfidenceWithML(patterns: [PatternResult], marketData: [MarketData]) -> [PatternResult] {
+        let regime = detectMarketRegime(marketData: marketData)
+        let volatility = marketData.map { $0.price }.standardDeviation()
+        
+        // Create state for ML model
+        let state: [Double] = [
+            regime == .bullish ? 1.0 : 0.0,
+            regime == .bearish ? 1.0 : 0.0,
+            volatility,
+            Double(marketData.count)
+        ]
+        
+        let mlAdjustment = mlModelManager.makePrediction(input: state)
+        
+        return patterns.map { pattern in
+            // Adjust confidence based on ML prediction and historical performance
+            let baseAdjustment = mlAdjustment * 0.1 // ML contributes 10% to confidence
+            let historicalAdjustment = getHistoricalPerformanceAdjustment(for: pattern.pattern, regime: regime)
+
+            let adjustedConfidence = min(1.0, max(0.0, pattern.confidence + baseAdjustment + historicalAdjustment))
+
+            // Create new PatternResult with adjusted confidence
+            return PatternResult(
+                pattern: pattern.pattern,
+                signal: pattern.signal,
+                confidence: adjustedConfidence,
+                timeframe: pattern.timeframe,
+                strength: pattern.strength,
+                targets: pattern.targets,
+                stopLoss: pattern.stopLoss,
+                successRate: pattern.successRate
+            )
+        }
+    }
+    
+    private func getHistoricalPerformanceAdjustment(for pattern: String, regime: MarketRegime) -> Double {
+        guard let history = patternPerformanceHistory[pattern] else { return 0.0 }
+        
+        let relevantHistory = history.filter { $0.marketRegime == regime }
+        guard !relevantHistory.isEmpty else { return 0.0 }
+        
+        let successRate = Double(relevantHistory.filter { $0.outcome }.count) / Double(relevantHistory.count)
+        let adjustment = (successRate - 0.5) * 0.2 // Adjust by up to 20% based on success rate
+        
+        return adjustment
+    }
+    
+    private func updateAdaptiveThresholds() {
+        // Update thresholds based on recent market conditions and pattern performance
+        for patternType in adaptiveThresholds.keys {
+            if let history = patternPerformanceHistory[patternType], !history.isEmpty {
+                let recentHistory = Array(history.suffix(10)) // Last 10 occurrences
+                let successRate = Double(recentHistory.filter { $0.outcome }.count) / Double(recentHistory.count)
+                
+                // Adaptive threshold: lower for successful patterns, higher for failures
+                let baseThreshold: Double = 0.7
+                let adjustment = (0.5 - successRate) * 0.2 // Adjust by up to 20%
+                adaptiveThresholds[patternType] = max(0.5, min(0.9, baseThreshold + adjustment))
+            } else {
+                adaptiveThresholds[patternType] = 0.7 // Default
+            }
+        }
+    }
+    
+    func getAdaptiveThreshold(for pattern: String) -> Double {
+        return adaptiveThresholds[pattern] ?? 0.7
+    }
+    
+    func recordPatternOutcome(pattern: String, confidence: Double, regime: MarketRegime, outcome: Bool, holdingPeriod: Int) {
+        let performance = PatternPerformance(
+            pattern: pattern,
+            confidence: confidence,
+            marketRegime: regime,
+            outcome: outcome,
+            timestamp: Date(),
+            holdingPeriod: holdingPeriod,
+            features: [confidence, Double(holdingPeriod)] // Basic features
+        )
+        
+        if patternPerformanceHistory[pattern] == nil {
+            patternPerformanceHistory[pattern] = []
+        }
+        patternPerformanceHistory[pattern]?.append(performance)
+        
+        // Keep only last 100 records per pattern to manage memory
+        if patternPerformanceHistory[pattern]?.count ?? 0 > 100 {
+            patternPerformanceHistory[pattern]?.removeFirst()
+        }
+        
+        // Record market condition
+        let volatility = marketConditionHistory.last?.volatility ?? 0.0
+        let volume = marketConditionHistory.last?.volume ?? 0.0
+        marketConditionHistory.append(MarketCondition(
+            regime: regime,
+            volatility: volatility,
+            volume: volume,
+            timestamp: Date(),
+            sentimentScore: 0.5, // Neutral sentiment
+            momentum: 0.0 // No momentum
+        ))
+        
+        // Train ML model with this outcome
+        let state: [Double] = [confidence, regime == .bullish ? 1.0 : 0.0, Double(holdingPeriod)]
+        let reward = outcome ? 1.0 : -1.0
+        mlModelManager.learnFromTrade(state: state, action: outcome ? 0 : 1, reward: reward, nextState: state)
     }
     
     // Enhanced pattern analysis with confluence detection
@@ -36,14 +179,18 @@ public class PatternRecognitionEngine: ObservableObject {
         return (patterns: multiTimeframeResults, confluence: confluencePatterns)
     }
     
-    // Real-time pattern scanning for alerts
+    // Real-time pattern scanning for alerts with adaptive thresholds
     func scanForPatternAlerts(marketData: [MarketData], alertThreshold: Double = 0.7) -> [PatternAlert] {
         let analysisResults = analyzeComprehensivePatterns(marketData: marketData)
         var alerts: [PatternAlert] = []
-        
+
         for (timeframe, patterns) in analysisResults {
             for pattern in patterns {
-                if pattern.confidence >= alertThreshold {
+                // Use adaptive threshold for this pattern type
+                let adaptiveThreshold = getAdaptiveThreshold(for: pattern.pattern)
+                let effectiveThreshold = min(alertThreshold, adaptiveThreshold)
+
+                if pattern.confidence >= effectiveThreshold {
                     let alert = PatternAlert(
                         pattern: pattern,
                         timeframe: timeframe,
@@ -54,7 +201,7 @@ public class PatternRecognitionEngine: ObservableObject {
                 }
             }
         }
-        
+
         // Sort by urgency and confidence
         alerts.sort { first, second in
             if first.urgency == second.urgency {
@@ -62,7 +209,7 @@ public class PatternRecognitionEngine: ObservableObject {
             }
             return first.urgency.priority > second.urgency.priority
         }
-        
+
         return alerts
     }
     
@@ -204,8 +351,7 @@ public class PatternRecognitionEngine: ObservableObject {
     // Market regime detection
     func detectMarketRegime(marketData: [MarketData]) -> MarketRegime {
         let prices = marketData.map { $0.price }
-        let volumes = marketData.map { $0.volume }
-        
+
         guard prices.count >= 50 else { return .sideways }
         
         // Calculate trend strength
@@ -483,5 +629,442 @@ public class PatternRecognitionEngine: ObservableObject {
     
     func determineMarketRegime(data: [MarketData]) -> MarketRegime {
         return detectMarketRegime(marketData: data)
+    }
+
+    // MARK: - Advanced ML Components
+
+    /// Feature extractor for pattern recognition
+    class PatternFeatureExtractor {
+        func extractFeatures(from marketData: [MarketData], pattern: PatternResult, technicalAnalysisEngine: TechnicalAnalysisEngine) -> [Double] {
+            let prices = marketData.map { $0.price }
+            let volumes = marketData.map { Double($0.volume) }
+
+            // Price-based features
+            let returns = calculateReturns(prices: prices)
+            let volatility = prices.standardDeviation()
+            let momentum = calculateMomentum(prices: prices, period: 10)
+
+            // Volume-based features
+            let volumeMA = technicalAnalysisEngine.calculateSMA(prices: volumes, period: 20)
+            let volumeRatio = volumes.last ?? 0 / volumeMA
+
+            // Pattern-specific features
+            let patternStrength = pattern.strength == .veryStrong ? 1.0 :
+                                 pattern.strength == .strong ? 0.8 :
+                                 pattern.strength == .moderate ? 0.6 : 0.4
+
+            let signalStrength = pattern.signal == .strongBuy || pattern.signal == .strongSell ? 1.0 : 0.7
+
+            return [
+                pattern.confidence,
+                patternStrength,
+                signalStrength,
+                volatility,
+                momentum,
+                volumeRatio,
+                returns.last ?? 0,
+                Double(marketData.count)
+            ]
+        }
+
+        private func calculateReturns(prices: [Double]) -> [Double] {
+            guard prices.count > 1 else { return [] }
+            var returns: [Double] = []
+            for i in 1..<prices.count {
+                returns.append((prices[i] - prices[i-1]) / prices[i-1])
+            }
+            return returns
+        }
+
+        private func calculateMomentum(prices: [Double], period: Int) -> Double {
+            guard prices.count >= period else { return 0 }
+            let recent = Array(prices.suffix(period))
+            let older = Array(prices.suffix(period * 2).prefix(period))
+            return (recent.average() - older.average()) / older.average()
+        }
+    }
+
+    /// Neural network predictor for pattern confidence
+    class NeuralNetworkPredictor {
+        private var weights: [[Double]] = []
+        private var biases: [Double] = []
+        private let learningRate = 0.01
+
+        init() {
+            initializeNetwork()
+        }
+
+        private func initializeNetwork() {
+            // Simple 2-layer network: 8 inputs -> 16 hidden -> 1 output
+            weights = [
+                Array(repeating: Double.random(in: -0.1...0.1), count: 16), // Input to hidden
+                Array(repeating: Double.random(in: -0.1...0.1), count: 1)   // Hidden to output
+            ]
+            biases = [Double.random(in: -0.1...0.1), Double.random(in: -0.1...0.1)]
+        }
+
+        func predict(features: [Double]) -> Double {
+            // Forward pass
+            let hidden = sigmoid(dotProduct(weights[0], features) + biases[0])
+            let output = sigmoid(hidden * weights[1][0] + biases[1])
+            return output
+        }
+
+        func train(features: [Double], target: Double) {
+            let prediction = predict(features: features)
+            let error = target - prediction
+
+            // Backpropagation (simplified)
+            let outputDelta = error * sigmoidDerivative(prediction)
+            let hiddenDelta = outputDelta * weights[1][0] * sigmoidDerivative(predict(features: features))
+
+            // Update weights and biases
+            for i in 0..<weights[0].count {
+                weights[0][i] += learningRate * hiddenDelta * features[i % features.count]
+            }
+            weights[1][0] += learningRate * outputDelta * predict(features: features)
+            biases[1] += learningRate * outputDelta
+            biases[0] += learningRate * hiddenDelta
+        }
+
+        private func sigmoid(_ x: Double) -> Double {
+            return 1 / (1 + exp(-x))
+        }
+
+        private func sigmoidDerivative(_ x: Double) -> Double {
+            return x * (1 - x)
+        }
+
+        private func dotProduct(_ a: [Double], _ b: [Double]) -> Double {
+            return zip(a, b).map(*).reduce(0, +)
+        }
+    }
+
+    /// Ensemble model combining multiple ML approaches
+    class EnsemblePatternModel {
+        private var models: [String: NeuralNetworkPredictor] = [:]
+        private var modelWeights: [String: Double] = [:]
+        private var deepLearningModel: DeepLearningPatternModel?
+
+        init() {
+            initializeModels()
+            initializeDeepLearningModel()
+        }
+
+        private func initializeModels() {
+            let patternTypes = ["HeadAndShoulders", "DoubleTop", "Triangle", "Flag", "CupAndHandle"]
+            for pattern in patternTypes {
+                models[pattern] = NeuralNetworkPredictor()
+                modelWeights[pattern] = 1.0
+            }
+        }
+
+        private func initializeDeepLearningModel() {
+            deepLearningModel = DeepLearningPatternModel()
+        }
+
+        func predictEnsemble(pattern: String, features: [Double]) -> Double {
+            guard let model = models[pattern] else {
+                return features.first ?? 0.5 // Fallback to base confidence
+            }
+
+            let basePrediction = model.predict(features: features)
+            let weight = modelWeights[pattern] ?? 1.0
+
+            // Combine with historical performance
+            let historicalAdjustment = calculateHistoricalAdjustment(for: pattern)
+
+            // Add deep learning prediction if available
+            let deepPrediction = deepLearningModel?.predict(pattern: pattern, features: features) ?? basePrediction
+            let deepWeight = 0.3 // 30% weight to deep learning
+
+            let combinedPrediction = (basePrediction * weight + historicalAdjustment + deepPrediction * deepWeight) / (weight + 1.0 + deepWeight)
+
+            return min(1.0, max(0.0, combinedPrediction))
+        }
+
+        func trainEnsemble(pattern: String, features: [Double], target: Double) {
+            guard let model = models[pattern] else { return }
+            model.train(features: features, target: target)
+
+            // Train deep learning model
+            deepLearningModel?.train(pattern: pattern, features: features, target: target)
+
+            // Update model weight based on recent performance
+            let recentAccuracy = calculateRecentAccuracy(for: pattern)
+            modelWeights[pattern] = max(0.1, recentAccuracy)
+        }
+
+        private func calculateHistoricalAdjustment(for pattern: String) -> Double {
+            // This would use historical pattern performance data
+            // For now, return a small adjustment
+            return Double.random(in: -0.1...0.1)
+        }
+
+        private func calculateRecentAccuracy(for pattern: String) -> Double {
+            // Calculate accuracy over recent predictions
+            // For now, return a default value
+            return 0.7
+        }
+    }
+
+    /// Deep Learning Model for Advanced Pattern Recognition
+    class DeepLearningPatternModel {
+        private var patternNetworks: [String: DeepNeuralNetwork] = [:]
+        private var attentionMechanism: AttentionLayer?
+
+        init() {
+            initializeNetworks()
+            attentionMechanism = AttentionLayer()
+        }
+
+        private func initializeNetworks() {
+            let patternTypes = ["HeadAndShoulders", "DoubleTop", "Triangle", "Flag", "CupAndHandle"]
+            for pattern in patternTypes {
+                patternNetworks[pattern] = DeepNeuralNetwork(inputSize: 8, hiddenSizes: [64, 32, 16], outputSize: 1)
+            }
+        }
+
+        func predict(pattern: String, features: [Double]) -> Double {
+            guard let network = patternNetworks[pattern] else {
+                return features.first ?? 0.5
+            }
+
+            // Apply attention mechanism to focus on relevant features
+            let attendedFeatures = attentionMechanism?.applyAttention(to: features) ?? features
+
+            return network.predict(features: attendedFeatures)
+        }
+
+        func train(pattern: String, features: [Double], target: Double) {
+            guard let network = patternNetworks[pattern] else { return }
+
+            // Apply attention mechanism
+            let attendedFeatures = attentionMechanism?.applyAttention(to: features) ?? features
+
+            network.train(features: attendedFeatures, target: target, learningRate: 0.001, epochs: 10)
+
+            // Update attention mechanism
+            attentionMechanism?.updateAttention(features: features, target: target)
+        }
+    }
+
+    /// Deep Neural Network Implementation
+    class DeepNeuralNetwork {
+        private var layers: [NeuralLayer] = []
+        private let learningRate: Double
+
+        init(inputSize: Int, hiddenSizes: [Int], outputSize: Int, learningRate: Double = 0.01) {
+            self.learningRate = learningRate
+
+            // Input layer
+            layers.append(NeuralLayer(inputSize: inputSize, outputSize: hiddenSizes.first ?? 32))
+
+            // Hidden layers
+            for i in 0..<hiddenSizes.count - 1 {
+                layers.append(NeuralLayer(inputSize: hiddenSizes[i], outputSize: hiddenSizes[i + 1]))
+            }
+
+            // Output layer
+            layers.append(NeuralLayer(inputSize: hiddenSizes.last ?? 32, outputSize: outputSize))
+        }
+
+        func predict(features: [Double]) -> Double {
+            var activations = features
+
+            for layer in layers {
+                activations = layer.forward(activations)
+            }
+
+            return activations.first ?? 0.0
+        }
+
+        func train(features: [Double], target: Double, learningRate: Double, epochs: Int) {
+            for _ in 0..<epochs {
+                // Forward pass
+                var activations = features
+                var layerOutputs: [[Double]] = [activations]
+
+                for layer in layers {
+                    activations = layer.forward(activations)
+                    layerOutputs.append(activations)
+                }
+
+                // Backward pass
+                var error = [target - activations[0]]
+                for i in (0..<layers.count).reversed() {
+                    error = layers[i].backward(error, learningRate: learningRate, previousActivations: layerOutputs[i])
+                }
+            }
+        }
+    }
+
+    /// Neural Layer for Deep Network
+    class NeuralLayer {
+        private var weights: [[Double]]
+        private var biases: [Double]
+        private var lastInput: [Double] = []
+        private var lastOutput: [Double] = []
+
+        init(inputSize: Int, outputSize: Int) {
+            // Initialize weights and biases randomly
+            weights = (0..<outputSize).map { _ in
+                (0..<inputSize).map { _ in Double.random(in: -0.1...0.1) }
+            }
+            biases = Array(repeating: 0.0, count: outputSize)
+        }
+
+        func forward(_ input: [Double]) -> [Double] {
+            lastInput = input
+            var output: [Double] = []
+
+            for i in 0..<weights.count {
+                var sum = biases[i]
+                for j in 0..<input.count {
+                    sum += weights[i][j] * input[j]
+                }
+                output.append(tanh(sum)) // Tanh activation
+            }
+
+            lastOutput = output
+            return output
+        }
+
+        func backward(_ error: [Double], learningRate: Double, previousActivations: [Double]) -> [Double] {
+            var nextError: [Double] = Array(repeating: 0.0, count: lastInput.count)
+
+            for i in 0..<weights.count {
+                let delta = error[i] * (1 - lastOutput[i] * lastOutput[i]) // Derivative of tanh
+
+                for j in 0..<weights[i].count {
+                    nextError[j] += weights[i][j] * delta
+                    weights[i][j] += learningRate * delta * lastInput[j]
+                }
+
+                biases[i] += learningRate * delta
+            }
+
+            return nextError
+        }
+    }
+
+    /// Attention Mechanism for Feature Focus
+    class AttentionLayer {
+        private var attentionWeights: [Double] = []
+
+        init() {
+            // Initialize attention weights (one per feature)
+            attentionWeights = Array(repeating: 1.0/8.0, count: 8) // Assuming 8 features
+        }
+
+        func applyAttention(to features: [Double]) -> [Double] {
+            return zip(features, attentionWeights).map { $0 * $1 }
+        }
+
+        func updateAttention(features: [Double], target: Double) {
+            // Simple attention update based on prediction error
+            let prediction = applyAttention(to: features).reduce(0, +)
+            let error = target - prediction
+
+            // Update attention weights based on feature importance
+            for i in 0..<attentionWeights.count {
+                let gradient = error * features[i]
+                attentionWeights[i] += 0.001 * gradient
+            }
+
+            // Normalize attention weights
+            let sum = attentionWeights.reduce(0, +)
+            attentionWeights = attentionWeights.map { $0 / sum }
+        }
+    }
+
+    // MARK: - Enhanced ML Methods
+
+    /// Advanced pattern detection using ML ensemble
+    func detectPatternsWithML(marketData: [MarketData]) -> [PatternResult] {
+        let basePatterns = technicalAnalysisEngine.analyzeMultiTimeframe(data: marketData)
+        var enhancedPatterns: [PatternResult] = []
+
+        for (timeframe, patterns) in basePatterns {
+            for pattern in patterns {
+                let features = patternFeatureExtractor.extractFeatures(from: marketData, pattern: pattern, technicalAnalysisEngine: technicalAnalysisEngine)
+                let mlConfidence = ensembleModel.predictEnsemble(pattern: pattern.pattern, features: features)
+
+                // Combine base confidence with ML prediction
+                let combinedConfidence = (pattern.confidence + mlConfidence) / 2.0
+
+                let enhancedPattern = PatternResult(
+                    pattern: pattern.pattern,
+                    signal: pattern.signal,
+                    confidence: combinedConfidence,
+                    timeframe: timeframe,
+                    strength: pattern.strength,
+                    targets: pattern.targets,
+                    stopLoss: pattern.stopLoss,
+                    successRate: pattern.successRate
+                )
+
+                enhancedPatterns.append(enhancedPattern)
+            }
+        }
+
+        return enhancedPatterns
+    }
+
+    /// Train ML models with pattern performance data
+    func trainMLModels(with performances: [PatternPerformance]) {
+        for performance in performances {
+            ensembleModel.trainEnsemble(
+                pattern: performance.pattern,
+                features: performance.features,
+                target: performance.outcome ? 1.0 : 0.0
+            )
+        }
+    }
+
+    /// Get ML-based pattern insights
+    func getPatternInsights(pattern: String, marketData: [MarketData]) -> PatternInsights {
+        let features = patternFeatureExtractor.extractFeatures(from: marketData, pattern: PatternResult(
+            pattern: pattern,
+            signal: .hold,
+            confidence: 0.5,
+            timeframe: "1H",
+            strength: .moderate,
+            targets: [],
+            stopLoss: 0,
+            successRate: 0.5
+        ), technicalAnalysisEngine: technicalAnalysisEngine)
+
+        let mlPrediction = ensembleModel.predictEnsemble(pattern: pattern, features: features)
+        let regime = detectMarketRegime(marketData: marketData)
+
+        return PatternInsights(
+            pattern: pattern,
+            mlConfidence: mlPrediction,
+            marketRegime: regime,
+            recommendedAction: mlPrediction > 0.7 ? "Strong Signal" : "Monitor",
+            riskLevel: calculateRiskLevel(prediction: mlPrediction, regime: regime)
+        )
+    }
+
+    struct PatternInsights {
+        let pattern: String
+        let mlConfidence: Double
+        let marketRegime: MarketRegime
+        let recommendedAction: String
+        let riskLevel: String
+    }
+
+    private func calculateRiskLevel(prediction: Double, regime: MarketRegime) -> String {
+        let baseRisk = 1.0 - prediction
+
+        switch regime {
+        case .volatile:
+            return baseRisk > 0.6 ? "High" : baseRisk > 0.4 ? "Medium" : "Low"
+        case .bullish, .bearish:
+            return baseRisk > 0.5 ? "Medium" : "Low"
+        case .sideways:
+            return baseRisk > 0.7 ? "High" : baseRisk > 0.5 ? "Medium" : "Low"
+        }
     }
 }

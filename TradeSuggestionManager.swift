@@ -14,6 +14,8 @@ class TradeSuggestionManager: ObservableObject {
     
     private let orderExecutor = OrderExecutor()
     private let zerodhaClient = ZerodhaAPIClient()
+    private let patternRecognitionEngine = PatternRecognitionEngine()
+    private let aiAgentTrader = AIAgentTrader()
     private var timer: Timer?
     
     // UserDefaults keys
@@ -141,81 +143,179 @@ class TradeSuggestionManager: ObservableObject {
             print("Trade suggestions disabled: No real-time data available")
             return
         }
-        
+
         // Check if WebSocket is connected using stored status
         guard isWebSocketConnected else {
             print("Trade suggestions disabled: WebSocket not connected")
             return
         }
-        
-        // Generate suggestion with real market data
+
+        // Generate intelligent suggestion based on pattern analysis
+        generateIntelligentSuggestion()
+    }
+
+    /// Generate intelligent trade suggestions based on pattern analysis and ML insights
+    private func generateIntelligentSuggestion() {
         let symbols = ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS", "INFY"]
-        let actions: [TradeAction] = [.buy, .sell]
-        
-        guard let randomSymbol = symbols.randomElement(),
-              let randomAction = actions.randomElement() else { return }
-        
-        // Fetch real market price for the symbol
-        fetchRealMarketPrice(for: randomSymbol) { [weak self] realPrice in
-            guard let self = self else { return }
-            
-            // Only proceed if we have a real price
-            guard let price = realPrice, price > 0 else {
-                print("Trade suggestion skipped: No real price available for \(randomSymbol)")
-                return
-            }
-            
-            let quantity = Int.random(in: 1...10)
-            let confidence = Double.random(in: 0.7...0.95)
-            
-            let rationales = [
-                "Strong momentum detected",
-                "Breakout from resistance level",
-                "Oversold condition",
-                "Positive news sentiment",
-                "Technical pattern completion",
-                "RSI indicating oversold/overbought",
-                "Moving average crossover signal",
-                "Volume spike detected"
-            ]
-            
-            guard let rationale = rationales.randomElement() else { return }
-            
-            let suggestion = TradeSuggestion(
-                symbol: randomSymbol,
-                action: randomAction,
-                price: price,
-                quantity: quantity,
-                confidence: confidence,
-                rationale: rationale,
-                timestamp: Date()
-            )
-            
-            // Add to current suggestions and history
-            DispatchQueue.main.async {
-                self.currentSuggestions.append(suggestion)
-                self.suggestionHistory.append(suggestion)
-                self.latestSuggestion = suggestion
-                
-                // Save updated history to UserDefaults
-                self.saveToUserDefaults()
-                
-                // Handle based on AI trading mode
-                if self.aiTradingMode == .autoTrade && self.autoTradeEnabled {
-                    // Auto-execute the trade
-                    let success = self.executeSuggestion(suggestion)
-                    if success {
-                        self.sendNotification(for: suggestion, autoExecuted: true)
-                    } else {
-                        self.showSuggestionAlert = true
-                        self.sendNotification(for: suggestion, autoExecuted: false)
+
+        // Analyze each symbol and find the best trading opportunity
+        var highestConfidence = 0.0
+
+        for symbol in symbols {
+            fetchRealMarketPrice(for: symbol) { [weak self] realPrice in
+                guard let self = self else { return }
+
+                guard let price = realPrice, price > 0 else {
+                    print("Skipping \(symbol): No real price available")
+                    return
+                }
+
+                // Create market data for pattern analysis
+                let marketData = [MarketData(symbol: symbol, price: price, volume: 100000, timestamp: Date())]
+
+                // Get pattern analysis results
+                let patternResults = self.patternRecognitionEngine.analyzeComprehensivePatterns(marketData: marketData)
+
+                // Find the strongest pattern across all timeframes
+                var strongestPattern: PatternRecognitionEngine.PatternResult?
+                var maxStrength = 0.0
+
+                for (_, patterns) in patternResults {
+                    for pattern in patterns {
+                        let strength = pattern.confidence * pattern.successRate
+                        if strength > maxStrength {
+                            maxStrength = strength
+                            strongestPattern = pattern
+                        }
                     }
-                } else {
-                    // Show alert for manual decision
-                    self.showSuggestionAlert = true
-                    self.sendNotification(for: suggestion)
+                }
+
+                guard let pattern = strongestPattern else {
+                    print("No strong patterns found for \(symbol)")
+                    return
+                }
+
+                // Get ML-based insights for this pattern
+                let insights = self.patternRecognitionEngine.getPatternInsights(pattern: pattern.pattern, marketData: marketData)
+
+                // Calculate final confidence combining pattern strength and ML insights
+                let finalConfidence = min(1.0, (pattern.confidence + insights.mlConfidence) / 2.0)
+
+                // Only consider suggestions with high confidence
+                guard finalConfidence >= 0.75 else {
+                    print("Pattern confidence too low for \(symbol): \(finalConfidence)")
+                    return
+                }
+
+                // Determine action based on pattern signal and market regime
+                let action: TradeAction
+                switch pattern.signal {
+                case .buy, .strongBuy:
+                    action = .buy
+                case .sell, .strongSell:
+                    action = .sell
+                default:
+                    action = insights.recommendedAction.contains("Buy") ? .buy : .sell
+                }
+
+                // Calculate quantity based on confidence and risk level
+                let baseQuantity = 1
+                let confidenceMultiplier = Int(finalConfidence * 5) // 1-5 based on confidence
+                let quantity = baseQuantity * confidenceMultiplier
+
+                // Generate rationale based on pattern and ML insights
+                let rationale = self.generateIntelligentRationale(
+                    pattern: pattern,
+                    insights: insights,
+                    symbol: symbol,
+                    confidence: finalConfidence
+                )
+
+                let suggestion = TradeSuggestion(
+                    symbol: symbol,
+                    action: action,
+                    price: price,
+                    quantity: quantity,
+                    confidence: finalConfidence,
+                    rationale: rationale,
+                    timestamp: Date()
+                )
+
+                // Process the suggestion if it has the highest confidence so far
+                DispatchQueue.main.async {
+                    if finalConfidence > highestConfidence {
+                        highestConfidence = finalConfidence
+                        // Process the best suggestion
+                        self.processSuggestion(suggestion)
+                    }
                 }
             }
+        }
+    }
+
+    /// Generate intelligent rationale based on pattern analysis and ML insights
+    private func generateIntelligentRationale(
+        pattern: PatternRecognitionEngine.PatternResult,
+        insights: PatternRecognitionEngine.PatternInsights,
+        symbol: String,
+        confidence: Double
+    ) -> String {
+        var rationale = "\(pattern.pattern) pattern detected on \(symbol) with \(Int(confidence * 100))% confidence. "
+
+        // Add market regime context
+        switch insights.marketRegime {
+        case .bullish:
+            rationale += "Market is in bullish regime, supporting upward momentum. "
+        case .bearish:
+            rationale += "Market is in bearish regime, supporting downward pressure. "
+        case .volatile:
+            rationale += "Market is volatile, requiring careful position sizing. "
+        case .sideways:
+            rationale += "Market is ranging, focusing on mean reversion opportunities. "
+        }
+
+        // Add ML insights
+        rationale += insights.recommendedAction
+
+        // Add risk assessment
+        rationale += " Risk level: \(insights.riskLevel)."
+
+        // Add pattern-specific details
+        if pattern.targets.count > 0 {
+            rationale += " Target: ₹\(String(format: "%.2f", pattern.targets[0]))"
+        }
+
+        if let stopLoss = pattern.stopLoss, stopLoss > 0 {
+            rationale += ", Stop Loss: ₹\(String(format: "%.2f", stopLoss))"
+        }
+
+        return rationale
+    }
+
+    /// Process and handle the generated suggestion
+    private func processSuggestion(_ suggestion: TradeSuggestion) {
+        // Add to current suggestions and history
+        self.currentSuggestions.append(suggestion)
+        self.suggestionHistory.append(suggestion)
+        self.latestSuggestion = suggestion
+
+        // Save updated history to UserDefaults
+        self.saveToUserDefaults()
+
+        // Handle based on AI trading mode
+        if self.aiTradingMode == .autoTrade && self.autoTradeEnabled {
+            // Auto-execute the trade
+            let success = self.executeSuggestion(suggestion)
+            if success {
+                self.sendNotification(for: suggestion, autoExecuted: true)
+            } else {
+                self.showSuggestionAlert = true
+                self.sendNotification(for: suggestion, autoExecuted: false)
+            }
+        } else {
+            // Show alert for manual decision
+            self.showSuggestionAlert = true
+            self.sendNotification(for: suggestion)
         }
     }
     

@@ -198,7 +198,25 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     /// - Parameter symbol: Trading symbol
     func subscribeToSymbol(_ symbol: String) {
         guard isConnected else {
-            print("Not connected to WebSocket")
+            print("Not connected to WebSocket - cannot subscribe to \(symbol)")
+            // Attempt to reconnect if credentials are available
+            let apiKey = Config.zerodhaAPIKey()
+            let accessToken = Config.zerodhaAccessToken()
+            if !apiKey.isEmpty && !accessToken.isEmpty {
+                print("Attempting to reconnect WebSocket...")
+                connectToZerodhaWebSocket(apiKey: apiKey, accessToken: accessToken)
+
+                // Wait a bit for connection and retry subscription
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    if self?.isConnected == true {
+                        self?.subscribeToSymbol(symbol)
+                    } else {
+                        print("WebSocket reconnection failed for \(symbol)")
+                    }
+                }
+            } else {
+                print("Missing credentials for WebSocket reconnection")
+            }
             return
         }
 

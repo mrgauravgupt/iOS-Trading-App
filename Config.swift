@@ -27,7 +27,7 @@ struct Config {
     }
 
     static func zerodhaRedirectURL() -> String {
-        // Must match the Redirect URL configured in Zerodha console
-        KeychainHelper.shared.readWithFallback("ZerodhaRedirectURL") ?? "https://trading-app.com/kite-redirect"
+        // Must match the Redirect URL configured in Zerodha console - using localhost for testing
+        KeychainHelper.shared.readWithFallback("ZerodhaRedirectURL") ?? "http://localhost/kite-redirect"
     }
 }

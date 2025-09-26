@@ -76,36 +76,74 @@ struct SettingsView: View {
 
 
     var body: some View {
-        NavigationView {
-            List {
-                // General Settings Section
-                Section(header: Text("General")) {
-                    generalSettingsSection
-                }
+        GeometryReader { geometry in
+            ZStack {
+                // Background gradient matching ContentView
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.black,
+                        Color(red: 0.05, green: 0.05, blue: 0.15),
+                        Color.black
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(.all)
 
-                // AI Trading Section
-                Section(header: Text("AI Trading")) {
-                    aiTradingSettingsSection
-                }
+                VStack(spacing: 0) {
+                    // Custom Header
+                    HStack {
+                        Text("Settings")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
 
-                // Pattern Recognition Section
-                Section(header: Text("Pattern Recognition")) {
-                    patternRecognitionSettingsSection
-                }
+                        Spacer()
 
-                // Risk Controls Section
-                Section(header: Text("Risk Controls")) {
-                    riskControlsSection
-                }
+                        Button(action: {
+                            isPresented = false
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(Color.black.opacity(0.3))
 
-                // Agent Behavior Section
-                Section(header: Text("Agent Behavior")) {
-                    agentBehaviorSection
+                    // Main Content
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            // General Settings Section
+                            SettingsCard("General Settings") {
+                                generalSettingsSection
+                            }
+
+                            // AI Trading Section
+                            SettingsCard("AI Trading") {
+                                aiTradingSettingsSection
+                            }
+
+                            // Pattern Recognition Section
+                            SettingsCard("Pattern Recognition") {
+                                patternRecognitionSettingsSection
+                            }
+
+                            // Risk Controls Section
+                            SettingsCard("Risk Controls") {
+                                riskControlsSection
+                            }
+
+                            // Agent Behavior Section
+                            SettingsCard("Agent Behavior") {
+                                agentBehaviorSection
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 20)
+                    }
                 }
             }
-            .listStyle(InsetGroupedListStyle())
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
         }
         .onAppear {
             loadSavedCredentials()
