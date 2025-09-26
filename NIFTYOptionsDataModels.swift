@@ -467,15 +467,6 @@ struct RiskMetrics: Codable {
     var beta: Double = 0
 }
 
-struct PerformanceMetrics {
-    var totalTrades: Int = 0
-    var winningTrades: Int = 0
-    var totalPnL: Double = 0
-    var winRate: Double = 0
-    var averageWin: Double = 0
-    var averageLoss: Double = 0
-    var profitFactor: Double = 0
-}
 
 struct OptionsPosition: Identifiable, Codable {
     let id = UUID()

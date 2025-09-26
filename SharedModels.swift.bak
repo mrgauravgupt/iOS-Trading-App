@@ -1,0 +1,213 @@
+import Foundation
+
+// MARK: - Shared Models
+// These models are used across multiple files in the application
+
+/// Validation results for model performance
+public struct ValidationResults {
+    // Fields from HistoricalTrainingManager
+    public var patternRecognitionAccuracy: Double = 0.0
+    public var marketRegimeAccuracy: Double = 0.0
+    public var rlAgentPerformance: Double = 0.0
+    
+    // Fields from ContinuousLearningManager
+    public var improvedWinRate: Bool = false
+    public var reducedDrawdown: Bool = false
+    public var betterSharpeRatio: Bool = false
+    public var overallImprovement: Double = 0.0
+    
+    public init(
+        patternRecognitionAccuracy: Double = 0.0,
+        marketRegimeAccuracy: Double = 0.0,
+        rlAgentPerformance: Double = 0.0,
+        improvedWinRate: Bool = false,
+        reducedDrawdown: Bool = false,
+        betterSharpeRatio: Bool = false,
+        overallImprovement: Double = 0.0
+    ) {
+        self.patternRecognitionAccuracy = patternRecognitionAccuracy
+        self.marketRegimeAccuracy = marketRegimeAccuracy
+        self.rlAgentPerformance = rlAgentPerformance
+        self.improvedWinRate = improvedWinRate
+        self.reducedDrawdown = reducedDrawdown
+        self.betterSharpeRatio = betterSharpeRatio
+        self.overallImprovement = overallImprovement
+    }
+}
+
+/// Trade result structure for backtest results
+public struct TradeResult: Identifiable, Codable {
+    public var id = UUID()
+    public var symbol: String = ""
+    public var entryDate: Date = Date()
+    public var exitDate: Date = Date()
+    public var entryPrice: Double = 0.0
+    public var exitPrice: Double = 0.0
+    public var quantity: Int = 0
+    public var pnl: Double = 0.0
+    public var isWin: Bool = false
+    
+    public init(
+        symbol: String = "",
+        entryDate: Date = Date(),
+        exitDate: Date = Date(),
+        entryPrice: Double = 0.0,
+        exitPrice: Double = 0.0,
+        quantity: Int = 0,
+        pnl: Double = 0.0,
+        isWin: Bool = false
+    ) {
+        self.symbol = symbol
+        self.entryDate = entryDate
+        self.exitDate = exitDate
+        self.entryPrice = entryPrice
+        self.exitPrice = exitPrice
+        self.quantity = quantity
+        self.pnl = pnl
+        self.isWin = isWin
+    }
+}
+
+/// Backtest results structure
+public struct BacktestResults {
+    public var totalReturn: Double = 0.0
+    public var winRate: Double = 0.0
+    public var maxDrawdown: Double = 0.0
+    public var sharpeRatio: Double = 0.0
+    public var trades: [TradeResult] = []
+    
+    public init(
+        totalReturn: Double = 0.0,
+        winRate: Double = 0.0,
+        maxDrawdown: Double = 0.0,
+        sharpeRatio: Double = 0.0,
+        trades: [TradeResult] = []
+    ) {
+        self.totalReturn = totalReturn
+        self.winRate = winRate
+        self.maxDrawdown = maxDrawdown
+        self.sharpeRatio = sharpeRatio
+        self.trades = trades
+    }
+}
+
+/// Performance metrics for trading strategies
+public struct PerformanceMetrics {
+    // Fields from NIFTYOptionsDataModels
+    public var totalTrades: Int = 0
+    public var winningTrades: Int = 0
+    public var totalPnL: Double = 0
+    public var winRate: Double = 0
+    public var averageWin: Double = 0
+    public var averageLoss: Double = 0
+    public var profitFactor: Double = 0
+    
+    // Additional fields that might be needed
+    public var sharpeRatio: Double = 0.0
+    public var maxDrawdown: Double = 0.0
+    
+    public init(
+        totalTrades: Int = 0,
+        winningTrades: Int = 0,
+        totalPnL: Double = 0,
+        winRate: Double = 0,
+        averageWin: Double = 0,
+        averageLoss: Double = 0,
+        profitFactor: Double = 0,
+        sharpeRatio: Double = 0.0,
+        maxDrawdown: Double = 0.0
+    ) {
+        self.totalTrades = totalTrades
+        self.winningTrades = winningTrades
+        self.totalPnL = totalPnL
+        self.winRate = winRate
+        self.averageWin = averageWin
+        self.averageLoss = averageLoss
+        self.profitFactor = profitFactor
+        self.sharpeRatio = sharpeRatio
+        self.maxDrawdown = maxDrawdown
+    }
+}
+
+/// Test results structure
+public struct TestResults {
+    public var backtestResults: BacktestResults = BacktestResults()
+    public var performanceMetrics: PerformanceMetrics = PerformanceMetrics()
+    
+    public init(
+        backtestResults: BacktestResults = BacktestResults(),
+        performanceMetrics: PerformanceMetrics = PerformanceMetrics()
+    ) {
+        self.backtestResults = backtestResults
+        self.performanceMetrics = performanceMetrics
+    }
+}
+
+/// Training results structure
+public struct TrainingResults {
+    public var modelName: String = ""
+    public var trainingDuration: TimeInterval = 0
+    public var epochs: Int = 0
+    public var finalLoss: Double = 0
+    public var accuracy: Double = 0
+    public var validationResults: ValidationResults = ValidationResults()
+    
+    public init(
+        modelName: String = "",
+        trainingDuration: TimeInterval = 0,
+        epochs: Int = 0,
+        finalLoss: Double = 0,
+        accuracy: Double = 0,
+        validationResults: ValidationResults = ValidationResults()
+    ) {
+        self.modelName = modelName
+        self.trainingDuration = trainingDuration
+        self.epochs = epochs
+        self.finalLoss = finalLoss
+        self.accuracy = accuracy
+        self.validationResults = validationResults
+    }
+}
+
+/// Market data point structure
+public struct MarketDataPoint {
+    public var date: Date = Date()
+    public var open: Double = 0.0
+    public var high: Double = 0.0
+    public var low: Double = 0.0
+    public var close: Double = 0.0
+    public var volume: Int = 0
+    public var symbol: String = ""
+    
+    public init(
+        date: Date = Date(),
+        open: Double = 0.0,
+        high: Double = 0.0,
+        low: Double = 0.0,
+        close: Double = 0.0,
+        volume: Int = 0,
+        symbol: String = ""
+    ) {
+        self.date = date
+        self.open = open
+        self.high = high
+        self.low = low
+        self.close = close
+        self.volume = volume
+        self.symbol = symbol
+    }
+}
+
+/// Processed data point structure
+public struct ProcessedDataPoint {
+    public var marketData: MarketDataPoint
+    public var features: [String: Double] = [:]
+    
+    public init(
+        marketData: MarketDataPoint = MarketDataPoint(),
+        features: [String: Double] = [:]
+    ) {
+        self.marketData = marketData
+        self.features = features
+    }
+}

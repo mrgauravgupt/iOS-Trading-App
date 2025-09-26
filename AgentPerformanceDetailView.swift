@@ -94,28 +94,32 @@ struct AgentPerformanceDetailView: View {
                     PerformanceMetricCard(
                         title: "Overall Accuracy",
                         value: "\(Int(overallAccuracy))%",
-                        change: "+2.3%",
+                        percentage: "+2.3%",
+                        isPositive: true,
                         color: .green
                     )
                     
                     PerformanceMetricCard(
                         title: "Total Decisions",
                         value: "\(totalDecisions)",
-                        change: "+15",
+                        percentage: "+15",
+                        isPositive: true,
                         color: .blue
                     )
                     
                     PerformanceMetricCard(
                         title: "Win Rate",
                         value: "\(Int(winRate))%",
-                        change: "+1.8%",
+                        percentage: "+1.8%",
+                        isPositive: true,
                         color: .green
                     )
                     
                     PerformanceMetricCard(
                         title: "Average Confidence",
                         value: "\(String(format: "%.1f", avgConfidence * 100))%",
-                        change: "+0.5%",
+                        percentage: "+0.5%",
+                        isPositive: true,
                         color: .orange
                     )
                 }
@@ -390,44 +394,7 @@ struct DecisionHistoryItem: Identifiable {
 
 // MARK: - Supporting Views
 
-struct PerformanceMetricCard: View {
-    let title: String
-    let value: String
-    let change: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            HStack {
-                Image(systemName: "arrow.up.right")
-                    .font(.caption)
-                    .foregroundColor(.green)
-                
-                Text(change)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.green)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(Color(.systemBackground))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(color.opacity(0.2), lineWidth: 1)
-        )
-    }
-}
+
 
 struct DecisionHistoryRow: View {
     let decision: DecisionHistoryItem

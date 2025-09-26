@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import Foundation
 
 /// Advanced Performance Analytics View with comprehensive pattern and agent performance tracking
 struct PerformanceAnalyticsView: View {
@@ -875,73 +876,4 @@ struct LearningMetric {
 
 // MARK: - Analytics Engine
 
-class PerformanceAnalyticsEngine: ObservableObject {
-    @Published var isAnalyzing = false
-    
-    func analyzePerformance(timeRange: PerformanceAnalyticsView.TimeRange) -> PerformanceData {
-        // Implement comprehensive performance analysis
-        return PerformanceData()
-    }
-    
-    func analyzePatternPerformance() -> [PatternPerformanceMetric] {
-        // Implement pattern-specific performance analysis
-        return []
-    }
-    
-    func analyzeAgentPerformance() -> [AgentPerformanceMetric] {
-        // Implement agent-specific performance analysis
-        return []
-    }
-    
-    func calculateRiskMetrics() -> RiskAnalysis {
-        // Implement risk analysis calculations
-        return RiskAnalysis()
-    }
-}
-
-// Helper function to generate daily returns from real trading data
-func generateDailyReturnsFromTrades(trades: [Trade]) -> [DailyReturn] {
-    guard !trades.isEmpty else { return [] }
-    
-    var returns: [DailyReturn] = []
-    var cumulativeReturn: Double = 0
-    
-    // Group trades by date
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateFormat = "yyyy-MM-dd"
-    
-    let groupedTrades = Dictionary(grouping: trades) { trade in
-        dateFormatter.string(from: trade.timestamp)
-    }
-    
-    for (dateString, dayTrades) in groupedTrades.sorted(by: { $0.key < $1.key }) {
-        guard let date = dateFormatter.date(from: dateString) else { continue }
-        
-        let dailyPnL = dayTrades.reduce(0.0) { sum, trade in
-            // Calculate P&L for each trade (simplified)
-            return sum + (Double(trade.quantity) * trade.price * 0.001) // Simplified calculation
-        }
-        
-        let dailyReturn = dailyPnL / 100000.0 * 100 // Convert to percentage
-        cumulativeReturn += dailyReturn
-        
-        returns.append(DailyReturn(
-            date: date,
-            dailyReturn: dailyReturn,
-            cumulativeReturn: cumulativeReturn
-        ))
-    }
-    
-    return returns
-}
-
-// Placeholder Trade struct for the helper function
-struct Trade {
-    let timestamp: Date
-    let quantity: Int
-    let price: Double
-}
-
-#Preview {
-    PerformanceAnalyticsView()
-}
+// Analytics Engine is defined in PerformanceAnalyticsEngine.swift

@@ -1,6 +1,8 @@
+import UIKit
 import Foundation
 import SwiftUI
 import Combine
+
 
 // MARK: - AI Trading Orchestrator
 @MainActor
@@ -378,13 +380,10 @@ class AITradingOrchestrator: ObservableObject {
         
         // Update performance metrics
         performanceMetrics = PerformanceMetrics(
-            totalTrades: currentPositions.count,
-            winningTrades: currentPositions.filter { $0.unrealizedPnL > 0 }.count,
-            totalPnL: dailyPnL,
+            totalReturn: dailyPnL,
             winRate: currentPositions.isEmpty ? 0 : Double(currentPositions.filter { $0.unrealizedPnL > 0 }.count) / Double(currentPositions.count),
-            averageWin: calculateAverageWin(),
-            averageLoss: calculateAverageLoss(),
-            profitFactor: calculateProfitFactor()
+            profitFactor: calculateProfitFactor(),
+            totalTrades: currentPositions.count
         )
     }
     

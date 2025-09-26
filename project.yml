@@ -34,9 +34,11 @@ targets:
       - path: PaperTradingView.swift
       - path: AIAgentTrader.swift
       - path: BacktestingEngine.swift
+      - path: PerformanceAnalyticsEngine.swift
       - path: BacktestingView.swift
       - path: AdvancedRiskManager.swift
       - path: AgentCoordinator.swift
+      - path: ContinuousLearningManager.swift
       - path: PerformanceOptimizer.swift
       - path: AppStorePrep.swift
       - path: SecurityManager.swift
@@ -44,6 +46,8 @@ targets:
       - path: AuthManager.swift
       - path: DataExportManager.swift
       - path: Persistence.swift
+      - path: NewsArticle.swift
+      - path: NewsArticle+CoreDataProperties.swift
       - path: NotificationManager.swift
       - path: SettingsView.swift
       - path: CustomPatternCreationView.swift
@@ -74,8 +78,10 @@ targets:
       - path: AnalyticsEnums.swift
       - path: PortfolioAnalyticsView.swift
       - path: TradingAnalyticsView.swift
+      - path: AgentPerformanceDetailView.swift
       - path: TechnicalIndicatorsManager.swift
       - path: TimeframeDataManager.swift
+      - path: SharedModels.swift
     settings:
       base:
         INFOPLIST_FILE: Info.plist

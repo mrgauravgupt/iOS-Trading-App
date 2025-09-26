@@ -9,7 +9,10 @@ class MLModelManager {
     private var discountFactor = 0.95
     private var explorationRate = 0.1
     private var qTable: [String: [Double]] = [:] // Q-table for reinforcement learning
-
+    
+    /// Current model version, used for tracking model iterations
+    public var currentModelVersion: String = "1.0.0"
+    
     /// Initialize the MLModelManager and load the model
     init() {
         loadModel()
@@ -44,12 +47,44 @@ class MLModelManager {
     func trainModel(data: [[Double]], labels: [Double]) {
         // Placeholder for on-device training
         print("Training model with \(data.count) samples")
+        
+        // Increment model version after training
+        incrementModelVersion()
     }
 
     /// Save the current model
     func saveModel() {
-        // Placeholder for model versioning
-        print("Model saved")
+        // Save model with versioning
+        print("Model version \(currentModelVersion) saved")
+    }
+    
+    /// Increment the model version
+    private func incrementModelVersion() {
+        // Parse the current version
+        let components = currentModelVersion.split(separator: ".").compactMap { Int($0) }
+        
+        if components.count == 3 {
+            // Increment the patch version (1.0.0 -> 1.0.1)
+            var major = components[0]
+            var minor = components[1]
+            var patch = components[2] + 1
+            
+            // Handle version rollover
+            if patch > 99 {
+                patch = 0
+                minor += 1
+            }
+            
+            if minor > 99 {
+                minor = 0
+                major += 1
+            }
+            
+            currentModelVersion = "\(major).\(minor).\(patch)"
+        } else {
+            // Fallback if version format is incorrect
+            currentModelVersion = "1.0.0"
+        }
     }
 
     // MARK: - Reinforcement Learning Methods
@@ -105,6 +140,12 @@ class MLModelManager {
         updateQValue(state: state, action: action, reward: reward, nextState: nextState)
         // Decay exploration rate
         explorationRate = max(0.01, explorationRate * 0.995)
+        
+        // Consider incrementing model version after significant learning
+        if reward > 5.0 {  // Threshold for significant improvement
+            incrementModelVersion()
+            saveModel()
+        }
     }
 
     /// Convert state array to string for Q-table key

@@ -758,18 +758,6 @@ struct RealtimeDecisionCard: View {
 
 // MARK: - Additional Views (Stubs for sheets)
 
-struct AgentPerformanceDetailView: View {
-    let selectedAgent: AIControlCenterView.AgentType
-    
-    var body: some View {
-        NavigationView {
-            Text("Detailed performance for \(selectedAgent.rawValue)")
-                .navigationTitle("Agent Details")
-                .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
-
 struct ManualOverrideView: View {
     @ObservedObject var aiTrader: AIAgentTrader
     

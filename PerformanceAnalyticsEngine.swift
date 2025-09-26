@@ -40,9 +40,7 @@ class PerformanceAnalyticsEngine: ObservableObject {
             totalTrades: tradingData.count,
             winningTrades: Int(Double(tradingData.count) * winRate / 100),
             averageTradeReturn: totalReturn / Double(max(tradingData.count, 1)),
-            bestPattern: "Bull Flag", // Placeholder
-            dailyReturns: dailyReturns,
-            learningMetrics: []
+            bestPattern: "Bull Flag" // Placeholder
         )
     }
 

@@ -1,3 +1,4 @@
+import UIKit
 import Foundation
 import SwiftUI
 
@@ -37,9 +38,9 @@ public class PatternRecognitionEngine: ObservableObject {
     }
 
     // ML-based pattern detection features
-    private var patternFeatureExtractor = PatternFeatureExtractor()
+    var patternFeatureExtractor = PatternFeatureExtractor()
     private var neuralNetworkPredictor = NeuralNetworkPredictor()
-    private var ensembleModel = EnsemblePatternModel()
+    var ensembleModel = EnsemblePatternModel()
     
     // MARK: - Pattern Alert Structure
 

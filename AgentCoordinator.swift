@@ -9,8 +9,8 @@ class AgentCoordinator {
     // Multi-agent reinforcement learning components
     private var reinforcementLearner = MultiAgentReinforcementLearner()
     private var agentPerformanceTracker = AgentPerformanceTracker()
-    private var negotiationProtocol = AgentNegotiationProtocol()
-    private var collaborativeLearning = CollaborativeLearningSystem()
+    var negotiationProtocol = AgentNegotiationProtocol()
+    var collaborativeLearning = CollaborativeLearningSystem()
     
     func coordinateDecision(marketData: MarketData, news: [Article]) -> String {
         let marketDecision = marketAnalysisAgent.makeDecision(marketData: marketData, news: news)

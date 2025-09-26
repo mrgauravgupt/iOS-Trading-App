@@ -60,5 +60,28 @@ struct PersistenceController {
         }
     }
 
+    func saveNewsArticle(_ article: Article) {
+        let context = container.viewContext
+        let newsEntity = NewsArticle(context: context)
+        newsEntity.title = article.title
+        newsEntity.descriptionText = article.description
+        newsEntity.url = article.url
+        // Convert publishedAt string to Date if needed
+        if let publishedAtDate = ISO8601DateFormatter().date(from: article.publishedAt) {
+            newsEntity.publishedAt = publishedAtDate
+        }
+        saveContext()
+    }
+
+    func fetchNewsArticles() -> [NewsArticle] {
+        let request: NSFetchRequest<NewsArticle> = NewsArticle.fetchRequest()
+        do {
+            return try container.viewContext.fetch(request)
+        } catch {
+            print("Fetch news articles failed")
+            return []
+        }
+    }
+
 
 }
