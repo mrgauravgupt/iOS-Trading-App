@@ -48,8 +48,8 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Custom Header - Compact and extends to top
                 headerView
-                    .frame(height: 60) // Further reduced from 70 to 60
-                    .padding(.top, 10) // Add top padding for status bar
+                    .frame(height: 48) // Reduced from 60 to 48
+                    .padding(.top, 2) // Reduced from 10 to 2
                 
                 // Main Content - Expand to fill available space
                 TabView(selection: $selectedTab) {
@@ -220,7 +220,8 @@ struct ContentView: View {
     // MARK: - Dashboard View
     private var dashboardView: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 8) {
+                Spacer(minLength: 0)
                 // Market Overview Cards
                 HStack(spacing: 12) {
                     MarketCard(
@@ -437,8 +438,9 @@ struct ContentView: View {
                     )
                 }
             }
-            .padding(12) // Further reduced from 16 to 12
+            .padding(8)
         }
+        .frame(maxHeight: .infinity)
         .background(Color.black.opacity(0.2))
     }
     
