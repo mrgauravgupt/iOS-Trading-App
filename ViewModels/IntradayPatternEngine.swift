@@ -1399,12 +1399,6 @@ struct PatternAlert {
     let timestamp: Date
 }
 
-enum AlertPriority {
-    case high
-    case medium
-    case low
-}
-
 // MARK: - Missing Method Implementations
 
 extension IntradayPatternEngine {

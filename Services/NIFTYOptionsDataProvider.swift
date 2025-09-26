@@ -172,22 +172,74 @@ class NIFTYOptionsDataProvider: ObservableObject {
             return OptionsChainAnalysis.empty()
         }
         
-        let analysis = OptionsChainAnalysis()
-        
         // Calculate Put-Call Ratio
         let totalCallOI = chain.callOptions.reduce(0) { $0 + $1.openInterest }
         let totalPutOI = chain.putOptions.reduce(0) { $0 + $1.openInterest }
-        analysis.putCallRatio = totalCallOI > 0 ? Double(totalPutOI) / Double(totalCallOI) : 0
+        let putCallRatio = totalCallOI > 0 ? Double(totalPutOI) / Double(totalCallOI) : 0
         
         // Find max pain point
-        analysis.maxPainPoint = calculateMaxPain(chain: chain)
+        let maxPainPoint = calculateMaxPain(chain: chain)
         
         // Identify support and resistance levels
-        analysis.supportLevels = identifySupportLevels(chain: chain)
-        analysis.resistanceLevels = identifyResistanceLevels(chain: chain)
+        let supportLevels = identifySupportLevels(chain: chain)
+        let resistanceLevels = identifyResistanceLevels(chain: chain)
         
-        // Calculate implied volatility skew
-        analysis.ivSkew = calculateIVSkew(chain: chain)
+        // Create properly initialized analysis object
+        let analysis = OptionsChainAnalysis(
+            metrics: OptionsChainMetrics(
+                pcr: putCallRatio,
+                oiPcr: putCallRatio,
+                maxPain: maxPainPoint,
+                skew: 0.0,
+                totalCallOI: totalCallOI,
+                totalPutOI: totalPutOI,
+                totalCallVolume: chain.callOptions.reduce(0) { $0 + $1.volume },
+                totalPutVolume: chain.putOptions.reduce(0) { $0 + $1.volume }
+            ),
+            ivAnalysis: IVChainAnalysis(
+                averageIV: chain.callOptions.reduce(0.0) { $0 + $1.impliedVolatility } / Double(chain.callOptions.count),
+                atmIV: 0.0,
+                callIV: chain.callOptions.reduce(0.0) { $0 + $1.impliedVolatility } / Double(chain.callOptions.count),
+                putIV: chain.putOptions.reduce(0.0) { $0 + $1.impliedVolatility } / Double(chain.putOptions.count),
+                ivSkew: 0.0,
+                termStructure: [],
+                volatilitySurface: [],
+                strikes: [],
+                callIVs: [],
+                putIVs: []
+            ),
+            greeksExposure: GreeksExposure(
+                netDelta: chain.callOptions.reduce(0.0) { $0 + $1.delta } + chain.putOptions.reduce(0.0) { $0 + $1.delta },
+                netGamma: chain.callOptions.reduce(0.0) { $0 + $1.gamma } + chain.putOptions.reduce(0.0) { $0 + $1.gamma },
+                netTheta: chain.callOptions.reduce(0.0) { $0 + $1.theta } + chain.putOptions.reduce(0.0) { $0 + $1.theta },
+                netVega: chain.callOptions.reduce(0.0) { $0 + $1.vega } + chain.putOptions.reduce(0.0) { $0 + $1.vega },
+                netRho: 0.0
+            ),
+            liquidityAnalysis: LiquidityAnalysis(
+                averageSpread: 0.0,
+                totalVolume: chain.callOptions.reduce(0) { $0 + $1.volume } + chain.putOptions.reduce(0) { $0 + $1.volume },
+                totalOpenInterest: totalCallOI + totalPutOI,
+                volumeConcentration: 0.0,
+                oiConcentration: 0.0
+            ),
+            sentimentAnalysis: SentimentAnalysis(
+                putCallRatio: putCallRatio,
+                oiPutCallRatio: putCallRatio,
+                volatilitySkew: 0.0,
+                sentimentScore: 0.0,
+                marketSentiment: .neutral,
+                confidenceLevel: 0.0
+            ),
+            riskMetrics: ChainRiskMetrics(
+                valueAtRisk: 0.0,
+                gammaRisk: 0.0,
+                thetaDecay: 0.0,
+                vegaRisk: 0.0,
+                stressTestResults: [:],
+                riskScore: 0.0
+            ),
+            recommendations: []
+        )
         
         return analysis
     }
@@ -347,16 +399,3 @@ class NIFTYOptionsDataProvider: ObservableObject {
     }
 }
 
-// MARK: - Supporting Classes
-
-class OptionsChainAnalysis {
-    var putCallRatio: Double = 0.0
-    var maxPainPoint: Double = 0.0
-    var supportLevels: [Double] = []
-    var resistanceLevels: [Double] = []
-    var ivSkew: Double = 0.0
-    
-    static func empty() -> OptionsChainAnalysis {
-        return OptionsChainAnalysis()
-    }
-}

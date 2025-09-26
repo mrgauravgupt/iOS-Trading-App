@@ -2,6 +2,11 @@ import Foundation
 
 // MARK: - NIFTY Options Specific Data Models
 
+public enum OptionType: String, Codable, CaseIterable {
+    case call = "CE"
+    case put = "PE"
+}
+
 struct NIFTYOptionContract: Codable, Identifiable, Hashable {
     let id = UUID()
     let symbol: String // e.g., "NIFTY24JAN18000CE"
@@ -25,11 +30,6 @@ struct NIFTYOptionContract: Codable, Identifiable, Hashable {
     enum CodingKeys: String, CodingKey {
         case symbol, underlyingSymbol, strikePrice, expiryDate, optionType, lotSize, currentPrice, bid, ask, volume, openInterest, impliedVolatility, delta, gamma, theta, vega, timestamp
     }
-}
-
-enum OptionType: String, Codable, CaseIterable {
-    case call = "CE"
-    case put = "PE"
 }
 
 struct NIFTYOptionsChain: Codable {

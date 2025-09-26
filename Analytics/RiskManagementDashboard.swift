@@ -411,12 +411,12 @@ struct RiskManagementDashboard: View {
         [] // No real data available
     }
     
-    private var riskLevels: [RiskLevel] {
+    private var riskLevels: [RiskLevelDisplay] {
         [
-            RiskLevel(level: "Low", color: .green),
-            RiskLevel(level: "Med", color: .yellow),
-            RiskLevel(level: "High", color: .orange),
-            RiskLevel(level: "Critical", color: .red)
+            RiskLevelDisplay(level: "Low", color: .green),
+            RiskLevelDisplay(level: "Med", color: .yellow),
+            RiskLevelDisplay(level: "High", color: .orange),
+            RiskLevelDisplay(level: "Critical", color: .red)
         ]
     }
     
@@ -434,11 +434,6 @@ struct RiskManagementDashboard: View {
 struct PositionData {
     let symbol: String
     let risk: Double
-}
-
-struct RiskLevel {
-    let level: String
-    let color: Color
 }
 
 struct RiskAlert: Identifiable {

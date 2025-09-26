@@ -52,31 +52,6 @@ enum AlertCondition: String, Codable, CaseIterable {
     }
 }
 
-enum AlertPriority: String, Codable, CaseIterable {
-    case low = "low"
-    case medium = "medium"
-    case high = "high"
-    case critical = "critical"
-
-    var displayName: String {
-        switch self {
-        case .low: return "Low"
-        case .medium: return "Medium"
-        case .high: return "High"
-        case .critical: return "Critical"
-        }
-    }
-
-    var color: String {
-        switch self {
-        case .low: return "green"
-        case .medium: return "yellow"
-        case .high: return "orange"
-        case .critical: return "red"
-        }
-    }
-}
-
 // MARK: - Alert Configuration Model
 
 struct AlertConfiguration: Codable, Identifiable {

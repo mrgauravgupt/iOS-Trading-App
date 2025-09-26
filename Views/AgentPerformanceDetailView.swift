@@ -394,8 +394,6 @@ struct DecisionHistoryItem: Identifiable {
 
 // MARK: - Supporting Views
 
-
-
 struct DecisionHistoryRow: View {
     let decision: DecisionHistoryItem
     
@@ -495,30 +493,26 @@ struct RiskMetricRow: View {
     let value: String
     let riskLevel: RiskLevel
     
-    enum RiskLevel {
-        case low, medium, high
-        
-        var color: Color {
-            switch self {
-            case .low: return .green
-            case .medium: return .orange
-            case .high: return .red
-            }
+    var color: Color {
+        switch riskLevel {
+        case .low: return .green
+        case .medium: return .orange
+        case .high: return .red
         }
-        
-        var icon: String {
-            switch self {
-            case .low: return "checkmark.circle.fill"
-            case .medium: return "exclamationmark.triangle.fill"
-            case .high: return "xmark.circle.fill"
-            }
+    }
+    
+    var icon: String {
+        switch riskLevel {
+        case .low: return "checkmark.circle.fill"
+        case .medium: return "exclamationmark.triangle.fill"
+        case .high: return "xmark.circle.fill"
         }
     }
     
     var body: some View {
         HStack {
-            Image(systemName: riskLevel.icon)
-                .foregroundColor(riskLevel.color)
+            Image(systemName: icon)
+                .foregroundColor(color)
                 .font(.title3)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -528,18 +522,15 @@ struct RiskMetricRow: View {
                 
                 Text(value)
                     .font(.caption)
-                    .foregroundColor(riskLevel.color)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()
         }
-        .padding()
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
         .background(Color(.systemBackground))
         .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(riskLevel.color.opacity(0.2), lineWidth: 1)
-        )
     }
 }
 

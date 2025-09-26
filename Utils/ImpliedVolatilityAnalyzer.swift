@@ -65,8 +65,8 @@ class ImpliedVolatilityAnalyzer {
             callIV: avgCallIV,
             putIV: avgPutIV,
             ivSkew: ivSkew,
-            termStructure: ivTermStructure,
-            volatilitySurface: ivSurface,
+            termStructure: ivTermStructure.map { $0.atmIV },
+            volatilitySurface: ivSurface.points.map { [$0.strike, $0.timeToExpiry, $0.impliedVolatility] },
             strikes: strikes.sorted(),
             callIVs: callIVs,
             putIVs: putIVs
@@ -77,59 +77,78 @@ class ImpliedVolatilityAnalyzer {
     private func calculateATMIV(chain: NIFTYOptionsChain, underlyingPrice: Double, riskFreeRate: Double) -> Double {
         let atmStrike = chain.getATMStrike()
 
-        guard let atmCall = chain.callOptions.first(where: { $0.strikePrice == atmStrike }),
-              let atmPut = chain.putOptions.first(where: { $0.strikePrice == atmStrike }) else {
+        if let atmCall = chain.callOptions.first(where: { $0.strikePrice == atmStrike }),
+           let atmCallIV = calculateIV(for: atmCall, underlyingPrice: underlyingPrice, riskFreeRate: riskFreeRate) {
+            return atmCallIV
+        } else if let atmPut = chain.putOptions.first(where: { $0.strikePrice == atmStrike }),
+                  let atmPutIV = calculateIV(for: atmPut, underlyingPrice: underlyingPrice, riskFreeRate: riskFreeRate) {
+            return atmPutIV
+        } else {
             return 0
         }
-
-        let callIV = calculateIV(for: atmCall, underlyingPrice: underlyingPrice, riskFreeRate: riskFreeRate) ?? 0
-        let putIV = calculateIV(for: atmPut, underlyingPrice: underlyingPrice, riskFreeRate: riskFreeRate) ?? 0
-
-        return (callIV + putIV) / 2
     }
 
-    /// Calculate IV skew (difference between call and put IVs)
+    /// Calculate IV skew
     private func calculateIVSkew(callIVs: [Double], putIVs: [Double], strikes: [Double], atmStrike: Double) -> Double {
-        guard !callIVs.isEmpty && !putIVs.isEmpty else { return 0 }
+        guard !callIVs.isEmpty, !putIVs.isEmpty else { return 0 }
 
-        let avgCallIV = callIVs.reduce(0, +) / Double(callIVs.count)
-        let avgPutIV = putIVs.reduce(0, +) / Double(putIVs.count)
+        let atmIndex = strikes.firstIndex(of: atmStrike) ?? strikes.count / 2
+        let atmCallIV = callIVs[atmIndex]
+        let atmPutIV = putIVs[atmIndex]
 
-        return avgCallIV - avgPutIV
+        return atmCallIV - atmPutIV
     }
 
-    /// Calculate IV term structure across different expiries
+    /// Calculate IV term structure
     private func calculateIVTermStructure(chain: NIFTYOptionsChain, underlyingPrice: Double) -> [IVTermPoint] {
-        let expiries = Set(chain.callOptions.map { $0.expiryDate }).sorted()
+        // Get unique expiry dates from both call and put options
+        let callExpiries = Set(chain.callOptions.map { $0.expiryDate })
+        let putExpiries = Set(chain.putOptions.map { $0.expiryDate })
+        let allExpiries = callExpiries.union(putExpiries).sorted()
+        
+        var termStructurePoints: [IVTermPoint] = []
 
-        return expiries.compactMap { expiry in
+        for expiry in allExpiries {
             let calls = chain.callOptions.filter { $0.expiryDate == expiry }
             let puts = chain.putOptions.filter { $0.expiryDate == expiry }
 
+            var atmIV: Double = 0
+            
+            // Calculate ATM IV for this expiry
             let atmStrike = chain.getATMStrike()
-            guard let atmCall = calls.first(where: { $0.strikePrice == atmStrike }),
-                  let atmPut = puts.first(where: { $0.strikePrice == atmStrike }) else {
-                return nil
+            if let atmCall = calls.first(where: { $0.strikePrice == atmStrike }),
+               let atmPut = puts.first(where: { $0.strikePrice == atmStrike }),
+               let atmCallIV = calculateIV(for: atmCall, underlyingPrice: underlyingPrice),
+               let atmPutIV = calculateIV(for: atmPut, underlyingPrice: underlyingPrice) {
+                atmIV = (atmCallIV + atmPutIV) / 2
+            } else if let atmCall = calls.first(where: { $0.strikePrice == atmStrike }),
+                      let atmCallIV = calculateIV(for: atmCall, underlyingPrice: underlyingPrice) {
+                atmIV = atmCallIV
+            } else if let atmPut = puts.first(where: { $0.strikePrice == atmStrike }),
+                      let atmPutIV = calculateIV(for: atmPut, underlyingPrice: underlyingPrice) {
+                atmIV = atmPutIV
             }
 
-            let callIV = calculateIV(for: atmCall, underlyingPrice: underlyingPrice) ?? 0
-            let putIV = calculateIV(for: atmPut, underlyingPrice: underlyingPrice) ?? 0
-            let avgIV = (callIV + putIV) / 2
-
-            return IVTermPoint(
+            termStructurePoints.append(IVTermPoint(
                 expiryDate: expiry,
-                daysToExpiry: Int(expiry.timeIntervalSince(Date()) / (24 * 3600)),
-                impliedVolatility: avgIV
-            )
+                daysToExpiry: Calendar.current.dateComponents([.day], from: Date(), to: expiry).day ?? 0,
+                atmIV: atmIV
+            ))
         }
+
+        return termStructurePoints
     }
 
-    /// Calculate volatility surface (IV vs strike vs time)
+    /// Calculate IV surface
     private func calculateIVSurface(chain: NIFTYOptionsChain, underlyingPrice: Double) -> IVSurface {
-        let expiries = Set(chain.callOptions.map { $0.expiryDate }).sorted()
         var surfacePoints: [IVSurfacePoint] = []
+        
+        // Get unique expiry dates from both call and put options
+        let callExpiries = Set(chain.callOptions.map { $0.expiryDate })
+        let putExpiries = Set(chain.putOptions.map { $0.expiryDate })
+        let allExpiries = callExpiries.union(putExpiries).sorted()
 
-        for expiry in expiries {
+        for expiry in allExpiries {
             let calls = chain.callOptions.filter { $0.expiryDate == expiry }
             let puts = chain.putOptions.filter { $0.expiryDate == expiry }
 
@@ -139,7 +158,7 @@ class ImpliedVolatilityAnalyzer {
                         strike: call.strikePrice,
                         timeToExpiry: timeToExpiry(from: expiry),
                         impliedVolatility: iv,
-                        optionType: .call
+                        optionType: OptionType.call
                     ))
                 }
             }
@@ -150,7 +169,7 @@ class ImpliedVolatilityAnalyzer {
                         strike: put.strikePrice,
                         timeToExpiry: timeToExpiry(from: expiry),
                         impliedVolatility: iv,
-                        optionType: .put
+                        optionType: OptionType.put
                     ))
                 }
             }
@@ -234,50 +253,51 @@ class ImpliedVolatilityAnalyzer {
 
 // MARK: - Supporting Structures
 
-struct IVChainAnalysis {
-    let averageIV: Double
-    let atmIV: Double
-    let callIV: Double
-    let putIV: Double
-    let ivSkew: Double
-    let termStructure: [IVTermPoint]
-    let volatilitySurface: IVSurface
-    let strikes: [Double]
-    let callIVs: [Double]
-    let putIVs: [Double]
+// Removed duplicate struct definitions - now in SharedModels.swift
 
-    var description: String {
-        return String(format: "Avg IV: %.1f%%, ATM IV: %.1f%%, Skew: %.1f%%",
-                      averageIV * 100, atmIV * 100, ivSkew * 100)
-    }
-}
+// MARK: - Helper Extensions
 
-struct IVTermPoint {
-    let expiryDate: Date
-    let daysToExpiry: Int
-    let impliedVolatility: Double
-}
-
-struct IVSurface {
-    let points: [IVSurfacePoint]
-
-    func getIVForStrike(_ strike: Double, timeToExpiry: Double) -> Double? {
-        // Simple interpolation - in production, use bilinear interpolation
-        let nearbyPoints = points.filter {
-            abs($0.strike - strike) < 100 && abs($0.timeToExpiry - timeToExpiry) < 0.1
+extension Array where Element == IVPoint {
+    func interpolated(at strike: Double) -> Double? {
+        guard !isEmpty else { return nil }
+        
+        // Find the two nearest strikes
+        let sortedByStrike = sorted { $0.strike < $1.strike }
+        
+        // If strike is outside range, return nil
+        guard strike >= sortedByStrike.first?.strike ?? 0,
+              strike <= sortedByStrike.last?.strike ?? 0 else {
+            return nil
         }
-
-        guard !nearbyPoints.isEmpty else { return nil }
-
-        return nearbyPoints.map { $0.impliedVolatility }.reduce(0, +) / Double(nearbyPoints.count)
+        
+        // Find exact match or interpolate
+        if let exactMatch = first(where: { $0.strike == strike }) {
+            return exactMatch.iv
+        }
+        
+        // Interpolate between two nearest points
+        guard let (lower, upper) = findBoundingPoints(for: strike) else {
+            return nil
+        }
+        
+        let ratio = (strike - lower.strike) / (upper.strike - lower.strike)
+        return lower.iv + (upper.iv - lower.iv) * ratio
     }
-}
-
-struct IVSurfacePoint {
-    let strike: Double
-    let timeToExpiry: Double
-    let impliedVolatility: Double
-    let optionType: OptionType
+    
+    private func findBoundingPoints(for strike: Double) -> (IVPoint, IVPoint)? {
+        let sortedByStrike = sorted { $0.strike < $1.strike }
+        
+        for i in 0..<sortedByStrike.count - 1 {
+            let lower = sortedByStrike[i]
+            let upper = sortedByStrike[i + 1]
+            
+            if strike >= lower.strike && strike <= upper.strike {
+                return (lower, upper)
+            }
+        }
+        
+        return nil
+    }
 }
 
 enum IVChangeType {

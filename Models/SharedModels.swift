@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Market Data Models
 
@@ -113,6 +114,7 @@ public struct PerformanceMetrics {
     public var maxDrawdown: Double
     public var winRate: Double
     public var profitFactor: Double
+    public var totalTrades: Int  // Added missing property
     
     public init(
         totalReturn: Double = 0.0,
@@ -120,7 +122,8 @@ public struct PerformanceMetrics {
         sharpeRatio: Double = 0.0,
         maxDrawdown: Double = 0.0,
         winRate: Double = 0.0,
-        profitFactor: Double = 0.0
+        profitFactor: Double = 0.0,
+        totalTrades: Int = 0     // Added to initializer
     ) {
         self.totalReturn = totalReturn
         self.annualizedReturn = annualizedReturn
@@ -128,6 +131,7 @@ public struct PerformanceMetrics {
         self.maxDrawdown = maxDrawdown
         self.winRate = winRate
         self.profitFactor = profitFactor
+        self.totalTrades = totalTrades
     }
 }
 
@@ -170,19 +174,25 @@ public struct TestResults {
     public var recall: Double
     public var f1Score: Double
     public var confusionMatrix: [[Int]]
+    public var backtestResults: BacktestResults
+    public var performanceMetrics: PerformanceMetrics
     
     public init(
         accuracy: Double = 0.0,
         precision: Double = 0.0,
         recall: Double = 0.0,
         f1Score: Double = 0.0,
-        confusionMatrix: [[Int]] = []
+        confusionMatrix: [[Int]] = [],
+        backtestResults: BacktestResults = BacktestResults(),
+        performanceMetrics: PerformanceMetrics = PerformanceMetrics()
     ) {
         self.accuracy = accuracy
         self.precision = precision
         self.recall = recall
         self.f1Score = f1Score
         self.confusionMatrix = confusionMatrix
+        self.backtestResults = backtestResults
+        self.performanceMetrics = performanceMetrics
     }
 }
 
@@ -207,4 +217,519 @@ public struct TrainingResults {
         self.validationAccuracy = validationAccuracy
         self.learningRate = learningRate
     }
+}
+
+// MARK: - Shared Enums
+
+/// Risk level for options trading
+public enum RiskLevel {
+    case low, medium, high
+}
+
+/// Display representation of risk level for UI
+public struct RiskLevelDisplay {
+    public let level: String
+    public let color: Color
+    
+    public init(level: String, color: Color) {
+        self.level = level
+        self.color = color
+    }
+}
+
+/// Alert priority levels
+public enum AlertPriority: String, Codable, CaseIterable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case critical = "critical"
+
+    public var displayName: String {
+        switch self {
+        case .low: return "Low"
+        case .medium: return "Medium"
+        case .high: return "High"
+        case .critical: return "Critical"
+        }
+    }
+}
+
+/// Time frame for market data
+public enum TimeFrame {
+    case minute, hour, day, week, month
+}
+
+/// Type of market data
+public enum MarketDataType {
+    case stock, forex, crypto
+}
+
+/// Type of model
+public enum ModelType: String, CaseIterable {
+    case lstm = "lstm"
+    case gru = "gru"
+    case transformer = "transformer"
+    case cnn = "cnn"
+    case randomForest = "random_forest"
+    case svm = "svm"
+    case xgboost = "xgboost"
+    
+    public var displayName: String {
+        switch self {
+        case .lstm: return "LSTM"
+        case .gru: return "GRU"
+        case .transformer: return "Transformer"
+        case .cnn: return "CNN"
+        case .randomForest: return "Random Forest"
+        case .svm: return "SVM"
+        case .xgboost: return "XGBoost"
+        }
+    }
+}
+
+/// Type of strategy
+public enum StrategyType {
+    case meanReversion, momentum, trendFollowing
+}
+
+/// Type of backtest
+public enum BacktestType {
+    case historical, walkForward
+}
+
+/// Type of training
+public enum TrainingType {
+    case supervised, unsupervised
+}
+
+/// Type of validation
+public enum ValidationType {
+    case crossValidation, holdout
+}
+
+/// Type of feature engineering
+public enum FeatureEngineeringType {
+    case technicalIndicators, sentimentAnalysis, macroeconomicFactors
+}
+
+/// Type of risk management
+public enum RiskManagementType {
+    case stopLoss, takeProfit, positionSizing
+}
+
+/// Type of performance evaluation
+public enum PerformanceEvaluationType {
+    case totalReturn, annualizedReturn, sharpeRatio, maxDrawdown, winRate, profitFactor
+}
+
+/// Type of data source
+public enum DataSourceType {
+    case api, csv, database
+}
+
+/// Type of data preprocessing
+public enum DataPreprocessingType {
+    case normalization, scaling, encoding
+}
+
+/// Type of data splitting
+public enum DataSplittingType {
+    case trainTestSplit, kFoldCrossValidation
+}
+
+/// Type of data augmentation
+public enum DataAugmentationType {
+    case timeSeriesAugmentation, syntheticDataGeneration
+}
+
+// MARK: - Implied Volatility Models
+
+public struct IVPoint {
+    public let strike: Double
+    public let iv: Double
+    
+    public init(strike: Double = 0.0, iv: Double = 0.0) {
+        self.strike = strike
+        self.iv = iv
+    }
+}
+
+public struct IVTermPoint {
+    public let expiryDate: Date
+    public let daysToExpiry: Int
+    public let atmIV: Double
+    
+    public init(
+        expiryDate: Date = Date(),
+        daysToExpiry: Int = 0,
+        atmIV: Double = 0.0
+    ) {
+        self.expiryDate = expiryDate
+        self.daysToExpiry = daysToExpiry
+        self.atmIV = atmIV
+    }
+}
+
+
+public struct IVSurfacePoint {
+    public let strike: Double
+    public let timeToExpiry: Double
+    public let impliedVolatility: Double
+    public let optionType: OptionType
+    
+    public init(
+        strike: Double = 0.0,
+        timeToExpiry: Double = 0.0,
+        impliedVolatility: Double = 0.0,
+        optionType: OptionType = OptionType.call
+    ) {
+        self.strike = strike
+        self.timeToExpiry = timeToExpiry
+        self.impliedVolatility = impliedVolatility
+        self.optionType = optionType
+    }
+}
+
+public struct IVSurface {
+    public let points: [IVSurfacePoint]
+    
+    public init(points: [IVSurfacePoint] = []) {
+        self.points = points
+    }
+}
+
+// MARK: - Options Chain Analysis Models
+
+public struct OptionsChainMetrics {
+    public let pcr: Double
+    public let oiPcr: Double
+    public let maxPain: Double
+    public let skew: Double
+    public let totalCallOI: Int
+    public let totalPutOI: Int
+    public let totalCallVolume: Int
+    public let totalPutVolume: Int
+    
+    public init(
+        pcr: Double = 0.0,
+        oiPcr: Double = 0.0,
+        maxPain: Double = 0.0,
+        skew: Double = 0.0,
+        totalCallOI: Int = 0,
+        totalPutOI: Int = 0,
+        totalCallVolume: Int = 0,
+        totalPutVolume: Int = 0
+    ) {
+        self.pcr = pcr
+        self.oiPcr = oiPcr
+        self.maxPain = maxPain
+        self.skew = skew
+        self.totalCallOI = totalCallOI
+        self.totalPutOI = totalPutOI
+        self.totalCallVolume = totalCallVolume
+        self.totalPutVolume = totalPutVolume
+    }
+}
+
+public struct IVChainAnalysis {
+    public let averageIV: Double
+    public let atmIV: Double
+    public let callIV: Double
+    public let putIV: Double
+    public let ivSkew: Double
+    public let termStructure: [Double]
+    public let volatilitySurface: [[Double]]
+    public let strikes: [Double]
+    public let callIVs: [Double]
+    public let putIVs: [Double]
+    
+    public init(
+        averageIV: Double = 0.0,
+        atmIV: Double = 0.0,
+        callIV: Double = 0.0,
+        putIV: Double = 0.0,
+        ivSkew: Double = 0.0,
+        termStructure: [Double] = [],
+        volatilitySurface: [[Double]] = [],
+        strikes: [Double] = [],
+        callIVs: [Double] = [],
+        putIVs: [Double] = []
+    ) {
+        self.averageIV = averageIV
+        self.atmIV = atmIV
+        self.callIV = callIV
+        self.putIV = putIV
+        self.ivSkew = ivSkew
+        self.termStructure = termStructure
+        self.volatilitySurface = volatilitySurface
+        self.strikes = strikes
+        self.callIVs = callIVs
+        self.putIVs = putIVs
+    }
+}
+
+public struct GreeksExposure {
+    public let netDelta: Double
+    public let netGamma: Double
+    public let netTheta: Double
+    public let netVega: Double
+    public let netRho: Double
+    
+    public init(
+        netDelta: Double = 0.0,
+        netGamma: Double = 0.0,
+        netTheta: Double = 0.0,
+        netVega: Double = 0.0,
+        netRho: Double = 0.0
+    ) {
+        self.netDelta = netDelta
+        self.netGamma = netGamma
+        self.netTheta = netTheta
+        self.netVega = netVega
+        self.netRho = netRho
+    }
+}
+
+public struct LiquidityAnalysis {
+    public let averageSpread: Double
+    public let totalVolume: Int
+    public let totalOpenInterest: Int
+    public let volumeConcentration: Double
+    public let oiConcentration: Double
+    
+    public init(
+        averageSpread: Double = 0.0,
+        totalVolume: Int = 0,
+        totalOpenInterest: Int = 0,
+        volumeConcentration: Double = 0.0,
+        oiConcentration: Double = 0.0
+    ) {
+        self.averageSpread = averageSpread
+        self.totalVolume = totalVolume
+        self.totalOpenInterest = totalOpenInterest
+        self.volumeConcentration = volumeConcentration
+        self.oiConcentration = oiConcentration
+    }
+}
+
+public struct SentimentAnalysis {
+    public let putCallRatio: Double
+    public let oiPutCallRatio: Double
+    public let volatilitySkew: Double
+    public let sentimentScore: Double
+    public let marketSentiment: MarketSentiment
+    public let confidenceLevel: Double
+    
+    public init(
+        putCallRatio: Double = 0.0,
+        oiPutCallRatio: Double = 0.0,
+        volatilitySkew: Double = 0.0,
+        sentimentScore: Double = 0.0,
+        marketSentiment: MarketSentiment = .neutral,
+        confidenceLevel: Double = 0.0
+    ) {
+        self.putCallRatio = putCallRatio
+        self.oiPutCallRatio = oiPutCallRatio
+        self.volatilitySkew = volatilitySkew
+        self.sentimentScore = sentimentScore
+        self.marketSentiment = marketSentiment
+        self.confidenceLevel = confidenceLevel
+    }
+}
+
+public enum MarketSentiment {
+    case bullish, bearish, neutral
+}
+
+public struct ChainRiskMetrics {
+    public let valueAtRisk: Double
+    public let gammaRisk: Double
+    public let thetaDecay: Double
+    public let vegaRisk: Double
+    public let stressTestResults: [String: Double]
+    public let riskScore: Double
+    
+    public init(
+        valueAtRisk: Double = 0.0,
+        gammaRisk: Double = 0.0,
+        thetaDecay: Double = 0.0,
+        vegaRisk: Double = 0.0,
+        stressTestResults: [String: Double] = [:],
+        riskScore: Double = 0.0
+    ) {
+        self.valueAtRisk = valueAtRisk
+        self.gammaRisk = gammaRisk
+        self.thetaDecay = thetaDecay
+        self.vegaRisk = vegaRisk
+        self.stressTestResults = stressTestResults
+        self.riskScore = riskScore
+    }
+}
+
+public struct OptionsChainAnalysis {
+    public let metrics: OptionsChainMetrics
+    public let ivAnalysis: IVChainAnalysis
+    public let greeksExposure: GreeksExposure
+    public let liquidityAnalysis: LiquidityAnalysis
+    public let sentimentAnalysis: SentimentAnalysis
+    public let riskMetrics: ChainRiskMetrics
+    public let recommendations: [String]
+    
+    public init(
+        metrics: OptionsChainMetrics,
+        ivAnalysis: IVChainAnalysis,
+        greeksExposure: GreeksExposure,
+        liquidityAnalysis: LiquidityAnalysis,
+        sentimentAnalysis: SentimentAnalysis,
+        riskMetrics: ChainRiskMetrics,
+        recommendations: [String]
+    ) {
+        self.metrics = metrics
+        self.ivAnalysis = ivAnalysis
+        self.greeksExposure = greeksExposure
+        self.liquidityAnalysis = liquidityAnalysis
+        self.sentimentAnalysis = sentimentAnalysis
+        self.riskMetrics = riskMetrics
+        self.recommendations = recommendations
+    }
+    
+    public static func empty() -> OptionsChainAnalysis {
+        return OptionsChainAnalysis(
+            metrics: OptionsChainMetrics(),
+            ivAnalysis: IVChainAnalysis(),
+            greeksExposure: GreeksExposure(),
+            liquidityAnalysis: LiquidityAnalysis(),
+            sentimentAnalysis: SentimentAnalysis(),
+            riskMetrics: ChainRiskMetrics(),
+            recommendations: []
+        )
+    }
+}
+
+public struct ExpirationAnalysis {
+    public let nearTerm: ExpirationMetrics
+    public let mediumTerm: ExpirationMetrics
+    public let longTerm: ExpirationMetrics
+    public let termStructure: [ExpirationMetrics]
+    
+    public init(
+        nearTerm: ExpirationMetrics = ExpirationMetrics(),
+        mediumTerm: ExpirationMetrics = ExpirationMetrics(),
+        longTerm: ExpirationMetrics = ExpirationMetrics(),
+        termStructure: [ExpirationMetrics] = []
+    ) {
+        self.nearTerm = nearTerm
+        self.mediumTerm = mediumTerm
+        self.longTerm = longTerm
+        self.termStructure = termStructure
+    }
+}
+
+public struct ExpirationMetrics {
+    public let daysToExpiry: Int
+    public let openInterest: Int
+    public let volume: Int
+    public let putCallRatio: Double
+    public let avgImpliedVolatility: Double
+    
+    public init(
+        daysToExpiry: Int = 0,
+        openInterest: Int = 0,
+        volume: Int = 0,
+        putCallRatio: Double = 0.0,
+        avgImpliedVolatility: Double = 0.0
+    ) {
+        self.daysToExpiry = daysToExpiry
+        self.openInterest = openInterest
+        self.volume = volume
+        self.putCallRatio = putCallRatio
+        self.avgImpliedVolatility = avgImpliedVolatility
+    }
+}
+
+public struct VolatilityAnalysis {
+    public let currentIV: Double
+    public let historicalVolatility: Double
+    public let ivPercentile: Double
+    public let volRiskPremium: Double
+    public let regime: VolatilityRegime
+    public let expectedMove: Double
+    
+    public init(
+        currentIV: Double = 0.0,
+        historicalVolatility: Double = 0.0,
+        ivPercentile: Double = 0.0,
+        volRiskPremium: Double = 0.0,
+        regime: VolatilityRegime = .normal,
+        expectedMove: Double = 0.0
+    ) {
+        self.currentIV = currentIV
+        self.historicalVolatility = historicalVolatility
+        self.ivPercentile = ivPercentile
+        self.volRiskPremium = volRiskPremium
+        self.regime = regime
+        self.expectedMove = expectedMove
+    }
+}
+
+public struct HistoricalVolatility {
+    public let date: Date
+    public let realizedVol: Double
+    public let impliedVol: Double
+    public let volSpread: Double
+    
+    public init(
+        date: Date = Date(),
+        realizedVol: Double = 0.0,
+        impliedVol: Double = 0.0,
+        volSpread: Double = 0.0
+    ) {
+        self.date = date
+        self.realizedVol = realizedVol
+        self.impliedVol = impliedVol
+        self.volSpread = volSpread
+    }
+}
+
+public struct StressTestResult {
+    public let scenario: String
+    public let priceImpact: Double
+    public let riskLevel: RiskLevel
+    
+    public init(
+        scenario: String = "",
+        priceImpact: Double = 0.0,
+        riskLevel: RiskLevel = .medium
+    ) {
+        self.scenario = scenario
+        self.priceImpact = priceImpact
+        self.riskLevel = riskLevel
+    }
+}
+
+public enum VolatilityRegime {
+    case low, normal, high, extreme
+}
+
+public struct VolatilityEvent {
+    public let type: VolatilityEventType
+    public let timestamp: Date
+    public let magnitude: Double
+    public let duration: TimeInterval
+    
+    public init(
+        type: VolatilityEventType = .spike,
+        timestamp: Date = Date(),
+        magnitude: Double = 0.0,
+        duration: TimeInterval = 0.0
+    ) {
+        self.type = type
+        self.timestamp = timestamp
+        self.magnitude = magnitude
+        self.duration = duration
+    }
+}
+
+public enum VolatilityEventType {
+    case spike, crash, consolidation
 }
