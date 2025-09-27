@@ -1,7 +1,8 @@
+
+/// Advanced Paper Trading View with AI Auto-Trading Engine
 import SwiftUI
 import SharedPatternModels
 
-/// Advanced Paper Trading View with AI Auto-Trading Engine
 struct PaperTradingView: View {
     // Core Trading State
     @State private var selectedSymbol = "NIFTY"
@@ -23,7 +24,6 @@ struct PaperTradingView: View {
     
     // Enhanced Alerts and Analysis
     @State private var patternAlerts: [SharedPatternModels.PatternAlert] = []
-    @State private var riskAlerts: [RiskAlert] = []
     @State private var aiDecisions: [AITradingDecision] = []
     @State private var momentumAlerts: [String] = []
     @State private var showAdvancedControls = false
@@ -139,11 +139,11 @@ struct PaperTradingView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text("AI Paper Trading")
-                        .font(.title2)
+                        .font(.headline)
                         .fontWeight(.bold)
-                    
+
                     Text("Advanced Pattern Recognition & Auto-Trading")
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
@@ -166,10 +166,10 @@ struct PaperTradingView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text("AI Auto-Trading")
-                        .font(.subheadline)
+                        .font(.callout)
                         .fontWeight(.medium)
                     Text("Enable autonomous pattern-based trading")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
@@ -202,7 +202,7 @@ struct PaperTradingView: View {
                     }) {
                         VStack(spacing: 4) {
                             Text(tab.rawValue)
-                                .font(.subheadline)
+                                .font(.caption)
                                 .fontWeight(selectedTab == tab ? .semibold : .regular)
                             
                             Rectangle()
@@ -212,7 +212,7 @@ struct PaperTradingView: View {
                         .foregroundColor(selectedTab == tab ? .blue : .secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 8)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -243,14 +243,15 @@ struct PaperTradingView: View {
         VStack(spacing: 16) {
             HStack {
                 Text("Portfolio Overview")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button("Analytics") {
                     showPerformanceAnalytics = true
                 }
+                .font(.caption)
                 .foregroundColor(.blue)
             }
             
@@ -313,17 +314,17 @@ struct PaperTradingView: View {
                 Image(systemName: "brain")
                     .foregroundColor(.purple)
                 Text("Real-time AI Decisions")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Text("Live")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
                     .background(Color.red)
                     .foregroundColor(.white)
-                    .cornerRadius(8)
+                    .cornerRadius(6)
             }
             
             if aiDecisions.isEmpty {
@@ -347,12 +348,12 @@ struct PaperTradingView: View {
                 Image(systemName: "waveform.path.ecg")
                     .foregroundColor(.green)
                 Text("Pattern Alerts")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Text("\(patternAlerts.count) Active")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
             
@@ -375,7 +376,7 @@ struct PaperTradingView: View {
         VStack(spacing: 16) {
             HStack {
                 Text("Quick Actions")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -419,21 +420,159 @@ struct PaperTradingView: View {
         .cornerRadius(15)
     }
     
+    // MARK: - Market Overview Card
+
+    private var marketOverviewCard: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundColor(.blue)
+                Text("Market Overview")
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                Spacer()
+                Text("NIFTY")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            HStack(spacing: 20) {
+                VStack(alignment: .leading) {
+                    Text("Spot Price")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("₹24,500")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                }
+
+                VStack(alignment: .leading) {
+                    Text("Change")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.right")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                        Text("+125.50 (+0.51%)")
+                            .font(.callout)
+                            .foregroundColor(.green)
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing) {
+                    Text("Volume")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("2.3M")
+                        .font(.callout)
+                        .foregroundColor(.primary)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+
     // MARK: - Trading Section
-    
+
     private var tradingSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
+            // Market Overview
+            marketOverviewCard
+
             // Enhanced Order Placement
             enhancedOrderPlacement
-            
-            // AI Suggestions
-            aiTradingSuggestions
-            
-            // Holdings
-            SectionCard("Current Holdings") { holdingsSection }
-            
-            // Trade History
-            SectionCard("Recent Trades") { tradeHistorySection }
+
+            // Holdings & Trade History in a compact layout
+            HStack(spacing: 16) {
+                // Current Holdings
+                VStack {
+                    Text("Holdings")
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if holdings.isEmpty {
+                        Text("No positions")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.vertical, 20)
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 8) {
+                                ForEach(holdings.keys.sorted(), id: \.self) { symbol in
+                                    HStack {
+                                        Text(symbol)
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                        Spacer()
+                                        Text("\(holdings[symbol] ?? 0)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                        }
+                        .frame(height: 120)
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+
+                // Recent Trades
+                VStack {
+                    Text("Recent Trades")
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if trades.isEmpty {
+                        Text("No trades")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.vertical, 20)
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 8) {
+                                ForEach(trades.prefix(3), id: \.timestamp) { trade in
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack {
+                                            Text(trade.symbol)
+                                                .font(.caption)
+                                                .fontWeight(.medium)
+                                            Spacer()
+                                            Text(trade.type == .buy ? "BUY" : "SELL")
+                                                .font(.caption2)
+                                                .padding(.horizontal, 4)
+                                                .padding(.vertical, 2)
+                                                .background(trade.type == .buy ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
+                                                .foregroundColor(trade.type == .buy ? .green : .red)
+                                                .cornerRadius(4)
+                                        }
+                                        Text("\(trade.quantity) @ ₹\(String(format: "%.0f", trade.price))")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                        }
+                        .frame(height: 120)
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            }
         }
     }
     
@@ -441,88 +580,80 @@ struct PaperTradingView: View {
         VStack(spacing: 16) {
             HStack {
                 Text("Place Order")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
-                
-                Toggle("AI Assist", isOn: .constant(true))
-                    .scaleEffect(0.8)
             }
-            
+
             VStack(spacing: 12) {
-                HStack {
-                    TextField("Symbol", text: $selectedSymbol)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .disableAutocorrection(true)
-                        .textInputAutocapitalization(.characters)
-                    
-                    Button("Analyze") {
-                        analyzeSymbol()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }
-                
-                HStack {
-                    TextField("Quantity", text: $quantity)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.numberPad)
-                    
-                    VStack(alignment: .leading) {
-                        Text("AI Suggested: 150")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                        Text("Risk: Low")
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                    }
-                }
-                
-                Picker("Order Type", selection: $orderType) {
-                    Text("Buy").tag("Buy")
-                    Text("Sell").tag("Sell")
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                
-                // AI Risk Assessment
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Position Size: \(String(format: "%.1f%%", maxPositionSize * 100))")
-                            .font(.caption)
-                        Text("Stop Loss: \(String(format: "%.1f%%", stopLossPercentage * 100))")
-                            .font(.caption)
-                        Text("Take Profit: \(String(format: "%.1f%%", takeProfitPercentage * 100))")
-                            .font(.caption)
-                    }
-                    .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing) {
-                        Text("AI Confidence")
+                // Symbol and Quantity in one row
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Symbol")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("82.3%")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.green)
+                        TextField("NIFTY", text: $selectedSymbol)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .disableAutocorrection(true)
+                            .textInputAutocapitalization(.characters)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Quantity")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        TextField("100", text: $quantity)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.numberPad)
                     }
                 }
-                
+
+                // Order Type
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Order Type")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("Order Type", selection: $orderType) {
+                        Text("Buy").tag("Buy")
+                        Text("Sell").tag("Sell")
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+
+                // AI Insights (if enabled)
+                if isAITradingEnabled {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("AI Suggestion: Buy 150 shares")
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                            Text("Confidence: 82.3% • Risk: Low")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                        }
+                        Spacer()
+                        Image(systemName: "brain")
+                            .foregroundColor(.purple)
+                    }
+                    .padding(8)
+                    .background(Color.purple.opacity(0.1))
+                    .cornerRadius(8)
+                }
+
+                // Place Order Button
                 Button(action: placeEnhancedOrder) {
                     HStack {
                         if isAITradingEnabled {
                             Image(systemName: "brain")
+                                .font(.callout)
                         }
                         Text(isAITradingEnabled ? "AI-Assisted Order" : "Place Order")
+                            .font(.callout)
+                            .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
-                    .font(.headline)
                     .foregroundColor(.white)
-                    .padding()
+                    .padding(.vertical, 12)
                     .background(isAITradingEnabled ? Color.purple : Color.blue)
                     .cornerRadius(10)
                 }
@@ -531,7 +662,7 @@ struct PaperTradingView: View {
         }
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     private var aiTradingSuggestions: some View {
@@ -540,7 +671,7 @@ struct PaperTradingView: View {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
                 Text("AI Trading Suggestions")
-                    .font(.headline)
+                    .font(.callout)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -575,7 +706,7 @@ struct PaperTradingView: View {
     private var patternsSection: some View {
         VStack(spacing: 20) {
             Text("Pattern Scanner - Coming Soon")
-                .font(.headline)
+                .font(.callout)
                 .foregroundColor(.secondary)
             // PatternScannerView(
             //     multiTimeframeAnalysis: [:],
@@ -590,7 +721,7 @@ struct PaperTradingView: View {
     private var riskSection: some View {
         VStack(spacing: 20) {
             Text("Risk Management Dashboard - Coming Soon")
-                .font(.headline)
+                .font(.callout)
                 .foregroundColor(.secondary)
             // RiskManagementDashboard()
         }

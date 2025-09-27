@@ -11,10 +11,16 @@ struct MarketDataConfig {
     static let defaultExpiryDays: Int = 30
 
     // MARK: - Realistic Data Ranges
-    static let spotPriceRange: ClosedRange<Double> = 18000.0...19000.0
     static let volatilityRange: ClosedRange<Double> = 0.15...0.25
     static let vixRange: ClosedRange<Double> = 13.0...17.0
     static let strikeRange: ClosedRange<Int> = -10...10 // +/- 10 strikes from ATM
+
+    // Dynamic spot price range based on current NIFTY value (-200 to +200)
+    static func spotPriceRange(for currentNIFTY: Double) -> ClosedRange<Double> {
+        let lowerBound = currentNIFTY - 200.0
+        let upperBound = currentNIFTY + 200.0
+        return lowerBound...upperBound
+    }
 
     // MARK: - AI Model Parameters
     static let defaultAccuracy: Double = 0.65
@@ -38,8 +44,9 @@ struct MarketDataConfig {
     static let headShouldersAccuracy: Double = 0.75
 
     // MARK: - Utility Functions
-    static func getRealisticSpotPrice() -> Double {
-        return Double.random(in: spotPriceRange)
+    static func getRealisticSpotPrice(currentNIFTY: Double = 24500.0) -> Double {
+        let range = spotPriceRange(for: currentNIFTY)
+        return Double.random(in: range)
     }
 
     static func getRealisticVolatility() -> Double {

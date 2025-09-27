@@ -480,16 +480,8 @@ struct ContentView: View {
     
     // MARK: - Trading View
     private func tradingView(geometry: GeometryProxy) -> some View {
-        VStack {
-            Text("Trading View")
-                .font(.title)
-                .foregroundColor(.white)
-            
-            Spacer()
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.2))
+        PaperTradingView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Analytics View
