@@ -1,5 +1,6 @@
 import Foundation
 import os.log
+import UIKit
 
 class MarketAnalysisAgent: BaseAgent {
     private let sentimentAnalyzer = SentimentAnalyzer()

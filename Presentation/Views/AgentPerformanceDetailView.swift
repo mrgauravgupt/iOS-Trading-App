@@ -488,11 +488,48 @@ struct LearningMetricRow: View {
     }
 }
 
+struct PerformanceMetricCard: View {
+    let title: String
+    let value: String
+    let percentage: String
+    let isPositive: Bool
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+
+            HStack(spacing: 4) {
+                Image(systemName: isPositive ? "arrow.up" : "arrow.down")
+                    .font(.caption2)
+                    .foregroundColor(isPositive ? .green : .red)
+
+                Text(percentage)
+                    .font(.caption2)
+                    .foregroundColor(isPositive ? .green : .red)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+}
+
 struct RiskMetricRow: View {
     let title: String
     let value: String
     let riskLevel: RiskLevel
-    
+
     var color: Color {
         switch riskLevel {
         case .low: return .green
@@ -500,7 +537,7 @@ struct RiskMetricRow: View {
         case .high: return .red
         }
     }
-    
+
     var icon: String {
         switch riskLevel {
         case .low: return "checkmark.circle.fill"
@@ -508,23 +545,23 @@ struct RiskMetricRow: View {
         case .high: return "xmark.circle.fill"
         }
     }
-    
+
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .foregroundColor(color)
                 .font(.title3)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 Text(value)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 4)

@@ -1,310 +1,264 @@
 import Foundation
-import Combine
-import UserNotifications
 import UIKit
-
-// MARK: - Alert Engine
+import Combine
+import os.log
 
 class AlertEngine: ObservableObject {
-    static let shared = AlertEngine()
-
-    @Published var activeAlerts: [AlertConfiguration] = []
-    @Published var alertHistory: [AlertHistory] = []
-    @Published var isMonitoring = false
-
-    private var cancellables = Set<AnyCancellable>()
-    private var monitoringTimer: Timer?
-    private var debounceTimers: [UUID: Timer] = [:]
-    private var lastTriggerTimes: [UUID: Date] = [:]
-
-    private let config: AlertManagerConfig
-    private let persistenceKey = "alertConfigurations"
-    private let historyKey = "alertHistory"
-
-    private init() {
-        self.config = AlertManagerConfig()
-        loadAlerts()
-        loadHistory()
+    // MARK: - Published Properties
+    
+    @Published var activeAlerts: [PriceAlert] = []
+    
+    // MARK: - Private Properties
+    
+    private let persistenceKey = "com.trading.app.priceAlerts"
+    private var alertTimers: [UUID: Timer] = [:]
+    private var dataProvider = NIFTYOptionsDataProvider()
+    private let logger = Logger(subsystem: "com.trading.app", category: "AlertEngine")
+    
+    // MARK: - Initialization
+    
+    init() {
+        loadSavedAlerts()
+        setupAlertTimers()
     }
-
-    // MARK: - Alert Management
-
-    func addAlert(_ alert: AlertConfiguration) {
-        activeAlerts.append(alert)
+    
+    // MARK: - Public Methods
+    
+    func addAlert(symbol: String, price: Double, direction: PriceAlertDirection, type: PriceAlertType) {
+        let newAlert = PriceAlert(
+            id: UUID(),
+            symbol: symbol,
+            targetPrice: price,
+            direction: direction,
+            type: type,
+            createdAt: Date(),
+            isActive: true
+        )
+        
+        activeAlerts.append(newAlert)
         saveAlerts()
+        setupTimerForAlert(newAlert)
+        
+        logger.info("Added new \(direction.rawValue) alert for \(symbol) at \(price)")
     }
-
-    func updateAlert(_ alert: AlertConfiguration) {
-        if let index = activeAlerts.firstIndex(where: { $0.id == alert.id }) {
-            activeAlerts[index] = alert
-            saveAlerts()
-        }
-    }
-
-    func removeAlert(_ alert: AlertConfiguration) {
-        activeAlerts.removeAll { $0.id == alert.id }
-        saveAlerts()
-    }
-
-    func enableAlert(_ alert: AlertConfiguration) {
-        updateAlert(alert.with(\.isEnabled, true))
-    }
-
-    func disableAlert(_ alert: AlertConfiguration) {
-        updateAlert(alert.with(\.isEnabled, false))
-    }
-
-    // MARK: - Monitoring
-
-    func startMonitoring() {
-        guard !isMonitoring else { return }
-
-        isMonitoring = true
-        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.checkAlerts()
-        }
-    }
-
-    func stopMonitoring() {
-        isMonitoring = false
-        monitoringTimer?.invalidate()
-        monitoringTimer = nil
-        debounceTimers.values.forEach { $0.invalidate() }
-        debounceTimers.removeAll()
-    }
-
-    private func checkAlerts() {
-        let activeAlerts = self.activeAlerts.filter { $0.isActive }
-
-        for alert in activeAlerts {
-            checkAlert(alert)
-        }
-    }
-
-    private func checkAlert(_ alert: AlertConfiguration) {
-        // Debounce check
-        let alertId = alert.id
-        if let lastCheck = lastTriggerTimes[alertId],
-           Date().timeIntervalSince(lastCheck) < config.cooldownPeriod {
-            return
-        }
-
-        // Get current market data for the symbol
-        // This would typically come from a data provider
-        getCurrentValue(for: alert.symbol) { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let currentValue):
-                if self.evaluateCondition(alert.condition, currentValue: currentValue, threshold: alert.threshold) {
-                    self.triggerAlert(alert, value: currentValue)
-                }
-            case .failure(let error):
-                print("Failed to get value for \(alert.symbol): \(error.localizedDescription)")
+    
+    func removeAlert(withID id: UUID) {
+        if let index = activeAlerts.firstIndex(where: { $0.id == id }) {
+            let alert = activeAlerts[index]
+            activeAlerts.remove(at: index)
+            
+            // Remove timer if exists
+            if let timer = alertTimers[id] {
+                timer.invalidate()
+                alertTimers.removeValue(forKey: id)
             }
+            
+            saveAlerts()
+            logger.info("Removed alert for \(alert.symbol)")
         }
     }
-
-    private func evaluateCondition(_ condition: AlertCondition, currentValue: Double, threshold: Double) -> Bool {
-        switch condition {
-        case .above:
-            return currentValue > threshold
-        case .below:
-            return currentValue < threshold
-        case .equals:
-            return abs(currentValue - threshold) < 0.01 // Small tolerance
-        case .crossesAbove:
-            // Would need previous value to detect crossing
-            return currentValue > threshold
-        case .crossesBelow:
-            return currentValue < threshold
-        case .percentageChange:
-            // Would need previous value for percentage calculation
-            return abs(currentValue - threshold) / threshold > 0.01 // 1% change
-        case .volumeSpike:
-            // Volume-specific logic
-            return currentValue > threshold * 2 // Simple spike detection
-        case .patternDetected:
-            // Pattern detection logic would go here
-            return false // Placeholder
-        case .newsSentiment:
-            // News sentiment analysis
-            return currentValue > threshold
-        case .riskThreshold:
-            // Risk calculation
-            return currentValue > threshold
-        case .custom:
-            // Custom evaluation logic
-            return evaluateCustomCondition(currentValue: currentValue, threshold: threshold)
+    
+    func toggleAlert(withID id: UUID) {
+        if let index = activeAlerts.firstIndex(where: { $0.id == id }) {
+            activeAlerts[index].isActive.toggle()
+            
+            if activeAlerts[index].isActive {
+                setupTimerForAlert(activeAlerts[index])
+            } else if let timer = alertTimers[id] {
+                timer.invalidate()
+                alertTimers.removeValue(forKey: id)
+            }
+            
+            saveAlerts()
+            logger.info("Toggled alert for \(self.activeAlerts[index].symbol) to \(self.activeAlerts[index].isActive ? "active" : "inactive")")
         }
     }
-
-    private func evaluateCustomCondition(currentValue: Double, threshold: Double) -> Bool {
-        // Placeholder for custom logic
-        return currentValue > threshold
-    }
-
-    private func triggerAlert(_ alert: AlertConfiguration, value: Double) {
-        let alertId = alert.id
-
-        // Debounce triggering
-        if let timer = debounceTimers[alertId] {
+    
+    func clearAllAlerts() {
+        // Invalidate all timers
+        for (_, timer) in alertTimers {
             timer.invalidate()
         }
-
-        debounceTimers[alertId] = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+        alertTimers.removeAll()
+        
+        activeAlerts.removeAll()
+        saveAlerts()
+        logger.info("Cleared all alerts")
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupAlertTimers() {
+        for alert in activeAlerts where alert.isActive {
+            setupTimerForAlert(alert)
+        }
+    }
+    
+    private func setupTimerForAlert(_ alert: PriceAlert) {
+        // Cancel existing timer if any
+        if let existingTimer = alertTimers[alert.id] {
+            existingTimer.invalidate()
+        }
+        
+        // Create a new timer that checks every 30 seconds
+        let timer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            self?.checkAlert(alert)
+        }
+        
+        alertTimers[alert.id] = timer
+    }
+    
+    private func checkAlert(_ alert: PriceAlert) {
+        guard alert.isActive else { return }
+        
+        getCurrentValue(for: alert.symbol) { [weak self] result in
             guard let self = self else { return }
-
-            self.debounceTimers[alertId] = nil
-            self.lastTriggerTimes[alertId] = Date()
-
-            // Create history entry
-            let history = AlertHistory(
-                alertId: alert.id,
-                triggeredAt: Date(),
-                message: "\(alert.name) triggered: \(alert.symbol) \(alert.condition.displayName.lowercased()) \(alert.threshold)",
-                symbol: alert.symbol,
-                value: value,
-                threshold: alert.threshold,
-                condition: alert.condition,
-                priority: alert.priority
-            )
-
-            self.alertHistory.insert(history, at: 0)
-            self.saveHistory()
-
-            // Update alert last triggered
-            var updatedAlert = alert
-            updatedAlert.lastTriggered = Date()
-            self.updateAlert(updatedAlert)
-
-            // Send notifications
-            self.sendNotification(for: alert, history: history)
-
-            // Limit history size
-            if self.alertHistory.count > 1000 {
-                self.alertHistory = Array(self.alertHistory.prefix(1000))
-                self.saveHistory()
+            
+            switch result {
+            case .success(let currentPrice):
+                let alertTriggered = self.isAlertTriggered(alert: alert, currentPrice: currentPrice)
+                
+                if alertTriggered {
+                    self.triggerAlert(alert, currentPrice: currentPrice)
+                    
+                    // If it's a one-time alert, deactivate it
+                    if alert.type == .oneTime {
+                        DispatchQueue.main.async {
+                            if let index = self.activeAlerts.firstIndex(where: { $0.id == alert.id }) {
+                                self.activeAlerts[index].isActive = false
+                                self.saveAlerts()
+                                
+                                if let timer = self.alertTimers[alert.id] {
+                                    timer.invalidate()
+                                    self.alertTimers.removeValue(forKey: alert.id)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            case .failure(let error):
+                self.logger.error("Failed to get current price for \(alert.symbol): \(error.localizedDescription)")
             }
         }
     }
-
-    // MARK: - Notifications
-
-    private func sendNotification(for alert: AlertConfiguration, history: AlertHistory) {
-        guard alert.notificationEnabled else { return }
-
+    
+    private func isAlertTriggered(alert: PriceAlert, currentPrice: Double) -> Bool {
+        switch alert.direction {
+        case .above:
+            return currentPrice >= alert.targetPrice
+        case .below:
+            return currentPrice <= alert.targetPrice
+        }
+    }
+    
+    private func triggerAlert(_ alert: PriceAlert, currentPrice: Double) {
         // Create notification content
+        let directionText = alert.direction == .above ? "risen above" : "fallen below"
+        let title = "\(alert.symbol) Price Alert"
+        let body = "\(alert.symbol) has \(directionText) ₹\(alert.targetPrice). Current price: ₹\(String(format: "%.2f", currentPrice))"
+        
+        // Post local notification
         let content = UNMutableNotificationContent()
-        content.title = "\(alert.priority.displayName.capitalized) Alert"
-        content.body = history.message
-        content.sound = alert.soundEnabled ? .default : nil
-        content.userInfo = ["alertId": alert.id.uuidString]
-
-        // Create trigger
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-
-        // Create request
-        let request = UNNotificationRequest(identifier: history.id.uuidString, content: content, trigger: trigger)
-
-        // Schedule notification
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: alert.id.uuidString,
+            content: content,
+            trigger: nil
+        )
+        
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Failed to schedule notification: \(error.localizedDescription)")
+                self.logger.error("Failed to schedule notification: \(error.localizedDescription)")
             }
         }
-
-        // Haptic feedback
-        if alert.vibrationEnabled {
-            triggerHapticFeedback(for: alert.priority)
-        }
+        
+        // Provide haptic feedback if app is in foreground
+        provideFeedback(for: alert.type)
+        
+        logger.info("Alert triggered for \(alert.symbol) at price \(currentPrice)")
     }
-
-    private func triggerHapticFeedback(for priority: AlertPriority) {
-        let generator: UINotificationFeedbackGenerator
-        switch priority {
-        case .low, .medium:
-            generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
-        case .high:
-            generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.warning)
+    
+    private func provideFeedback(for alertType: PriceAlertType) {
+        var generator: UIFeedbackGenerator
+        
+        switch alertType {
+        case .oneTime:
+            generator = UIImpactFeedbackGenerator(style: .medium)
+            (generator as? UIImpactFeedbackGenerator)?.impactOccurred()
+        case .persistent:
+            generator = UIImpactFeedbackGenerator(style: .heavy)
+            (generator as? UIImpactFeedbackGenerator)?.impactOccurred()
         case .critical:
             generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
+            (generator as? UINotificationFeedbackGenerator)?.notificationOccurred(.error)
         }
     }
-
+    
     // MARK: - Data Access
-
+    
     private func getCurrentValue(for symbol: String, completion: @escaping (Result<Double, Error>) -> Void) {
-        // This would integrate with your data providers
-        // For now, return a mock value
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-            // Mock implementation - replace with actual data provider call
-            let mockValue = Double.random(in: 18000...20000) // Mock NIFTY value
-            completion(.success(mockValue))
+        // Use the data provider to get real-time price data
+        Task {
+            do {
+                let marketData = try await dataProvider.fetchLatestPrice(for: symbol)
+                DispatchQueue.main.async {
+                    completion(.success(marketData.close))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+            }
         }
     }
-
+    
     // MARK: - Persistence
-
+    
     private func saveAlerts() {
         do {
             let data = try JSONEncoder().encode(activeAlerts)
             UserDefaults.standard.set(data, forKey: persistenceKey)
         } catch {
-            print("Failed to save alerts: \(error.localizedDescription)")
+            logger.error("Failed to save alerts: \(error.localizedDescription)")
         }
     }
-
-    private func loadAlerts() {
-        guard let data = UserDefaults.standard.data(forKey: persistenceKey) else { return }
+    
+    private func loadSavedAlerts() {
+        guard let data = UserDefaults.standard.data(forKey: persistenceKey) else {
+            return
+        }
+        
         do {
-            activeAlerts = try JSONDecoder().decode([AlertConfiguration].self, from: data)
+            activeAlerts = try JSONDecoder().decode([PriceAlert].self, from: data)
         } catch {
-            print("Failed to load alerts: \(error.localizedDescription)")
+            logger.error("Failed to load saved alerts: \(error.localizedDescription)")
         }
-    }
-
-    private func saveHistory() {
-        do {
-            let data = try JSONEncoder().encode(alertHistory)
-            UserDefaults.standard.set(data, forKey: historyKey)
-        } catch {
-            print("Failed to save alert history: \(error.localizedDescription)")
-        }
-    }
-
-    private func loadHistory() {
-        guard let data = UserDefaults.standard.data(forKey: historyKey) else { return }
-        do {
-            alertHistory = try JSONDecoder().decode([AlertHistory].self, from: data)
-        } catch {
-            print("Failed to load alert history: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - Cleanup
-
-    func clearHistory() {
-        alertHistory.removeAll()
-        saveHistory()
-    }
-
-    func clearOldHistory(olderThan days: Int) {
-        let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
-        alertHistory.removeAll { $0.triggeredAt < cutoffDate }
-        saveHistory()
     }
 }
 
-// MARK: - Helper Extensions
+// MARK: - Supporting Types
 
-extension AlertConfiguration {
-    func with<T>(_ keyPath: WritableKeyPath<AlertConfiguration, T>, _ value: T) -> AlertConfiguration {
-        var copy = self
-        copy[keyPath: keyPath] = value
-        return copy
-    }
+struct PriceAlert: Identifiable, Codable {
+    let id: UUID
+    let symbol: String
+    let targetPrice: Double
+    let direction: PriceAlertDirection
+    let type: PriceAlertType
+    let createdAt: Date
+    var isActive: Bool
+}
+
+enum PriceAlertDirection: String, Codable {
+    case above = "Above"
+    case below = "Below"
+}
+
+enum PriceAlertType: String, Codable {
+    case oneTime = "One-time"
+    case persistent = "Persistent"
+    case critical = "Critical"
 }

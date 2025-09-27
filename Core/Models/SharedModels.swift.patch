@@ -1,0 +1,18 @@
+--- SharedModels.swift.bak	2024-06-12 12:00:00
++++ SharedModels.swift	2024-06-12 12:00:00
+@@ -83,6 +83,15 @@
+ }
+ 
+ /// Trend direction
++public enum MarketSentimentType: String, Codable {
++    case bullish = "Bullish"
++    case bearish = "Bearish"
++    case neutral = "Neutral"
++    case moderatelyBullish = "Moderately Bullish"
++    case moderatelyBearish = "Moderately Bearish"
++}
++
++/// Trend direction
+ public enum TrendDirection: String, Codable {
+     case bullish = "Bullish"
+     case bearish = "Bearish"

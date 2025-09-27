@@ -1,0 +1,241 @@
+import Foundation
+import Combine
+
+class NIFTYOptionsDataProvider: DataProviderProtocol {
+    private var cancellables = Set<AnyCancellable>()
+    private let analyzer = OptionsChainAnalyzer()
+    
+    // MARK: - Public Methods
+    
+    /// Fetch options chain data for a given symbol and expiry
+    func fetchOptionsChain(symbol: String, expiry: Date) -> AnyPublisher<NIFTYOptionsChain, Error> {
+        // In a real app, this would make an API call to fetch live data
+        // For this demo, we'll return mock data
+        return Just(createMockOptionsChain(symbol: symbol, expiry: expiry))
+            .setFailureType(to: Error.self)
+            .delay(for: .seconds(0.5), scheduler: DispatchQueue.global())
+            .eraseToAnyPublisher()
+    }
+    
+    /// Fetch historical options data
+    func fetchHistoricalOptionsData(symbol: String, from: Date, to: Date) -> AnyPublisher<[NIFTYOptionsChain], Error> {
+        // Generate mock historical data
+        let calendar = Calendar.current
+        var currentDate = from
+        var historicalChains: [NIFTYOptionsChain] = []
+        
+        while currentDate <= to {
+            let chain = createMockOptionsChain(
+                symbol: symbol,
+                expiry: calendar.date(byAdding: .month, value: 1, to: currentDate) ?? currentDate,
+                date: currentDate
+            )
+            historicalChains.append(chain)
+            
+            // Move to next day
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? to
+        }
+        
+        return Just(historicalChains)
+            .setFailureType(to: Error.self)
+            .delay(for: .seconds(1.0), scheduler: DispatchQueue.global())
+            .eraseToAnyPublisher()
+    }
+    
+    /// Fetch options chain summary metrics
+    func fetchOptionsMetrics(symbol: String) -> AnyPublisher<OptionsMetrics, Error> {
+        // Create mock metrics
+        return fetchOptionsChain(symbol: symbol, expiry: Date().addingTimeInterval(30*24*60*60))
+            .map { chain in
+                self.calculateOptionsMetrics(chain: chain)
+            }
+            .eraseToAnyPublisher()
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Create mock options chain data
+    private func createMockOptionsChain(symbol: String, expiry: Date, date: Date = Date()) -> NIFTYOptionsChain {
+        let basePrice = 19500.0
+        let underlyingPrice = basePrice + Double.random(in: -200...200)
+        
+        var callOptions: [NIFTYOption] = []
+        var putOptions: [NIFTYOption] = []
+        
+        // Generate options at different strike prices
+        for i in -10...10 {
+            let strike = basePrice + Double(i * 100)
+            let daysToExpiry = Calendar.current.dateComponents([.day], from: date, to: expiry).day ?? 30
+            
+            // Calculate mock implied volatility (higher for OTM options)
+            let callMoneyness = strike / underlyingPrice
+            let putMoneyness = underlyingPrice / strike
+            
+            let callIV = 0.2 + 0.1 * abs(1 - callMoneyness)
+            let putIV = 0.2 + 0.1 * abs(1 - putMoneyness)
+            
+            // Create call option
+            let call = createMockOption(
+                symbol: symbol,
+                strikePrice: strike,
+                optionType: .call,
+                expiry: expiry,
+                underlyingPrice: underlyingPrice,
+                impliedVolatility: callIV,
+                daysToExpiry: daysToExpiry
+            )
+            callOptions.append(call)
+            
+            // Create put option
+            let put = createMockOption(
+                symbol: symbol,
+                strikePrice: strike,
+                optionType: .put,
+                expiry: expiry,
+                underlyingPrice: underlyingPrice,
+                impliedVolatility: putIV,
+                daysToExpiry: daysToExpiry
+            )
+            putOptions.append(put)
+        }
+        
+        return NIFTYOptionsChain(
+            symbol: symbol,
+            underlyingPrice: underlyingPrice,
+            expiry: expiry,
+            callOptions: callOptions,
+            putOptions: putOptions,
+            timestamp: date
+        )
+    }
+    
+    /// Create a mock option contract
+    private func createMockOption(
+        symbol: String,
+        strikePrice: Double,
+        optionType: OptionType,
+        expiry: Date,
+        underlyingPrice: Double,
+        impliedVolatility: Double,
+        daysToExpiry: Int
+    ) -> NIFTYOption {
+        // Calculate option price using Black-Scholes approximation
+        let calculator = OptionsGreeksCalculator()
+        let timeToExpiry = Double(daysToExpiry) / 365.0
+        let riskFreeRate = 0.05 // 5% risk-free rate
+        
+        let price = calculator.calculateOptionPrice(
+            s: underlyingPrice,
+            k: strikePrice,
+            t: timeToExpiry,
+            r: riskFreeRate,
+            v: impliedVolatility,
+            optionType: optionType
+        )
+        
+        // Calculate Greeks
+        let delta = calculator.calculateDelta(
+            s: underlyingPrice,
+            k: strikePrice,
+            t: timeToExpiry,
+            r: riskFreeRate,
+            v: impliedVolatility,
+            optionType: optionType
+        )
+        
+        let gamma = calculator.calculateGamma(
+            s: underlyingPrice,
+            k: strikePrice,
+            t: timeToExpiry,
+            r: riskFreeRate,
+            v: impliedVolatility
+        )
+        
+        let theta = calculator.calculateTheta(
+            s: underlyingPrice,
+            k: strikePrice,
+            t: timeToExpiry,
+            r: riskFreeRate,
+            v: impliedVolatility,
+            optionType: optionType
+        )
+        
+        let vega = calculator.calculateVega(
+            s: underlyingPrice,
+            k: strikePrice,
+            t: timeToExpiry,
+            r: riskFreeRate,
+            v: impliedVolatility
+        )
+        
+        // Generate mock volume and open interest
+        // ATM options tend to have higher volume and OI
+        let moneyness = abs(strikePrice - underlyingPrice)
+        let volumeMultiplier = max(1.0 - (moneyness / 500.0), 0.1)
+        let volume = Int(Double.random(in: 100...5000) * volumeMultiplier)
+        let openInterest = Int(Double.random(in: 500...20000) * volumeMultiplier)
+        
+        return NIFTYOption(
+            symbol: "\(symbol)\(expiry.formatted(.dateTime.month().day().year()))\(strikePrice)\(optionType.rawValue)",
+            underlyingSymbol: symbol,
+            strikePrice: strikePrice,
+            optionType: optionType,
+            expiry: expiry,
+            lastPrice: price,
+            change: Double.random(in: -20...20),
+            percentChange: Double.random(in: -5...5),
+            volume: volume,
+            openInterest: openInterest,
+            impliedVolatility: impliedVolatility,
+            delta: delta,
+            gamma: gamma,
+            theta: theta,
+            vega: vega,
+            rho: 0.0, // Not calculating rho for simplicity
+            timeValue: price,
+            intrinsicValue: 0.0
+        )
+    }
+    
+    /// Calculate options metrics from an options chain
+    private func calculateOptionsMetrics(chain: NIFTYOptionsChain) -> OptionsMetrics {
+        let analysis = analyzer.analyzeOptionsChain(chain: chain)
+        
+        // Calculate put/call ratio
+        let putVolume = chain.putOptions.reduce(0) { $0 + $1.volume }
+        let callVolume = chain.callOptions.reduce(0) { $0 + $1.volume }
+        let putCallRatio = callVolume > 0 ? Double(putVolume) / Double(callVolume) : 1.0
+        
+        // Calculate OI put/call ratio
+        let putOI = chain.putOptions.reduce(0) { $0 + $1.openInterest }
+        let callOI = chain.callOptions.reduce(0) { $0 + $1.openInterest }
+        let oiPutCallRatio = callOI > 0 ? Double(putOI) / Double(callOI) : 1.0
+        
+        // Calculate total OI
+        let totalCallOI = chain.callOptions.reduce(0) { $0 + $1.openInterest }
+        let totalPutOI = chain.putOptions.reduce(0) { $0 + $1.openInterest }
+        
+        return OptionsMetrics(
+            symbol: chain.symbol,
+            timestamp: Date(),
+            putCallRatio: putCallRatio,
+            oiPutCallRatio: oiPutCallRatio,
+            impliedVolatility: analysis.volatilityProfile.averageIV,
+            volumeMetrics: VolumeMetrics(
+                totalVolume: chain.callOptions.reduce(0) { $0 + $1.volume } + chain.putOptions.reduce(0) { $0 + $1.volume },
+                totalOpenInterest: totalCallOI + totalPutOI,
+                volumeConcentration: 0.0,
+                oiConcentration: 0.0
+            ),
+            sentimentAnalysis: MarketSentimentAnalysis(
+                putCallRatio: putCallRatio,
+                oiPutCallRatio: putCallRatio,
+                volatilitySkew: 0.0,
+                sentimentScore: 0.0,
+                marketSentiment: "Neutral",
+                keywords: nil,
+                sources: nil
+            )
+        )
+    }
+}

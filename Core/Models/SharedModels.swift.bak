@@ -82,15 +82,6 @@ public enum VolatilityEnvironment: String, Codable {
 }
 
 /// Trend direction
-public enum MarketSentimentType: String, Codable {
-    case bullish = "Bullish"
-    case bearish = "Bearish"
-    case neutral = "Neutral"
-    case moderatelyBullish = "Moderately Bullish"
-    case moderatelyBearish = "Moderately Bearish"
-}
-
-/// Trend direction
 public enum TrendDirection: String, Codable {
     case bullish = "Bullish"
     case bearish = "Bearish"
@@ -100,60 +91,7 @@ public enum TrendDirection: String, Codable {
 }
 
 /// Market sentiment alias for compatibility
-public typealias MarketSentiment = MarketSentimentType
-
-/// Consolidated sentiment analysis model
-public struct SentimentAnalysis: Codable {
-    // Options-based sentiment (from SharedModels)
-    public let putCallRatio: Double?
-    public let oiPutCallRatio: Double?
-    public let volatilitySkew: Double?
-    public let sentimentScore: Double
-    public let marketSentiment: MarketSentimentType?
-    
-    // News-based sentiment (from ContinuousLearningManager)
-    public let keywords: [String]?
-    public let sources: [String]?
-    
-    public init(
-        putCallRatio: Double? = nil,
-        oiPutCallRatio: Double? = nil,
-        volatilitySkew: Double? = nil,
-        sentimentScore: Double,
-        marketSentiment: MarketSentimentType? = nil,
-        keywords: [String]? = nil,
-        sources: [String]? = nil
-    ) {
-        self.putCallRatio = putCallRatio
-        self.oiPutCallRatio = oiPutCallRatio
-        self.volatilitySkew = volatilitySkew
-        self.sentimentScore = sentimentScore
-        self.marketSentiment = marketSentiment
-        self.keywords = keywords
-        self.sources = sources
-    }
-}
-
-/// Sentiment type for analysis results
-public enum SentimentType: String, Codable, CaseIterable {
-    case positive = "Positive"
-    case negative = "Negative"
-    case neutral = "Neutral"
-    case unknown = "Unknown"
-}
-
-/// Result of sentiment analysis
-public struct SentimentResult: Codable {
-    public let sentiment: SentimentType
-    public let score: Double
-    public let description: String
-    
-    public init(sentiment: SentimentType, score: Double, description: String) {
-        self.sentiment = sentiment
-        self.score = score
-        self.description = description
-    }
-}
+public typealias MarketSentiment = SentimentAnalysis.MarketSentiment
 
 // MARK: - Market Data Models
 
@@ -670,7 +608,7 @@ public struct OptionsChainAnalysis {
     public let metrics: OptionsChainMetrics
     public let ivAnalysis: IVChainAnalysis
     public let greeksExposure: GreeksExposure
-    public let liquidityAnalysis: LiquidityAnalysis 
+    public let liquidityAnalysis: LiquidityAnalysis
     public let sentimentAnalysis: SentimentAnalysis
     public let riskMetrics: ChainRiskMetrics
     public let recommendations: [String]

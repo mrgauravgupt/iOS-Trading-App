@@ -1,394 +1,295 @@
 import SwiftUI
 import Charts
+import os.log
 
 struct PortfolioAnalyticsView: View {
     @StateObject private var analyticsManager = PortfolioAnalyticsManager()
     @State private var selectedTimeframe: AnalyticsTimeframe = .oneMonth
-    @State private var selectedBenchmark: String = "NIFTY 50"
-
+    @State private var isLoading = false
+    
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                headerSection
-                performanceOverviewGrid
-                performanceChart
-                sectorAllocationChart
-                riskMetricsGrid
-                attributionAnalysisChart
+            VStack(alignment: .leading, spacing: 20) {
+                // Header with timeframe selector
+                HStack {
+                    Text("Portfolio Analytics")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Spacer()
+                    
+                    Picker("Timeframe", selection: $selectedTimeframe) {
+                        ForEach(AnalyticsTimeframe.allCases, id: \.self) { timeframe in
+                            Text(timeframe.displayName).tag(timeframe)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: selectedTimeframe) { _ in
+                        loadData()
+                    }
+                }
+                .padding(.horizontal)
+                
+                if isLoading {
+                    ProgressView("Loading analytics data...")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                } else {
+                    // Performance Summary
+                    performanceSummarySection
+                    
+                    // Performance Chart
+                    performanceChartSection
+                    
+                    // Risk Metrics
+                    riskMetricsSection
+                    
+                    // Sector Allocation
+                    sectorAllocationSection
+                    
+                    // Attribution Analysis
+                    attributionAnalysisSection
+                }
             }
             .padding(.vertical)
         }
-        .background(Color(.systemGroupedBackground))
         .onAppear {
-            analyticsManager.loadAnalyticsData(for: selectedTimeframe)
-        }
-        .onChange(of: selectedTimeframe) { _, newTimeframe in
-            analyticsManager.loadAnalyticsData(for: newTimeframe)
+            loadData()
         }
     }
-
-    private var headerSection: some View {
-        HStack {
-            Text("Portfolio Analytics")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-
-            Spacer()
-
-            Picker("Timeframe", selection: $selectedTimeframe) {
-                ForEach(AnalyticsTimeframe.allCases, id: \.self) { timeframe in
-                    Text(timeframe.displayName)
-                        .tag(timeframe)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-            .font(.caption)
-        }
-        .padding(.horizontal)
-    }
-
-    private var performanceOverviewGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-            PerformanceMetricCard(
-                title: "Total Return",
-                value: String(format: "+₹%.2f", analyticsManager.totalReturn),
-                percentage: String(format: "+%.2f%%", analyticsManager.totalReturnPercentage),
-                isPositive: analyticsManager.totalReturn >= 0,
-                color: analyticsManager.totalReturn >= 0 ? .green : .red
-            )
-
-            PerformanceMetricCard(
-                title: "Benchmark Return",
-                value: String(format: "+₹%.2f", analyticsManager.benchmarkReturn),
-                percentage: String(format: "+%.2f%%", analyticsManager.benchmarkReturnPercentage),
-                isPositive: analyticsManager.benchmarkReturn >= 0,
-                color: .blue
-            )
-
-            PerformanceMetricCard(
-                title: "Alpha",
-                value: String(format: "%.2f%%", analyticsManager.alpha),
-                percentage: nil,
-                isPositive: analyticsManager.alpha >= 0,
-                color: analyticsManager.alpha >= 0 ? .green : .red
-            )
-
-            PerformanceMetricCard(
-                title: "Beta",
-                value: String(format: "%.3f", analyticsManager.beta),
-                percentage: nil,
-                isPositive: analyticsManager.beta <= 1.0,
-                color: analyticsManager.beta <= 1.0 ? .green : .orange
-            )
-        }
-        .padding(.horizontal)
-    }
-
-    private var performanceChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Performance Comparison")
+    
+    private var performanceSummarySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Performance Summary")
                 .font(.headline)
-                .foregroundColor(.primary)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
-                VStack {
-                    if analyticsManager.portfolioPerformance.isEmpty {
-                        Text("Loading performance data...")
-                            .foregroundColor(.secondary)
-                            .frame(height: 200)
-                    } else {
-                        Chart {
-                            ForEach(analyticsManager.portfolioPerformance) { dataPoint in
-                                LineMark(
-                                    x: .value("Date", dataPoint.date),
-                                    y: .value("Portfolio", dataPoint.portfolioValue)
-                                )
-                                .foregroundStyle(.blue)
-                                .lineStyle(StrokeStyle(lineWidth: 2))
-                            }
-
-                            ForEach(analyticsManager.benchmarkPerformance) { dataPoint in
-                                LineMark(
-                                    x: .value("Date", dataPoint.date),
-                                    y: .value("Benchmark", dataPoint.benchmarkValue)
-                                )
-                                .foregroundStyle(.gray.opacity(0.7))
-                                .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
-                            }
-                        }
-                        .frame(height: 200)
-                        .padding()
+                .padding(.horizontal)
+            
+            HStack(spacing: 20) {
+                metricCard(
+                    title: "Portfolio Return",
+                    value: analyticsManager.totalReturn,
+                    percentage: analyticsManager.totalReturnPercentage,
+                    isPositive: analyticsManager.totalReturnPercentage >= 0
+                )
+                
+                metricCard(
+                    title: "Benchmark Return",
+                    value: analyticsManager.benchmarkReturn,
+                    percentage: analyticsManager.benchmarkReturnPercentage,
+                    isPositive: analyticsManager.benchmarkReturnPercentage >= 0
+                )
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var performanceChartSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Performance Chart")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            if analyticsManager.portfolioPerformance.isEmpty {
+                Text("No performance data available")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                Chart {
+                    ForEach(analyticsManager.portfolioPerformance) { dataPoint in
+                        LineMark(
+                            x: .value("Date", dataPoint.date),
+                            y: .value("Value", dataPoint.value)
+                        )
+                        .foregroundStyle(Color.blue)
+                        .interpolationMethod(.catmullRom)
+                    }
+                    
+                    ForEach(analyticsManager.benchmarkPerformance) { dataPoint in
+                        LineMark(
+                            x: .value("Date", dataPoint.date),
+                            y: .value("Value", dataPoint.value)
+                        )
+                        .foregroundStyle(Color.gray)
+                        .interpolationMethod(.catmullRom)
+                    }
+                }
+                .frame(height: 250)
+                .padding()
+                .chartLegend(position: .bottom) {
+                    HStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 10, height: 10)
+                        Text("Portfolio")
+                        
+                        Circle()
+                            .fill(Color.gray)
+                            .frame(width: 10, height: 10)
+                        Text("Benchmark")
                     }
                 }
             }
         }
-        .padding(.horizontal)
     }
-
-    private var sectorAllocationChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Sector Allocation")
-                .font(.headline)
-                .foregroundColor(.primary)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
-                VStack(spacing: 16) {
-                    if analyticsManager.sectorAllocation.isEmpty {
-                        Text("Loading sector data...")
-                            .foregroundColor(.secondary)
-                            .frame(height: 150)
-                    } else {
-                        Chart(analyticsManager.sectorAllocation) { sector in
-                            if #available(iOS 17.0, *) {
-                                SectorMark(
-                                    angle: .value("Allocation", sector.percentage),
-                                    innerRadius: .ratio(0.5),
-                                    angularInset: 1
-                                )
-                                .foregroundStyle(by: .value("Sector", sector.name))
-                            } else {
-                                // Fallback on earlier versions
-                            }
-                        }
-                        .frame(height: 150)
-                        .padding()
-
-                        // Sector Legend
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
-                            ForEach(analyticsManager.sectorAllocation) { sector in
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(sector.color)
-                                        .frame(width: 12, height: 12)
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(sector.name)
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-
-                                        Text(String(format: "%.1f%%", sector.percentage))
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-            }
-        }
-        .padding(.horizontal)
-    }
-
-    private var riskMetricsGrid: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    
+    private var riskMetricsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Risk Metrics")
                 .font(.headline)
-                .foregroundColor(.primary)
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                RiskMetricCard(
-                    title: "Volatility",
-                    value: String(format: "%.2f%%", analyticsManager.volatility * 100),
-                    subtitle: "Annualized",
-                    color: .orange
+                .padding(.horizontal)
+            
+            HStack(spacing: 20) {
+                metricCard(
+                    title: "Alpha",
+                    value: analyticsManager.alpha,
+                    isPercentage: false,
+                    isPositive: analyticsManager.alpha >= 0
                 )
-
-                RiskMetricCard(
-                    title: "Max Drawdown",
-                    value: String(format: "%.2f%%", analyticsManager.maxDrawdown * 100),
-                    subtitle: "Peak to trough",
-                    color: .red
-                )
-
-                RiskMetricCard(
-                    title: "Sharpe Ratio",
-                    value: String(format: "%.2f", analyticsManager.sharpeRatio),
-                    subtitle: "Risk-adjusted return",
-                    color: analyticsManager.sharpeRatio >= 1.0 ? .green : .orange
-                )
-
-                RiskMetricCard(
-                    title: "Sortino Ratio",
-                    value: String(format: "%.2f", analyticsManager.sortinoRatio),
-                    subtitle: "Downside risk",
-                    color: analyticsManager.sortinoRatio >= 1.0 ? .green : .orange
+                
+                metricCard(
+                    title: "Beta",
+                    value: analyticsManager.beta,
+                    isPercentage: false,
+                    isPositive: analyticsManager.beta <= 1.0
                 )
             }
+            .padding(.horizontal)
+            
+            HStack(spacing: 20) {
+                metricCard(
+                    title: "Sharpe Ratio",
+                    value: analyticsManager.sharpeRatio,
+                    isPercentage: false,
+                    isPositive: analyticsManager.sharpeRatio >= 1.0
+                )
+                
+                metricCard(
+                    title: "Max Drawdown",
+                    value: analyticsManager.maxDrawdown * 100,
+                    isPercentage: true,
+                    isPositive: false
+                )
+            }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
-
-    private var attributionAnalysisChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Performance Attribution")
+    
+    private var sectorAllocationSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Sector Allocation")
                 .font(.headline)
-                .foregroundColor(.primary)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
-                VStack(spacing: 16) {
-                    if analyticsManager.attributionData.isEmpty {
-                        Text("Loading attribution data...")
-                            .foregroundColor(.secondary)
-                            .frame(height: 150)
-                    } else {
-                        Chart(analyticsManager.attributionData) { attribution in
-                            BarMark(
-                                x: .value("Factor", attribution.factor),
-                                y: .value("Contribution", attribution.contribution)
-                            )
-                            .foregroundStyle(attribution.contribution >= 0 ? .green : .red)
-                        }
-                        .frame(height: 150)
-                        .padding()
-
-                        // Attribution Details
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
-                            ForEach(analyticsManager.attributionData) { attribution in
-                                AttributionRowView(attribution: attribution)
-                            }
-                        }
-                        .padding(.horizontal)
+                .padding(.horizontal)
+            
+            if analyticsManager.sectorAllocation.isEmpty {
+                Text("No sector allocation data available")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                Chart {
+                    ForEach(analyticsManager.sectorAllocation) { sector in
+                        SectorMark(
+                            angle: .value("Allocation", sector.weight)
+                        )
+                        .foregroundStyle(by: .value("Sector", sector.name))
                     }
                 }
+                .frame(height: 250)
+                .padding()
             }
         }
-        .padding(.horizontal)
     }
-}
-
-// MARK: - Supporting Views
-
-struct PerformanceMetricCard: View {
-    let title: String
-    let value: String
-    let percentage: String?
-    let isPositive: Bool
-    let color: Color
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Text(value)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(color)
-
-                if let percentage = percentage {
-                    Text(percentage)
-                        .font(.caption)
-                        .foregroundColor(isPositive ? .green : .red)
+    
+    private var attributionAnalysisSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Attribution Analysis")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            if analyticsManager.attributionData.isEmpty {
+                Text("No attribution data available")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                Chart {
+                    ForEach(analyticsManager.attributionData) { data in
+                        BarMark(
+                            x: .value("Factor", data.factor),
+                            y: .value("Contribution", data.contribution)
+                        )
+                        .foregroundStyle(data.contribution >= 0 ? Color.green : Color.red)
+                    }
                 }
+                .frame(height: 250)
+                .padding()
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-}
-
-struct RiskMetricCard: View {
-    let title: String
-    let value: String
-    let subtitle: String
-    let color: Color
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(color)
-
-                Text(value)
+    
+    private func metricCard(title: String, value: Double, percentage: Double? = nil, isPercentage: Bool = false, isPositive: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            if isPercentage {
+                Text("\(String(format: "%.2f", value))%")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
-
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isPositive ? .green : .red)
+            } else {
+                Text(value < 10000 ? String(format: "%.2f", value) : String(format: "₹%.2f", value))
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(isPositive ? .green : .red)
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if let percentage = percentage {
+                Text("\(percentage >= 0 ? "+" : "")\(String(format: "%.2f", percentage))%")
+                    .font(.caption)
+                    .foregroundColor(percentage >= 0 ? .green : .red)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+    
+    private func loadData() {
+        isLoading = true
+        
+        // In a real app, this would be an async call to a data service
+        Task {
+            await analyticsManager.loadAnalyticsData(for: selectedTimeframe)
+            
+            // Simulate network delay
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            await MainActor.run {
+                isLoading = false
+            }
         }
     }
 }
 
-struct AttributionRowView: View {
-    let attribution: AttributionData
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(attribution.factor)
-                    .font(.caption)
-                    .fontWeight(.medium)
-
-                Text(String(format: "%.2f%%", attribution.contribution))
-                    .font(.caption2)
-                    .foregroundColor(attribution.contribution >= 0 ? .green : .red)
-            }
-
-            Spacer()
-
-            Text(String(format: "%.1f%%", attribution.weight))
-                .font(.caption2)
-                .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-// MARK: - Data Models
-
-
+// MARK: - Supporting Types
 
 struct PerformanceDataPoint: Identifiable {
     let id = UUID()
     let date: Date
-    let portfolioValue: Double
-    let benchmarkValue: Double
+    let value: Double
 }
 
 struct SectorAllocation: Identifiable {
     let id = UUID()
     let name: String
-    let percentage: Double
-    let color: Color
+    let weight: Double
 }
 
 struct AttributionData: Identifiable {
     let id = UUID()
     let factor: String
     let contribution: Double
-    let weight: Double
 }
 
 // MARK: - Analytics Manager
@@ -409,81 +310,124 @@ class PortfolioAnalyticsManager: ObservableObject {
     @Published var benchmarkPerformance: [PerformanceDataPoint] = []
     @Published var sectorAllocation: [SectorAllocation] = []
     @Published var attributionData: [AttributionData] = []
-
-    func loadAnalyticsData(for timeframe: AnalyticsTimeframe) {
-        // Simulate loading data - in production, this would fetch from API
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.generateMockData(for: timeframe)
+    
+    private let dataProvider = NIFTYOptionsDataProvider()
+    private let logger = Logger(subsystem: "com.trading.app", category: "PortfolioAnalyticsManager")
+    
+    func loadAnalyticsData(for timeframe: AnalyticsTimeframe) async {
+        logger.info("Loading portfolio analytics data for timeframe: \(timeframe.displayName)")
+        
+        do {
+            // In a real implementation, these would be separate API calls
+            // For now, we'll simulate the data loading
+            
+            // 1. Load portfolio performance data
+            let portfolioData = try await loadPortfolioPerformance(for: timeframe)
+            let benchmarkData = try await loadBenchmarkPerformance(for: timeframe)
+            
+            // 2. Load risk metrics
+            let riskMetrics = try await loadRiskMetrics(for: timeframe)
+            
+            // 3. Load sector allocation
+            let sectorData = try await loadSectorAllocation()
+            
+            // 4. Load attribution data
+            let attributionData = try await loadAttributionData(for: timeframe)
+            
+            // Update the published properties on the main thread
+            await MainActor.run {
+                // Performance data
+                self.portfolioPerformance = portfolioData.dataPoints
+                self.totalReturn = portfolioData.totalReturn
+                self.totalReturnPercentage = portfolioData.returnPercentage
+                
+                // Benchmark data
+                self.benchmarkPerformance = benchmarkData.dataPoints
+                self.benchmarkReturn = benchmarkData.totalReturn
+                self.benchmarkReturnPercentage = benchmarkData.returnPercentage
+                
+                // Risk metrics
+                self.alpha = riskMetrics.alpha
+                self.beta = riskMetrics.beta
+                self.volatility = riskMetrics.volatility
+                self.maxDrawdown = riskMetrics.maxDrawdown
+                self.sharpeRatio = riskMetrics.sharpeRatio
+                self.sortinoRatio = riskMetrics.sortinoRatio
+                
+                // Sector allocation
+                self.sectorAllocation = sectorData
+                
+                // Attribution data
+                self.attributionData = attributionData
+            }
+            
+            logger.info("Successfully loaded portfolio analytics data")
+        } catch {
+            logger.error("Failed to load portfolio analytics data: \(error.localizedDescription)")
+            
+            // Reset data on error
+            await MainActor.run {
+                self.resetData()
+            }
         }
     }
-
-    private func generateMockData(for timeframe: AnalyticsTimeframe) {
-        // Mock performance data
-        self.totalReturn = 24567.89
-        self.totalReturnPercentage = 15.67
-        self.benchmarkReturn = 18234.56
-        self.benchmarkReturnPercentage = 12.34
-        self.alpha = 3.33
-        self.beta = 0.87
-        self.volatility = 0.18
-        self.maxDrawdown = 0.12
-        self.sharpeRatio = 1.23
-        self.sortinoRatio = 1.45
-
-        // Generate performance chart data
-        let calendar = Calendar.current
-        let endDate = Date()
-        let startDate = calendar.date(byAdding: .month, value: -3, to: endDate)!
-
-        var portfolioData: [PerformanceDataPoint] = []
-        var benchmarkData: [PerformanceDataPoint] = []
-
-        var currentDate = startDate
-        var portfolioValue = 100000.0
-        var benchmarkValue = 100000.0
-
-        while currentDate <= endDate {
-            // Simulate daily returns
-            let portfolioReturn = Double.random(in: -0.02...0.03)
-            let benchmarkReturn = Double.random(in: -0.015...0.025)
-
-            portfolioValue *= (1 + portfolioReturn)
-            benchmarkValue *= (1 + benchmarkReturn)
-
-            portfolioData.append(PerformanceDataPoint(
-                date: currentDate,
-                portfolioValue: portfolioValue,
-                benchmarkValue: benchmarkValue
-            ))
-
-            benchmarkData.append(PerformanceDataPoint(
-                date: currentDate,
-                portfolioValue: portfolioValue,
-                benchmarkValue: benchmarkValue
-            ))
-
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-        }
-
-        self.portfolioPerformance = portfolioData
-        self.benchmarkPerformance = benchmarkData
-
-        // Mock sector allocation
-        self.sectorAllocation = [
-            SectorAllocation(name: "Technology", percentage: 35.2, color: .blue),
-            SectorAllocation(name: "Financials", percentage: 25.8, color: .green),
-            SectorAllocation(name: "Healthcare", percentage: 15.3, color: .orange),
-            SectorAllocation(name: "Consumer", percentage: 12.1, color: .purple),
-            SectorAllocation(name: "Energy", percentage: 8.9, color: .red),
-            SectorAllocation(name: "Others", percentage: 2.7, color: .gray)
-        ]
-
-        // Mock attribution data
-        self.attributionData = [
-            AttributionData(factor: "Stock Selection", contribution: 4.2, weight: 45.0),
-            AttributionData(factor: "Sector Allocation", contribution: 2.8, weight: 30.0),
-            AttributionData(factor: "Market Timing", contribution: -1.5, weight: 15.0),
-            AttributionData(factor: "Currency", contribution: 0.8, weight: 10.0)
-        ]
+    
+    private func resetData() {
+        totalReturn = 0.0
+        totalReturnPercentage = 0.0
+        benchmarkReturn = 0.0
+        benchmarkReturnPercentage = 0.0
+        alpha = 0.0
+        beta = 0.0
+        volatility = 0.0
+        maxDrawdown = 0.0
+        sharpeRatio = 0.0
+        sortinoRatio = 0.0
+        portfolioPerformance = []
+        benchmarkPerformance = []
+        sectorAllocation = []
+        attributionData = []
+    }
+    
+    // MARK: - Data Loading Methods
+    
+    private func loadPortfolioPerformance(for timeframe: AnalyticsTimeframe) async throws -> (dataPoints: [PerformanceDataPoint], totalReturn: Double, returnPercentage: Double) {
+        // In a real app, this would fetch from an API or database
+        // For now, we'll return empty data until real implementation is added
+        
+        logger.info("This would fetch real portfolio performance data from the backend")
+        return ([], 0.0, 0.0)
+    }
+    
+    private func loadBenchmarkPerformance(for timeframe: AnalyticsTimeframe) async throws -> (dataPoints: [PerformanceDataPoint], totalReturn: Double, returnPercentage: Double) {
+        // In a real app, this would fetch from an API or database
+        // For now, we'll return empty data until real implementation is added
+        
+        logger.info("This would fetch real benchmark performance data from the backend")
+        return ([], 0.0, 0.0)
+    }
+    
+    private func loadRiskMetrics(for timeframe: AnalyticsTimeframe) async throws -> (alpha: Double, beta: Double, volatility: Double, maxDrawdown: Double, sharpeRatio: Double, sortinoRatio: Double) {
+        // In a real app, this would fetch from an API or database
+        // For now, we'll return zeros until real implementation is added
+        
+        logger.info("This would fetch real risk metrics from the backend")
+        return (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    }
+    
+    private func loadSectorAllocation() async throws -> [SectorAllocation] {
+        // In a real app, this would fetch from an API or database
+        // For now, we'll return empty data until real implementation is added
+        
+        logger.info("This would fetch real sector allocation data from the backend")
+        return []
+    }
+    
+    private func loadAttributionData(for timeframe: AnalyticsTimeframe) async throws -> [AttributionData] {
+        // In a real app, this would fetch from an API or database
+        // For now, we'll return empty data until real implementation is added
+        
+        logger.info("This would fetch real attribution data from the backend")
+        return []
     }
 }

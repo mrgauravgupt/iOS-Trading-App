@@ -438,16 +438,16 @@ struct PositionData {
 
 struct RiskAlert: Identifiable {
     let id: Int
-    let type: AlertType
+    let type: RiskAlertType
     let message: String
-    let severity: AlertSeverity
+    let severity: RiskSeverity
     let timestamp: Date
     
-    enum AlertType {
+    enum RiskAlertType {
         case concentrationRisk, volatilitySpike, drawdownLimit, correlationRisk
     }
     
-    enum AlertSeverity {
+    enum RiskSeverity {
         case low, medium, high, critical
         
         var color: Color {

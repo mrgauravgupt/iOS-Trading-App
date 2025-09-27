@@ -35,7 +35,7 @@ struct NIFTYOptionsChain: Codable {
     let expiryDate: Date
     let callOptions: [NIFTYOptionContract]
     let putOptions: [NIFTYOptionContract]
-    let timestamp: Date
+    var timestamp: Date
     
     // Helper methods for options analysis
     func getATMStrike() -> Double {
