@@ -1,0 +1,41 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme iOS-Trading-App -sdk iphonesimulator -configuration Debug build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator18.5
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+{ platform:iOS Simulator, arch:arm64, id:E337D656-834B-4F3C-9563-46D61BC84D78, OS:18.6, name:ihpone 16 }
+{ platform:iOS Simulator, arch:x86_64, id:E337D656-834B-4F3C-9563-46D61BC84D78, OS:18.6, name:ihpone 16 }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006000-000C31D20E40011E, name:My Mac }
+{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+{ platform:iOS, arch:arm64, id:00008140-001C7D6E3CE3001C, name:GG iphone  }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (2 targets)
+    Target 'iOS-Trading-App' in project 'iOS-Trading-App'
+        ➜ Explicit dependency on target 'SharedPatternModels' in project 'iOS-Trading-App'
+    Target 'SharedPatternModels' in project 'iOS-Trading-App' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+error: unable to attach DB: error: accessing build database "/Users/hexa/Library/Developer/Xcode/DerivedData/iOS-Trading-App-ecstemvrbsgcfwhlgncnblxndqbk/Build/Intermediates.noindex/XCBuildData/build.db": database is locked Possibly there are two concurrent builds running in the same filesystem location.
+** BUILD FAILED **
+
+
+The following build commands failed:
+	Building project iOS-Trading-App with scheme iOS-Trading-App and configuration Debug
+(1 failure)

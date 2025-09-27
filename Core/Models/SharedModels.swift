@@ -564,18 +564,20 @@ public struct IVChainAnalysis {
     public let callIV: Double
     public let putIV: Double
     public let ivSkew: Double
+    public let ivPercentile: Double
     public let termStructure: [Double]
     public let volatilitySurface: [[Double]]
     public let strikes: [Double]
     public let callIVs: [Double]
     public let putIVs: [Double]
-    
+
     public init(
         averageIV: Double = 0.0,
         atmIV: Double = 0.0,
         callIV: Double = 0.0,
         putIV: Double = 0.0,
         ivSkew: Double = 0.0,
+        ivPercentile: Double = 0.0,
         termStructure: [Double] = [],
         volatilitySurface: [[Double]] = [],
         strikes: [Double] = [],
@@ -587,6 +589,7 @@ public struct IVChainAnalysis {
         self.callIV = callIV
         self.putIV = putIV
         self.ivSkew = ivSkew
+        self.ivPercentile = ivPercentile
         self.termStructure = termStructure
         self.volatilitySurface = volatilitySurface
         self.strikes = strikes

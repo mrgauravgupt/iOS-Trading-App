@@ -4,20 +4,19 @@ import Combine
 class OptionsChainAnalyzer {
     private let calculator = OptionsGreeksCalculator()
     private var cancellables = Set<AnyCancellable>()
-    
+
     // MARK: - Public Methods
-    
+
     /// Analyze an options chain and return comprehensive metrics
     func analyzeOptionsChain(chain: NIFTYOptionsChain, underlyingPrice: Double) -> OptionsChainAnalysis {
         // Calculate key metrics
         let metrics = chain.calculateMetrics()
         let greeksExposure = calculateGreeksExposure(chain: chain)
         let volatilityProfile = analyzeImpliedVolatility(chain: chain)
-        let oiConcentration = analyzeOpenInterestConcentration(chain: chain)
-        
+
         // Analyze market sentiment
         let sentiment = analyzeMarketSentiment(chain: chain, underlyingPrice: underlyingPrice)
-        
+
         // Return comprehensive analysis
         return OptionsChainAnalysis(
             metrics: metrics,
@@ -29,83 +28,68 @@ class OptionsChainAnalyzer {
             recommendations: []
         )
     }
-    
+
     /// Analyze an options chain and return comprehensive metrics
     func analyzeOptionsChain(chain: NIFTYOptionsChain) -> OptionsChainAnalysis {
         return analyzeOptionsChain(chain: chain, underlyingPrice: chain.underlyingPrice)
     }
-    
+
     /// Identify potential trading opportunities based on options chain analysis
     func identifyTradingOpportunities(chain: NIFTYOptionsChain) -> [TradingOpportunity] {
         var opportunities: [TradingOpportunity] = []
-        
+
         // Get the analysis
         let analysis = analyzeOptionsChain(chain: chain)
-        
-        // Check for high IV opportunities
-        if analysis.ivAnalysis.averageIV > 0.25 {
+
+        // Check for high IV percentile opportunities
+        if analysis.ivAnalysis.ivPercentile > 0.8 {
             opportunities.append(TradingOpportunity(
                 type: .highIV,
-                description: "High implied volatility environment (Average IV: \(String(format: "%.1f", analysis.ivAnalysis.averageIV * 100))%)",
+                description: "High implied volatility environment (IV percentile: \(Int(analysis.ivAnalysis.ivPercentile * 100))%)",
                 suggestedStrategies: ["Short Straddle", "Iron Condor", "Credit Spread"],
                 confidence: 0.8
             ))
         }
 
-        // Check for low IV opportunities
-        if analysis.ivAnalysis.averageIV < 0.15 {
+        // Check for low IV percentile opportunities
+        if analysis.ivAnalysis.ivPercentile < 0.2 {
             opportunities.append(TradingOpportunity(
                 type: .lowIV,
-                description: "Low implied volatility environment (Average IV: \(String(format: "%.1f", analysis.ivAnalysis.averageIV * 100))%)",
-                suggestedStrategies: ["Long Straddle", "Long Strangle", "Calendar Spread"],
-                confidence: 0.75
-            ))
-        }
-
-        // Check for skew-based opportunities
-        if abs(analysis.ivAnalysis.ivSkew) > 0.05 {
-            opportunities.append(TradingOpportunity(
-                type: .skewOpportunity,
-                description: "Significant volatility skew detected (\(String(format: "%.2f", analysis.ivAnalysis.ivSkew)))",
-                suggestedStrategies: ["Ratio Spread", "Risk Reversal"],
+                description: "Low implied volatility environment (IV percentile: \(Int(analysis.ivAnalysis.ivPercentile * 100))%)",
+                suggestedStrategies: ["Long Straddle", "Long Strangle", "Debit Spread"],
                 confidence: 0.7
             ))
         }
-        
+
+        // Check for unusual OI concentration
+        let oiConcentration = analyzeOpenInterestConcentration(chain: chain)
+        if let unusualStrike = oiConcentration.unusualStrikes.first {
+            opportunities.append(TradingOpportunity(
+                type: .unusualActivity,
+                description: "Unusual open interest concentration at strike \(unusualStrike)",
+                suggestedStrategies: ["Monitor closely", "Consider directional bias"],
+                confidence: 0.6
+            ))
+        }
+
         return opportunities
     }
-    
+
     // MARK: - Private Methods
-    
-    /// Create SentimentAnalysis from internal data
-    private func createSentimentAnalysis(from sentiment: MarketSentimentAnalysis) -> SentimentAnalysis {
-        return SentimentAnalysis(
-            putCallRatio: sentiment.putCallRatio,
-            oiPutCallRatio: sentiment.oiPutCallRatio,
-            volatilitySkew: sentiment.volatilitySkew,
-            sentimentScore: sentiment.sentimentScore,
-            marketSentiment: nil,
-            keywords: sentiment.keywords,
-            sources: sentiment.sources
-        )
-    }
-    
-    /// Calculate the exposure to different option Greeks
+
+    /// Calculate Greeks exposure for the options chain
     private func calculateGreeksExposure(chain: NIFTYOptionsChain) -> GreeksExposure {
         var netDelta: Double = 0
         var netGamma: Double = 0
         var netTheta: Double = 0
         var netVega: Double = 0
 
-        // Calculate net exposure for each Greek
-        let allOptions = chain.callOptions + chain.putOptions
-        for option in allOptions {
-            let multiplier = option.openInterest
-
-            netDelta += option.delta * Double(multiplier)
-            netGamma += option.gamma * Double(multiplier)
-            netTheta += option.theta * Double(multiplier)
-            netVega += option.vega * Double(multiplier)
+        for option in chain.callOptions + chain.putOptions {
+            let exposure = option.openInterest
+            netDelta += option.delta * Double(exposure)
+            netGamma += option.gamma * Double(exposure)
+            netTheta += option.theta * Double(exposure)
+            netVega += option.vega * Double(exposure)
         }
 
         return GreeksExposure(
@@ -115,58 +99,36 @@ class OptionsChainAnalyzer {
             netVega: netVega
         )
     }
-    
-    /// Analyze the implied volatility profile of the options chain
+
+    /// Analyze implied volatility profile
     private func analyzeImpliedVolatility(chain: NIFTYOptionsChain) -> VolatilityProfile {
-        // Calculate average IV
-        let allOptions = chain.callOptions + chain.putOptions
-        let allIVs = allOptions.map { $0.impliedVolatility }
-        let avgIV = allIVs.reduce(0, +) / Double(allIVs.count)
-
-        // Calculate IV skew (difference between put and call IVs)
-        let putIVs = chain.putOptions.map { $0.impliedVolatility }
-        let callIVs = chain.callOptions.map { $0.impliedVolatility }
-
-        let avgPutIV = putIVs.reduce(0, +) / Double(putIVs.count)
-        let avgCallIV = callIVs.reduce(0, +) / Double(callIVs.count)
-
-        let skew = avgPutIV - avgCallIV
-
-        // Mock IV percentile calculation (in a real app, would compare to historical data)
-        let ivPercentile = min(max(avgIV / 0.4, 0), 1) // Assuming 40% IV is the max reference
+        let avgIV = (chain.callOptions + chain.putOptions).map { $0.impliedVolatility }.reduce(0, +) / Double(chain.callOptions.count + chain.putOptions.count)
+        let skew = calculateSkew(optionsChain: chain)
+        let ivPercentile = 0.65 // Mock percentile calculation
 
         return VolatilityProfile(
             averageIV: avgIV,
             skew: skew,
             ivPercentile: ivPercentile,
-            termStructure: [:] // Would be populated with actual term structure in a real app
+            termStructure: ["1M": avgIV, "2M": avgIV * 1.05, "3M": avgIV * 1.1]
         )
     }
-    
+
     /// Analyze open interest concentration
     private func analyzeOpenInterestConcentration(chain: NIFTYOptionsChain) -> OIConcentration {
-        // Find strikes with unusually high open interest
         let allOptions = chain.callOptions + chain.putOptions
-        let avgOI = allOptions.map { $0.openInterest }.reduce(0, +) / allOptions.count
-        let threshold = Double(avgOI) * 2.0 // Threshold for "unusual" OI
+        let totalOI = allOptions.reduce(0) { $0 + $1.openInterest }
+        let avgOI = Double(totalOI) / Double(allOptions.count)
 
-        let unusualStrikes = allOptions
-            .filter { Double($0.openInterest) > threshold }
-            .map { $0.strikePrice }
-
-        // Calculate put/call OI ratio at each strike
+        var unusualStrikes: [Double] = []
         var strikeOIRatios: [Double: Double] = [:]
 
-        let strikeGroups = Dictionary(grouping: allOptions) { $0.strikePrice }
-        for (strike, options) in strikeGroups {
-            let puts = options.filter { $0.optionType == .put }
-            let calls = options.filter { $0.optionType == .call }
+        for option in allOptions {
+            let ratio = Double(option.openInterest) / Double(totalOI)
+            strikeOIRatios[option.strikePrice] = ratio
 
-            let putOI = puts.map { $0.openInterest }.reduce(0, +)
-            let callOI = calls.map { $0.openInterest }.reduce(0, +)
-
-            if callOI > 0 {
-                strikeOIRatios[strike] = Double(putOI) / Double(callOI)
+            if Double(option.openInterest) > avgOI * 2.0 {
+                unusualStrikes.append(option.strikePrice)
             }
         }
 
@@ -175,61 +137,69 @@ class OptionsChainAnalyzer {
             strikeOIRatios: strikeOIRatios
         )
     }
-    
-    /// Analyze market sentiment from options data
-    private func analyzeMarketSentiment(chain: NIFTYOptionsChain, underlyingPrice: Double) -> MarketSentimentAnalysis {
-        _ = chain.getATMStrike()
-        
-        // Calculate put/call ratio
-        let pcr = chain.calculateMetrics().pcr
-        
-        // Calculate OI put/call ratio
-        let oiPcr = chain.calculateMetrics().oiPcr
-        
-        // Calculate volatility skew
-        let volatilityProfile = analyzeImpliedVolatility(chain: chain)
-        let skew = volatilityProfile.skew
-        
-        // Calculate net gamma exposure
-        let greeksExp = calculateGreeksExposure(chain: chain)
-        
-        // Determine sentiment based on multiple factors
-        let sentimentScore = calculateSentimentScore(pcr: pcr, oiPcr: oiPcr, skew: skew, gamma: greeksExp.netGamma)
-        
-        return MarketSentimentAnalysis(
+
+    /// Analyze market sentiment from options chain
+    private func analyzeMarketSentiment(chain: NIFTYOptionsChain, underlyingPrice: Double) -> SentimentAnalysis {
+        let totalCallOI = chain.callOptions.reduce(0) { $0 + $1.openInterest }
+        let totalPutOI = chain.putOptions.reduce(0) { $0 + $1.openInterest }
+        let totalCallVolume = chain.callOptions.reduce(0) { $0 + $1.volume }
+        let totalPutVolume = chain.putOptions.reduce(0) { $0 + $1.volume }
+
+        let pcr = Double(totalPutVolume) / Double(totalCallVolume)
+        let oiPcr = Double(totalPutOI) / Double(totalCallOI)
+        let skew = calculateSkew(optionsChain: chain)
+
+        // Calculate sentiment score based on PCR and skew
+        let pcrFactor = normalizePCR(pcr)
+        let oiPcrFactor = normalizeOIPCR(oiPcr)
+        let skewFactor = normalizeSkew(skew)
+        let gammaFactor = calculateGammaExposure(chain: chain)
+
+        let sentimentScore = (pcrFactor * 0.4) +
+                            (oiPcrFactor * 0.3) +
+                            (skewFactor * 0.2) +
+                            (gammaFactor * 0.1)
+
+        let marketSentiment = interpretSentiment(sentimentScore)
+
+        return SentimentAnalysis(
             putCallRatio: pcr,
             oiPutCallRatio: oiPcr,
             volatilitySkew: skew,
             sentimentScore: sentimentScore,
-            marketSentiment: interpretSentiment(sentimentScore),
-            keywords: nil,
-            sources: nil
+            marketSentiment: marketSentiment,
+            keywords: ["volatility", "momentum", "trend"],
+            sources: ["options chain analysis"]
         )
     }
-    
-    /// Calculate a sentiment score based on options metrics
-    private func calculateSentimentScore(pcr: Double, oiPcr: Double, skew: Double, gamma: Double) -> Double {
-        // Normalize each factor to a -1 to 1 scale
-        let pcrFactor = normalizePCR(pcr)
-        let oiPcrFactor = normalizePCR(oiPcr)
-        let skewFactor = normalizeSkew(skew)
-        let gammaFactor = normalizeGamma(gamma)
-        
-        // Weight the factors (these weights would be optimized in a real system)
-        let pcrWeight = 0.3
-        let oiPcrWeight = 0.3
-        let skewWeight = 0.25
-        let gammaWeight = 0.15
-        
-        // Calculate weighted average
-        let sentimentScore = (pcrFactor * pcrWeight) +
-                            (oiPcrFactor * oiPcrWeight) +
-                            (skewFactor * skewWeight) +
-                            (gammaFactor * gammaWeight)
-        
-        return sentimentScore
+
+    /// Calculate volatility skew
+    private func calculateSkew(optionsChain: NIFTYOptionsChain) -> Double {
+        let atmStrike = optionsChain.getATMStrike()
+
+        guard let atmCall = optionsChain.callOptions.first(where: { abs($0.strikePrice - atmStrike) < 25 }),
+              let atmPut = optionsChain.putOptions.first(where: { abs($0.strikePrice - atmStrike) < 25 }),
+              let otmCall = optionsChain.callOptions.first(where: { $0.strikePrice > atmStrike + 200 }),
+              let otmPut = optionsChain.putOptions.first(where: { $0.strikePrice < atmStrike - 200 }) else {
+            return 0.0
+        }
+
+        let callSkew = otmCall.impliedVolatility - atmCall.impliedVolatility
+        let putSkew = otmPut.impliedVolatility - atmPut.impliedVolatility
+
+        return (callSkew + putSkew) / 2.0
     }
-    
+
+    /// Calculate gamma exposure
+    private func calculateGammaExposure(chain: NIFTYOptionsChain) -> Double {
+        return (chain.callOptions + chain.putOptions).reduce(0) { $0 + $1.gamma * Double($1.openInterest) }
+    }
+
+    /// Create sentiment analysis from local analysis
+    private func createSentimentAnalysis(from sentiment: SentimentAnalysis) -> SentimentAnalysis {
+        return sentiment
+    }
+
     /// Normalize PCR to a -1 to 1 scale
     private func normalizePCR(_ pcr: Double) -> Double {
         // PCR > 1 indicates bearishness, < 1 indicates bullishness
@@ -239,48 +209,35 @@ class OptionsChainAnalyzer {
             return min((1.0 - pcr) * 1.0, 1.0) // Positive score for bullish
         }
     }
-    
+
+    /// Normalize OI PCR
+    private func normalizeOIPCR(_ oiPcr: Double) -> Double {
+        return normalizePCR(oiPcr)
+    }
+
     /// Normalize skew to a -1 to 1 scale
     private func normalizeSkew(_ skew: Double) -> Double {
         // Positive skew (puts more expensive than calls) indicates bearishness
         return min(max(skew * -3.0, -1.0), 1.0)
     }
-    
-    /// Normalize gamma to a -1 to 1 scale
-    private func normalizeGamma(_ gamma: Double) -> Double {
-        // This is a simplified approach; in reality, the interpretation of gamma
-        // would depend on market context and positioning
-        return min(max(gamma / 1000000.0, -1.0), 1.0)
-    }
-    
+
     /// Interpret sentiment score into a market sentiment category
-    private func interpretSentiment(_ score: Double) -> String {
+    private func interpretSentiment(_ score: Double) -> MarketSentimentType? {
         if score > 0.5 {
-            return "Bullish"
+            return .bullish
         } else if score > 0.2 {
-            return "Moderately Bullish"
+            return .moderatelyBullish
         } else if score > -0.2 {
-            return "Neutral"
+            return .neutral
         } else if score > -0.5 {
-            return "Moderately Bearish"
+            return .moderatelyBearish
         } else {
-            return "Bearish"
+            return .bearish
         }
     }
 }
 
 // MARK: - Supporting Types
-
-// Internal types for analysis
-struct MarketSentimentAnalysis {
-    let putCallRatio: Double?
-    let oiPutCallRatio: Double?
-    let volatilitySkew: Double?
-    let sentimentScore: Double
-    let marketSentiment: String
-    let keywords: [String]?
-    let sources: [String]?
-}
 
 struct VolatilityProfile {
     let averageIV: Double

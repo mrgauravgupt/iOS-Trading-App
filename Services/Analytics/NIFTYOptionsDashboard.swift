@@ -8,7 +8,7 @@ struct NIFTYOptionsDashboard: View {
     @StateObject private var aiOrchestrator = AITradingOrchestrator()
     @StateObject private var patternEngine = IntradayPatternEngine()
     
-    @State private var selectedTimeframe: PatternTimeframe = .fiveMinute
+    @State private var selectedTimeframe: Timeframe = .fiveMinute
     @State private var showingSettings = false
     
     private var availableExpiries: [Date] {
@@ -346,14 +346,14 @@ struct NIFTYOptionsDashboard: View {
                 
                 Spacer()
                 
-                Picker("Timeframe", selection: $selectedTimeframe) {
-                    ForEach(PatternTimeframe.allCases, id: \.self) { timeframe in
-                        Text(timeframe.displayName)
-                            .tag(timeframe)
-                    }
+            Picker("Timeframe", selection: $selectedTimeframe) {
+                ForEach(Timeframe.allCases, id: \.self) { timeframe in
+                    Text(timeframe.displayName)
+                        .tag(timeframe)
                 }
-                .pickerStyle(MenuPickerStyle())
-                .font(.caption)
+            }
+            .pickerStyle(MenuPickerStyle())
+            .font(.caption)
             }
             
             let recentPatterns = patternEngine.detectedPatterns

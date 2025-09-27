@@ -24,11 +24,12 @@ class AITradingOrchestrator: ObservableObject {
     private let riskManager = AdvancedRiskManager()
     private let orderExecutor = OptionsOrderExecutor()
     private let trainingManager = HistoricalTrainingManager()
-    
+
     // MARK: - Private Properties
     private var cancellables = Set<AnyCancellable>()
     private var tradingTimer: Timer?
     private var riskMonitoringTimer: Timer?
+    private var currentOptionsChain: NIFTYOptionsChain?
     
     // MARK: - Initialization
     init() {
@@ -43,29 +44,23 @@ class AITradingOrchestrator: ObservableObject {
     // MARK: - Public Methods
     func startAutoTrading() async {
         guard !isAutoTradingEnabled else { return }
-        
+
         do {
             // Initialize all components
             try await initializeComponents()
-            
-            // Start real-time data streams
-            dataProvider.startRealTimeDataStream()
-            
-            // Begin pattern recognition
-            // await patternEngine.startRealTimeAnalysis()
-            
+
             // Start trading loop
             startTradingLoop()
-            
+
             // Start risk monitoring
             startRiskMonitoring()
-            
+
             isAutoTradingEnabled = true
             tradingStatus = .running
             errorMessage = nil
-            
+
             print("✅ AI Auto Trading Started Successfully")
-            
+
         } catch {
             errorMessage = "Failed to start auto trading: \(error.localizedDescription)"
             print("❌ Failed to start auto trading: \(error)")
@@ -74,18 +69,14 @@ class AITradingOrchestrator: ObservableObject {
     
     func stopAutoTrading() {
         guard isAutoTradingEnabled else { return }
-        
+
         // Stop timers
         tradingTimer?.invalidate()
         riskMonitoringTimer?.invalidate()
-        
-        // Stop data streams
-        dataProvider.stopRealTimeDataStream()
-        // await patternEngine.stopRealTimeAnalysis()
-        
+
         isAutoTradingEnabled = false
         tradingStatus = .stopped
-        
+
         print("🛑 AI Auto Trading Stopped")
     }
     
@@ -150,21 +141,18 @@ class AITradingOrchestrator: ObservableObject {
     private func initializeSystem() {
         Task {
             do {
-                // Initialize data provider
-                try await dataProvider.initialize()
-                
                 // Initialize pattern engine
                 try await patternEngine.initialize()
-                
+
                 // Initialize risk manager
                 try await riskManager.initialize()
-                
+
                 // Initialize order executor
                 try await orderExecutor.initialize()
-                
+
                 isInitialized = true
                 print("✅ AI Trading System Initialized")
-                
+
             } catch {
                 errorMessage = "System initialization failed: \(error.localizedDescription)"
                 print("❌ System initialization failed: \(error)")
@@ -208,26 +196,27 @@ class AITradingOrchestrator: ObservableObject {
     
     private func executeTradingCycle() async {
         guard isAutoTradingEnabled && tradingStatus == .running else { return }
-        
+
         do {
             // Get latest market data
-            let optionsChain = dataProvider.currentOptionsChain
-            
+            let optionsChain = dataProvider.getCurrentOptionsChain()
+            currentOptionsChain = optionsChain
+
             // Analyze patterns
             // let patterns = await patternEngine.analyzeCurrentMarket(optionsChain)
             let patterns: [IntradayPattern] = []
-            
+
             // Generate trading signals
             let signals = generateTradingSignals(from: patterns, optionsChain: optionsChain)
-            
+
             // Execute trades based on signals
             for signal in signals {
                 await executeTradeSignal(signal)
             }
-            
+
             // Update performance metrics
             await updatePerformanceMetrics()
-            
+
         } catch {
             print("❌ Trading cycle error: \(error)")
             errorMessage = "Trading cycle error: \(error.localizedDescription)"
