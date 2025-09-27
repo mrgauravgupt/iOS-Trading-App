@@ -76,7 +76,14 @@ struct PerformanceAnalyticsView: View {
                 }
             }
             .navigationTitle("Performance Analytics")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Performance Analytics")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .onAppear {
                 loadAnalyticsData()
             }
@@ -744,9 +751,18 @@ struct DetailedMetricsView: View {
             }
             .navigationTitle("Detailed Metrics")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                presentationMode.wrappedValue.dismiss()
-            })
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Detailed Metrics")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
         }
     }
 }

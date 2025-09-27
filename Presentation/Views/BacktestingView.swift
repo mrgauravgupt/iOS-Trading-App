@@ -106,7 +106,14 @@ struct BacktestingView: View {
                 .padding()
             }
             .navigationTitle("Advanced Backtesting")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Advanced Backtesting")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .alert("Error", isPresented: $showError) {
                 Button("OK") { }
             } message: {
@@ -823,6 +830,11 @@ struct DetailedBacktestResultsView: View {
             .navigationTitle("Detailed Results")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Detailed Results")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") {
                         presentationMode.wrappedValue.dismiss()

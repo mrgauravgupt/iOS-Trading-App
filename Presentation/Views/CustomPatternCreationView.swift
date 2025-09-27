@@ -44,9 +44,14 @@ struct CustomPatternCreationView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Create Custom Pattern")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Create Custom Pattern")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         dismiss()

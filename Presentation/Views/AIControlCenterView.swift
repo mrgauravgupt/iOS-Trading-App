@@ -48,8 +48,15 @@ struct AIControlCenterView: View {
                 }
                 .padding()
             }
-            .navigationTitle("AI Control Center")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("AI Control Center")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             // TODO: Implement these views
             // .sheet(isPresented: $showPerformanceDetails) {
             //     AgentPerformanceDetailView(selectedAgent: selectedAgent)
@@ -767,6 +774,13 @@ struct ManualOverrideView: View {
             Text("Manual Override Controls")
                 .navigationTitle("Manual Override")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("Manual Override")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                }
         }
     }
 }

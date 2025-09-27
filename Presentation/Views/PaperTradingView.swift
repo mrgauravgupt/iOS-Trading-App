@@ -91,8 +91,15 @@ struct PaperTradingView: View {
                 }
             }
             .background(Color.kiteBackground.ignoresSafeArea())
-            .navigationTitle("AI Paper Trading")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("AI Paper Trading")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .onAppear {
                 loadPortfolioData()
                 startAIAnalysis()

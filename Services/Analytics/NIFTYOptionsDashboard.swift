@@ -67,7 +67,14 @@ struct NIFTYOptionsDashboard: View {
                 .padding(.top, 8)
             }
             .navigationTitle("NIFTY Options AI")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("NIFTY Options AI")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingSettings = true }) {

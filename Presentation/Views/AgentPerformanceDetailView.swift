@@ -29,8 +29,15 @@ struct AgentPerformanceDetailView: View {
                 }
                 .padding()
             }
-            .navigationTitle("\(selectedAgent.rawValue) Details")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("\(selectedAgent.rawValue) Details")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Close") {

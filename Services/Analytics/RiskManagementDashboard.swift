@@ -45,7 +45,14 @@ struct RiskManagementDashboard: View {
                 .padding()
             }
             .navigationTitle("Risk Management")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Risk Management")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Stress Test") {
@@ -847,6 +854,11 @@ struct StressTestView: View {
                 .navigationTitle("Stress Testing")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("Stress Testing")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button("Close") {
                             presentationMode.wrappedValue.dismiss()

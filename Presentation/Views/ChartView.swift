@@ -610,11 +610,20 @@ struct PatternDetailView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("Pattern Details")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                presentationMode.wrappedValue.dismiss()
-            })
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Pattern Details")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
         }
     }
 }

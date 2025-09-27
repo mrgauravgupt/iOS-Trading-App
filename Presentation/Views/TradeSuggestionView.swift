@@ -28,7 +28,14 @@ struct TradeSuggestionView: View {
                 }
             }
             .navigationTitle("Trade Suggestions")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Trade Suggestions")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+            }
         }
         .alert(isPresented: $showExecutionSuccess) {
             Alert(

@@ -39,9 +39,14 @@ struct PatternImportView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Import Patterns")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Import Patterns")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         dismiss()
@@ -381,6 +386,11 @@ struct PatternPreviewView: View {
             .navigationTitle("Pattern Preview")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Pattern Preview")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
