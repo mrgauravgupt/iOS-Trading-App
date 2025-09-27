@@ -23,16 +23,19 @@ struct PersistenceController {
         container.viewContext.automaticallyMergesChangesFromParent = true
     }
 
-    func saveContext() {
+    func saveContext() -> Bool {
         let context = container.viewContext
         if context.hasChanges {
             do {
                 try context.save()
+                return true
             } catch {
                 let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+                print("Unresolved error saving context: \(nserror), \(nserror.userInfo)")
+                return false
             }
         }
+        return true
     }
 
     func fetchTradingData() -> [TradingData] {
@@ -40,37 +43,46 @@ struct PersistenceController {
         do {
             return try container.viewContext.fetch(request)
         } catch {
-            print("Fetch failed")
+            print("Fetch TradingData failed: \(error)")
             return []
         }
     }
 
-    func addTradingData(symbol: String, price: Double, volume: Int64, timestamp: Date) {
+    func addTradingData(symbol: String, price: Double, volume: Int64, timestamp: Date) -> Bool {
         let newData = TradingData(context: container.viewContext)
         newData.symbol = symbol
         newData.price = price
         newData.volume = volume
         newData.timestamp = timestamp
-        saveContext()
+        return saveContext()
     }
 
-    func cacheDataLocally(data: [MarketData]) {
+    func cacheDataLocally(data: [MarketData]) -> Int {
+        var successCount = 0
         for item in data {
-            addTradingData(symbol: item.symbol, price: item.price, volume: Int64(item.volume), timestamp: item.timestamp)
+            if addTradingData(symbol: item.symbol, price: item.price, volume: Int64(item.volume), timestamp: item.timestamp) {
+                successCount += 1
+            }
         }
+        return successCount
     }
 
-    func saveNewsArticle(_ article: Article) {
+    func saveNewsArticle(_ article: Article) -> Bool {
         let context = container.viewContext
         let newsEntity = NewsArticle(context: context)
         newsEntity.title = article.title
         newsEntity.descriptionText = article.description
         newsEntity.url = article.url
         // Convert publishedAt string to Date if needed
-        if let publishedAtDate = ISO8601DateFormatter().date(from: article.publishedAt) {
+        let dateFormatter = ISO8601DateFormatter()
+        if let publishedAtDate = dateFormatter.date(from: article.publishedAt) {
             newsEntity.publishedAt = publishedAtDate
+        } else {
+            // Fallback to current date if parsing fails
+            newsEntity.publishedAt = Date()
+            print("Failed to parse publishedAt date for article: \(article.title), using current date")
         }
-        saveContext()
+        return saveContext()
     }
 
     func fetchNewsArticles() -> [NewsArticle] {

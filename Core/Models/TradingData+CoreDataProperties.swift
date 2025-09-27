@@ -8,8 +8,8 @@ extension TradingData {
 
     @NSManaged public var symbol: String?
     @NSManaged public var price: Double
-    @NSManaged public var timestamp: Date?
     @NSManaged public var volume: Int64
+    @NSManaged public var timestamp: Date?
 }
 
 extension TradingData : Identifiable {
