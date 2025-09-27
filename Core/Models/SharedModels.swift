@@ -1,6 +1,134 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Core Enums
+
+/// Option type for Indian markets with specific CE/PE notation
+public enum OptionType: String, Codable, CaseIterable {
+    case call = "CE"
+    case put = "PE"
+    
+    /// Alternative representation for compatibility
+    public var standardType: String {
+        switch self {
+        case .call: return "call"
+        case .put: return "put"
+        }
+    }
+}
+
+/// Timeframe enumeration for consistency across the app
+public enum Timeframe: String, Codable, CaseIterable {
+    case oneMinute = "1m"
+    case fiveMinute = "5m"
+    case fifteenMinute = "15m"
+    case thirtyMinute = "30m"
+    case oneHour = "1h"
+    case fourHour = "4h"
+    case oneDay = "1d"
+    
+    // Convenience aliases for backward compatibility
+    public static let m1 = oneMinute
+    public static let m5 = fiveMinute
+    public static let m15 = fifteenMinute
+    public static let h1 = oneHour
+    
+    public var displayName: String {
+        switch self {
+        case .oneMinute: return "1 Min"
+        case .fiveMinute: return "5 Min"
+        case .fifteenMinute: return "15 Min"
+        case .thirtyMinute: return "30 Min"
+        case .oneHour: return "1 Hour"
+        case .fourHour: return "4 Hour"
+        case .oneDay: return "1 Day"
+        }
+    }
+    
+    public var seconds: Int {
+        switch self {
+        case .oneMinute: return 60
+        case .fiveMinute: return 300
+        case .fifteenMinute: return 900
+        case .thirtyMinute: return 1800
+        case .oneHour: return 3600
+        case .fourHour: return 14400
+        case .oneDay: return 86400
+        }
+    }
+}
+
+/// Market sentiment analysis - consolidated version
+public struct SentimentAnalysis: Codable {
+    // Options-based sentiment (from SharedModels)
+    public let putCallRatio: Double?
+    public let oiPutCallRatio: Double?
+    public let volatilitySkew: Double?
+    public let sentimentScore: Double
+    public let marketSentiment: MarketSentiment?
+    
+    // News-based sentiment (from ContinuousLearningManager)
+    public let keywords: [String]?
+    public let sources: [String]?
+    
+    public enum MarketSentiment: String, Codable {
+        case bullish = "Bullish"
+        case bearish = "Bearish"
+        case neutral = "Neutral"
+        case extremeBullish = "Extreme Bullish"
+        case extremeBearish = "Extreme Bearish"
+    }
+    
+    public init(
+        putCallRatio: Double? = nil,
+        oiPutCallRatio: Double? = nil,
+        volatilitySkew: Double? = nil,
+        sentimentScore: Double,
+        marketSentiment: MarketSentiment? = nil,
+        keywords: [String]? = nil,
+        sources: [String]? = nil
+    ) {
+        self.putCallRatio = putCallRatio
+        self.oiPutCallRatio = oiPutCallRatio
+        self.volatilitySkew = volatilitySkew
+        self.sentimentScore = sentimentScore
+        self.marketSentiment = marketSentiment
+        self.keywords = keywords
+        self.sources = sources
+    }
+}
+
+/// Trade action types
+public enum TradeAction: String, Codable, CaseIterable {
+    case buy = "BUY"
+    case sell = "SELL"
+    case hold = "HOLD"
+    
+    public var displayName: String {
+        return self.rawValue.capitalized
+    }
+}
+
+/// Volatility environment classification
+public enum VolatilityEnvironment: String, Codable {
+    case low = "Low"
+    case normal = "Normal"
+    case high = "High"
+    case extreme = "Extreme"
+}
+
+/// Trend direction
+public enum TrendDirection: String, Codable {
+    case bullish = "Bullish"
+    case bearish = "Bearish"
+    case neutral = "Neutral"
+    case strongBullish = "Strong Bullish"
+    case strongBearish = "Strong Bearish"
+}
+
+/// Market sentiment alias for compatibility
+public typealias MarketSentiment = SentimentAnalysis.MarketSentiment
+
 // MARK: - Market Data Models
 
 /// Represents a single point of market data
@@ -106,34 +234,7 @@ public struct BacktestResults {
     }
 }
 
-/// Performance metrics for trading strategies
-public struct PerformanceMetrics {
-    public var totalReturn: Double
-    public var annualizedReturn: Double
-    public var sharpeRatio: Double
-    public var maxDrawdown: Double
-    public var winRate: Double
-    public var profitFactor: Double
-    public var totalTrades: Int  // Added missing property
-    
-    public init(
-        totalReturn: Double = 0.0,
-        annualizedReturn: Double = 0.0,
-        sharpeRatio: Double = 0.0,
-        maxDrawdown: Double = 0.0,
-        winRate: Double = 0.0,
-        profitFactor: Double = 0.0,
-        totalTrades: Int = 0     // Added to initializer
-    ) {
-        self.totalReturn = totalReturn
-        self.annualizedReturn = annualizedReturn
-        self.sharpeRatio = sharpeRatio
-        self.maxDrawdown = maxDrawdown
-        self.winRate = winRate
-        self.profitFactor = profitFactor
-        self.totalTrades = totalTrades
-    }
-}
+
 
 /// Results of a single trade
 public struct TradeResult {
@@ -468,13 +569,13 @@ public struct IVChainAnalysis {
     }
 }
 
-public struct GreeksExposure {
+public struct GreeksExposure: Codable {
     public let netDelta: Double
     public let netGamma: Double
     public let netTheta: Double
     public let netVega: Double
     public let netRho: Double
-    
+
     public init(
         netDelta: Double = 0.0,
         netGamma: Double = 0.0,
@@ -512,34 +613,7 @@ public struct LiquidityAnalysis {
     }
 }
 
-public struct SentimentAnalysis {
-    public let putCallRatio: Double
-    public let oiPutCallRatio: Double
-    public let volatilitySkew: Double
-    public let sentimentScore: Double
-    public let marketSentiment: MarketSentiment
-    public let confidenceLevel: Double
-    
-    public init(
-        putCallRatio: Double = 0.0,
-        oiPutCallRatio: Double = 0.0,
-        volatilitySkew: Double = 0.0,
-        sentimentScore: Double = 0.0,
-        marketSentiment: MarketSentiment = .neutral,
-        confidenceLevel: Double = 0.0
-    ) {
-        self.putCallRatio = putCallRatio
-        self.oiPutCallRatio = oiPutCallRatio
-        self.volatilitySkew = volatilitySkew
-        self.sentimentScore = sentimentScore
-        self.marketSentiment = marketSentiment
-        self.confidenceLevel = confidenceLevel
-    }
-}
-
-public enum MarketSentiment {
-    case bullish, bearish, neutral
-}
+// Note: SentimentAnalysis and MarketSentiment are now consolidated in CoreModels.swift to avoid duplication
 
 public struct ChainRiskMetrics {
     public let valueAtRisk: Double
@@ -599,7 +673,7 @@ public struct OptionsChainAnalysis {
             ivAnalysis: IVChainAnalysis(),
             greeksExposure: GreeksExposure(),
             liquidityAnalysis: LiquidityAnalysis(),
-            sentimentAnalysis: SentimentAnalysis(),
+            sentimentAnalysis: SentimentAnalysis(sentimentScore: 0.0),
             riskMetrics: ChainRiskMetrics(),
             recommendations: []
         )
@@ -732,4 +806,140 @@ public struct VolatilityEvent {
 
 public enum VolatilityEventType {
     case spike, crash, consolidation
+}
+
+// MARK: - Options Analysis Models
+
+public struct OptionsMetrics: Codable {
+    public let pcr: Double
+    public let oiPcr: Double
+    public let maxPain: Double
+    public let skew: Double
+    public let totalCallOI: Int
+    public let totalPutOI: Int
+    public let totalCallVolume: Int
+    public let totalPutVolume: Int
+
+    public init(
+        pcr: Double = 0.0,
+        oiPcr: Double = 0.0,
+        maxPain: Double = 0.0,
+        skew: Double = 0.0,
+        totalCallOI: Int = 0,
+        totalPutOI: Int = 0,
+        totalCallVolume: Int = 0,
+        totalPutVolume: Int = 0
+    ) {
+        self.pcr = pcr
+        self.oiPcr = oiPcr
+        self.maxPain = maxPain
+        self.skew = skew
+        self.totalCallOI = totalCallOI
+        self.totalPutOI = totalPutOI
+        self.totalCallVolume = totalCallVolume
+        self.totalPutVolume = totalPutVolume
+    }
+
+    public static func empty() -> OptionsMetrics {
+        return OptionsMetrics()
+    }
+}
+
+public struct VolatilitySurface: Codable {
+    public let points: [VolatilitySurfacePoint]
+
+    public init(points: [VolatilitySurfacePoint] = []) {
+        self.points = points
+    }
+
+    public static func empty() -> VolatilitySurface {
+        return VolatilitySurface()
+    }
+}
+
+public struct VolatilitySurfacePoint: Codable {
+    public let strike: Double
+    public let timeToExpiry: Double
+    public let impliedVolatility: Double
+    public let optionType: OptionType
+
+    public init(
+        strike: Double = 0.0,
+        timeToExpiry: Double = 0.0,
+        impliedVolatility: Double = 0.0,
+        optionType: OptionType = .call
+    ) {
+        self.strike = strike
+        self.timeToExpiry = timeToExpiry
+        self.impliedVolatility = impliedVolatility
+        self.optionType = optionType
+    }
+}
+
+// OptionType moved to NIFTYOptionsDataModels.swift to avoid duplication
+// Using the more comprehensive version with Indian market specific values
+
+// MARK: - Market Sentiment Analysis
+
+public struct OptionsAnalysis: Codable {
+    public let atmStrike: Double
+    public let metrics: OptionsMetrics
+    public let greeksExposure: GreeksExposure
+    public let volatilitySurface: VolatilitySurface
+    public let sentimentAnalysis: SentimentAnalysis
+
+    public init(
+        atmStrike: Double,
+        metrics: OptionsMetrics,
+        greeksExposure: GreeksExposure,
+        volatilitySurface: VolatilitySurface,
+        sentimentAnalysis: SentimentAnalysis
+    ) {
+        self.atmStrike = atmStrike
+        self.metrics = metrics
+        self.greeksExposure = greeksExposure
+        self.volatilitySurface = volatilitySurface
+        self.sentimentAnalysis = sentimentAnalysis
+    }
+
+    public static func empty() -> OptionsAnalysis {
+        return OptionsAnalysis(
+            atmStrike: 0.0,
+            metrics: OptionsMetrics.empty(),
+            greeksExposure: GreeksExposure(),
+            volatilitySurface: VolatilitySurface.empty(),
+            sentimentAnalysis: SentimentAnalysis(sentimentScore: 0.0)
+        )
+    }
+}
+
+public struct PerformanceMetrics: Codable {
+    public let sharpeRatio: Double
+    public let maxDrawdown: Double
+    public let winRate: Double
+    public let profitFactor: Double
+    public let avgWin: Double
+    public let avgLoss: Double
+    public let totalTrades: Int
+    public let periodReturn: Double
+    
+    public init(
+        sharpeRatio: Double = 0.0,
+        maxDrawdown: Double = 0.0,
+        winRate: Double = 0.0,
+        profitFactor: Double = 0.0,
+        avgWin: Double = 0.0,
+        avgLoss: Double = 0.0,
+        totalTrades: Int = 0,
+        periodReturn: Double = 0.0
+    ) {
+        self.sharpeRatio = sharpeRatio
+        self.maxDrawdown = maxDrawdown
+        self.winRate = winRate
+        self.profitFactor = profitFactor
+        self.avgWin = avgWin
+        self.avgLoss = avgLoss
+        self.totalTrades = totalTrades
+        self.periodReturn = periodReturn
+    }
 }

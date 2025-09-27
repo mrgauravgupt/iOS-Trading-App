@@ -431,6 +431,8 @@ class OptionsOrderExecutor: ObservableObject {
             return marketPrice + slippageAmount // Pay slightly more for buys
         case .sell:
             return marketPrice - slippageAmount // Accept slightly less for sells
+        case .hold:
+            return marketPrice // No slippage adjustment for hold orders
         }
     }
     

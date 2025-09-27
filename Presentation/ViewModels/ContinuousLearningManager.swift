@@ -1,7 +1,8 @@
-import UIKit
 import Foundation
 import Combine
-import CoreML
+import SharedPatternModels
+
+@MainActor
 
 class ContinuousLearningManager: ObservableObject {
     @Published var isLearning = false
@@ -17,12 +18,6 @@ class ContinuousLearningManager: ObservableObject {
     private var learningHistory: [LearningSession] = []
     private var performanceMetrics: [String: [Double]] = [:]
     private var cancellables = Set<AnyCancellable>()
-    
-    struct SentimentAnalysis {
-        let score: Double
-        let keywords: [String]
-        let sources: [String]
-    }
     
     struct LearningSession {
         let date: Date
@@ -105,7 +100,11 @@ class ContinuousLearningManager: ObservableObject {
     private func analyzeSentiment() async throws -> SentimentAnalysis {
         // Analyze market sentiment from news and social media
         return SentimentAnalysis(
-            score: 0.65,
+            putCallRatio: nil,
+            oiPutCallRatio: nil,
+            volatilitySkew: nil,
+            sentimentScore: 0.65,
+            marketSentiment: nil,
             keywords: ["bullish", "growth", "recovery"],
             sources: ["financial_news", "twitter", "reddit"]
         )

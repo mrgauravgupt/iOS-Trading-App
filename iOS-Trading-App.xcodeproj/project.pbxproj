@@ -37,6 +37,7 @@
 		4625C7DDDB7506937E9F8A80 /* PatternScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 396990E108B8C83A15DF2117 /* PatternScannerView.swift */; };
 		4B91DA7DF550259D704D213E /* OptionsChainAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A7EB0C06FFE92B11A25BD11 /* OptionsChainAnalyzer.swift */; };
 		4DC8DFA37286E8CD7A825F31 /* PerformanceAnalyticsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0675F2B943757ECF301E8E1A /* PerformanceAnalyticsEngine.swift */; };
+		52659545A9F3A65E6414DED7 /* PatternModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06DC71AFD4EA1CFD4680127 /* PatternModels.swift */; };
 		550CDADE396D3ED801D1A145 /* UATTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4662DECE5B4B4483DD388BB /* UATTests.swift */; };
 		56EA4DAD605D364CAD322CE5 /* TradeSuggestionAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EE58BDC84316D29752D4684 /* TradeSuggestionAlert.swift */; };
 		5868E0EC5F8AA22E45A6BAFF /* PatternImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02FFFCC3025BE70E499754E /* PatternImportView.swift */; };
@@ -47,6 +48,7 @@
 		61AE6693DF56068F4F53F513 /* EngineProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2154B87746F1C68867DC7219 /* EngineProtocol.swift */; };
 		61E74211D36236B1794566EB /* PLCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E37CCFE4277241CAB80DB5 /* PLCalculator.swift */; };
 		629011F2C9131B42C5FA5003 /* LaunchPrep.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE07FBC9D789E4A95ED8EEBB /* LaunchPrep.swift */; };
+		6530180D2FE18B596D1B6B33 /* SharedPatternModels.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FAE83C9CCB98603A74770F3B /* SharedPatternModels.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		68A2447F683652287590985C /* RiskManagementAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33777CA4D735FA79E787CA21 /* RiskManagementAgent.swift */; };
 		69401DCC6A35702B2ABA9C08 /* ViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B1CCBEF5816EFD95367EF8 /* ViewModelProtocol.swift */; };
 		69814886B25A37BE3091B1C5 /* TradeSuggestionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0286D91D065B1F9E5CD1B7 /* TradeSuggestionManager.swift */; };
@@ -77,8 +79,10 @@
 		C334E73F84E1103FD7432A85 /* IntradayPatternEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040CF49CB8FBDAD40E1FE32F /* IntradayPatternEngine.swift */; };
 		C41A8A2D25C3DCBA21737FD3 /* CustomPatternCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E09489F37219CC03FEBAC5A /* CustomPatternCreationView.swift */; };
 		C544147BBBBD238E04A45665 /* OptionsOrderExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2010D4EB17798DD418304786 /* OptionsOrderExecutor.swift */; };
+		C79E9AA8F4CB5BF3EAE544A8 /* PatternModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06DC71AFD4EA1CFD4680127 /* PatternModels.swift */; };
 		C7D03642C425D0150B971F14 /* TradingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27CF33EB54D733E70CBF32FF /* TradingData.swift */; };
 		C8FCAC86E207BFB6359DE691 /* RiskManagementDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2070AAC2DF4AAE8F9ABFFBCF /* RiskManagementDashboard.swift */; };
+		C9B4794D8163CCD6C7F2684B /* SharedPatternModels.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAE83C9CCB98603A74770F3B /* SharedPatternModels.framework */; };
 		CD69B3BA31F7A24C50633887 /* TechnicalAnalysisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD99653DD9130C7B0F547EE /* TechnicalAnalysisEngine.swift */; };
 		CE4281CDFCB8D8E42B3EA4EA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D66ED26AD1BC09180F6BC227 /* ContentView.swift */; };
 		D008E222D229DB57A3A65EE5 /* HistoricalDataEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51917E905906DD6F0C25D0A /* HistoricalDataEngine.swift */; };
@@ -105,7 +109,28 @@
 			remoteGlobalIDString = 0F59D7989A757EF8B0725397;
 			remoteInfo = "iOS-Trading-App";
 		};
+		A701EB950F101720E9BCA966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C0C1453B651AE1E5412D3DD5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A9A675DEFE6704DA69194C9;
+			remoteInfo = SharedPatternModels;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CF30A7872C2F46BB72BF01E5 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				6530180D2FE18B596D1B6B33 /* SharedPatternModels.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		01C801A92EC09B26A0CD3AFD /* AnalyticsEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsEnums.swift; sourceTree = "<group>"; };
@@ -167,6 +192,7 @@
 		9754FDAF88E39BF314A0CC39 /* ZerodhaAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZerodhaAuthManager.swift; sourceTree = "<group>"; };
 		9EA7F7A67E2EDBD21C889FA9 /* SecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityManager.swift; sourceTree = "<group>"; };
 		A02FFFCC3025BE70E499754E /* PatternImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternImportView.swift; sourceTree = "<group>"; };
+		A06DC71AFD4EA1CFD4680127 /* PatternModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternModels.swift; sourceTree = "<group>"; };
 		A4C54EF4BB7F4E9D9BCD6857 /* OrderExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderExecutor.swift; sourceTree = "<group>"; };
 		A9553C0E4B17EE3F73653A5B /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "iOS-Trading-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -197,9 +223,21 @@
 		F5D26590F21171256F1048B8 /* NewsAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsAPIClient.swift; sourceTree = "<group>"; };
 		F8E37CCFE4277241CAB80DB5 /* PLCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PLCalculator.swift; sourceTree = "<group>"; };
 		FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "iOS-Trading-AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FAE83C9CCB98603A74770F3B /* SharedPatternModels.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SharedPatternModels.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB147D9F9ABD9812B4E91561 /* ProtocolConformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolConformanceTests.swift; sourceTree = "<group>"; };
 		FF0953853617D2DAC95E4A5A /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5AFB0BDE1A83AF0184D3FE28 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9B4794D8163CCD6C7F2684B /* SharedPatternModels.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0CE974483089E1227826B8B4 /* Products */ = {
@@ -207,6 +245,7 @@
 			children = (
 				AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */,
 				FA715AB68FE19BA9D34F5DA2 /* iOS-Trading-AppTests.xctest */,
+				FAE83C9CCB98603A74770F3B /* SharedPatternModels.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -221,6 +260,7 @@
 				218B763904BD15D330F5C9F6 /* Extensions */,
 				75925E33639A3E57362E535D /* Managers */,
 				BBCCE9BE9C052CC862DF06B5 /* Models */,
+				5F9F4ED24EE945EBC3A77E88 /* Models */,
 				43E2DD690256AC5812A76058 /* Networking */,
 				661348B727FD7623D82F15E4 /* Notifications */,
 				F9936815985B37CCA95D94ED /* Orchestrators */,
@@ -298,6 +338,15 @@
 			);
 			name = Networking;
 			path = Services/Networking;
+			sourceTree = "<group>";
+		};
+		5F9F4ED24EE945EBC3A77E88 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A06DC71AFD4EA1CFD4680127 /* PatternModels.swift */,
+			);
+			name = Models;
+			path = Shared/Models;
 			sourceTree = "<group>";
 		};
 		661348B727FD7623D82F15E4 /* Notifications */ = {
@@ -474,10 +523,13 @@
 			buildConfigurationList = 67A77B60F49F7A239BF1DBA9 /* Build configuration list for PBXNativeTarget "iOS-Trading-App" */;
 			buildPhases = (
 				E3E426F3D82C031859C4127B /* Sources */,
+				5AFB0BDE1A83AF0184D3FE28 /* Frameworks */,
+				CF30A7872C2F46BB72BF01E5 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9358289BE179FB82FCF1B2D7 /* PBXTargetDependency */,
 			);
 			name = "iOS-Trading-App";
 			packageProductDependencies = (
@@ -485,6 +537,23 @@
 			productName = "iOS-Trading-App";
 			productReference = AB09FDF2A16646F262C5ABE9 /* iOS-Trading-App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9A9A675DEFE6704DA69194C9 /* SharedPatternModels */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 99C9BD53CE2BFB09CA6C88BD /* Build configuration list for PBXNativeTarget "SharedPatternModels" */;
+			buildPhases = (
+				9AA28B7E42064999CBF4D56B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SharedPatternModels;
+			packageProductDependencies = (
+			);
+			productName = SharedPatternModels;
+			productReference = FAE83C9CCB98603A74770F3B /* SharedPatternModels.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		B0F052DD4714394998B76E0E /* iOS-Trading-AppTests */ = {
 			isa = PBXNativeTarget;
@@ -532,6 +601,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				9A9A675DEFE6704DA69194C9 /* SharedPatternModels */,
 				0F59D7989A757EF8B0725397 /* iOS-Trading-App */,
 				B0F052DD4714394998B76E0E /* iOS-Trading-AppTests */,
 			);
@@ -547,6 +617,14 @@
 				99673743093F476C95BCED1A /* ProtocolConformanceTests.swift in Sources */,
 				550CDADE396D3ED801D1A145 /* UATTests.swift in Sources */,
 				B343BBF8745C60DCB67BAFB9 /* UnitTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9AA28B7E42064999CBF4D56B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52659545A9F3A65E6414DED7 /* PatternModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -606,6 +684,7 @@
 				61E74211D36236B1794566EB /* PLCalculator.swift in Sources */,
 				75363FC137701816784D9101 /* PaperTradingView.swift in Sources */,
 				5868E0EC5F8AA22E45A6BAFF /* PatternImportView.swift in Sources */,
+				C79E9AA8F4CB5BF3EAE544A8 /* PatternModels.swift in Sources */,
 				5F3BE8AE9A8F71DF551D14AD /* PatternRecognitionEngine.swift in Sources */,
 				4625C7DDDB7506937E9F8A80 /* PatternScannerView.swift in Sources */,
 				4DC8DFA37286E8CD7A825F31 /* PerformanceAnalyticsEngine.swift in Sources */,
@@ -648,6 +727,11 @@
 			isa = PBXTargetDependency;
 			target = 0F59D7989A757EF8B0725397 /* iOS-Trading-App */;
 			targetProxy = 49EE7717DBBD1947A4A2481F /* PBXContainerItemProxy */;
+		};
+		9358289BE179FB82FCF1B2D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A9A675DEFE6704DA69194C9 /* SharedPatternModels */;
+			targetProxy = A701EB950F101720E9BCA966 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -734,6 +818,30 @@
 			};
 			name = Debug;
 		};
+		660E6E9E277625A981E7FD58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SharedPatternModels;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 		874CE7601801DF3D4BFDE6A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -815,9 +923,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -832,13 +937,34 @@
 			};
 			name = Release;
 		};
+		AE801CAC6095EB61A568F901 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SharedPatternModels;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
 		D8BBD7AB293C23C092DD105A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -879,6 +1005,15 @@
 			buildConfigurations = (
 				D8BBD7AB293C23C092DD105A /* Debug */,
 				A96CFA72E36BDA656EED3433 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		99C9BD53CE2BFB09CA6C88BD /* Build configuration list for PBXNativeTarget "SharedPatternModels" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE801CAC6095EB61A568F901 /* Debug */,
+				660E6E9E277625A981E7FD58 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

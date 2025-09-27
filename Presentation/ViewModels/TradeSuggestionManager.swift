@@ -14,7 +14,7 @@ class TradeSuggestionManager: ObservableObject {
     
     private let orderExecutor = OrderExecutor()
     private let zerodhaClient = ZerodhaAPIClient()
-    private let patternRecognitionEngine = PatternRecognitionEngine()
+    private var patternRecognitionEngine: PatternRecognitionEngine?
     private let aiAgentTrader = AIAgentTrader()
     private var timer: Timer?
     
@@ -29,7 +29,12 @@ class TradeSuggestionManager: ObservableObject {
     private init() {
         // Load saved data
         loadFromUserDefaults()
-        
+
+        // Initialize PatternRecognitionEngine asynchronously
+        Task { @MainActor in
+            self.patternRecognitionEngine = PatternRecognitionEngine()
+        }
+
         // Set up observers for connection status changes
         connectionObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name("DataConnectionStatusChanged"),
@@ -38,7 +43,7 @@ class TradeSuggestionManager: ObservableObject {
         ) { [weak self] _ in
             self?.handleConnectionStatusChanged()
         }
-        
+
         webSocketObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name("WebSocketStatusChanged"),
             object: nil,
@@ -46,7 +51,7 @@ class TradeSuggestionManager: ObservableObject {
         ) { [weak self] _ in
             self?.handleConnectionStatusChanged()
         }
-        
+
         // Start the suggestion generation process if we have real-time data
         handleConnectionStatusChanged()
     }
@@ -156,6 +161,11 @@ class TradeSuggestionManager: ObservableObject {
 
     /// Generate intelligent trade suggestions based on pattern analysis and ML insights
     private func generateIntelligentSuggestion() {
+        guard let patternRecognitionEngine = patternRecognitionEngine else {
+            print("PatternRecognitionEngine not initialized yet")
+            return
+        }
+
         let symbols = ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS", "INFY"]
 
         // Analyze each symbol and find the best trading opportunity
@@ -173,80 +183,83 @@ class TradeSuggestionManager: ObservableObject {
                 // Create market data for pattern analysis
                 let marketData = [MarketData(symbol: symbol, price: price, volume: 100000, timestamp: Date())]
 
-                // Get pattern analysis results
-                let patternResults = self.patternRecognitionEngine.analyzeComprehensivePatterns(marketData: marketData)
+                // Run pattern analysis on main actor - use async/await pattern
+                Task {
+                    await MainActor.run {
+                        // Get pattern analysis results
+                        let patternResults = patternRecognitionEngine.analyzeComprehensivePatterns(marketData: marketData)
 
-                // Find the strongest pattern across all timeframes
-                var strongestPattern: PatternRecognitionEngine.PatternResult?
-                var maxStrength = 0.0
+                        // Find the strongest pattern across all timeframes
+                        var strongestPattern: PatternRecognitionEngine.PatternResult?
+                        var maxStrength = 0.0
 
-                for (_, patterns) in patternResults {
-                    for pattern in patterns {
-                        let strength = pattern.confidence * pattern.successRate
-                        if strength > maxStrength {
-                            maxStrength = strength
-                            strongestPattern = pattern
+                        for (_, patterns) in patternResults {
+                            for pattern in patterns {
+                                let strength = pattern.confidence * pattern.successRate
+                                if strength > maxStrength {
+                                    maxStrength = strength
+                                    strongestPattern = pattern
+                                }
+                            }
                         }
-                    }
-                }
 
-                guard let pattern = strongestPattern else {
-                    print("No strong patterns found for \(symbol)")
-                    return
-                }
+                        guard let pattern = strongestPattern else {
+                            print("No strong patterns found for \(symbol)")
+                            return
+                        }
 
-                // Get ML-based insights for this pattern
-                let insights = self.patternRecognitionEngine.getPatternInsights(pattern: pattern.pattern, marketData: marketData)
+                        // Get ML-based insights for this pattern
+                        let insights = patternRecognitionEngine.getPatternInsights(pattern: pattern.pattern, marketData: marketData)
 
-                // Calculate final confidence combining pattern strength and ML insights
-                let finalConfidence = min(1.0, (pattern.confidence + insights.mlConfidence) / 2.0)
+                        // Calculate final confidence combining pattern strength and ML insights
+                        let finalConfidence = min(1.0, (pattern.confidence + insights.mlConfidence) / 2.0)
 
-                // Only consider suggestions with high confidence
-                guard finalConfidence >= 0.75 else {
-                    print("Pattern confidence too low for \(symbol): \(finalConfidence)")
-                    return
-                }
+                        // Only consider suggestions with high confidence
+                        guard finalConfidence >= 0.75 else {
+                            print("Pattern confidence too low for \(symbol): \(finalConfidence)")
+                            return
+                        }
 
-                // Determine action based on pattern signal and market regime
-                let action: TradeAction
-                switch pattern.signal {
-                case .buy, .strongBuy:
-                    action = .buy
-                case .sell, .strongSell:
-                    action = .sell
-                default:
-                    action = insights.recommendedAction.contains("Buy") ? .buy : .sell
-                }
+                        // Determine action based on pattern signal and market regime
+                        let action: TradeAction
+                        switch pattern.signal {
+                        case .buy, .strongBuy:
+                            action = .buy
+                        case .sell, .strongSell:
+                            action = .sell
+                        default:
+                            action = insights.recommendedAction.contains("Buy") ? .buy : .sell
+                        }
 
-                // Calculate quantity based on confidence and risk level
-                let baseQuantity = 1
-                let confidenceMultiplier = Int(finalConfidence * 5) // 1-5 based on confidence
-                let quantity = baseQuantity * confidenceMultiplier
+                        // Calculate quantity based on confidence and risk level
+                        let baseQuantity = 1
+                        let confidenceMultiplier = Int(finalConfidence * 5) // 1-5 based on confidence
+                        let quantity = baseQuantity * confidenceMultiplier
 
-                // Generate rationale based on pattern and ML insights
-                let rationale = self.generateIntelligentRationale(
-                    pattern: pattern,
-                    insights: insights,
-                    symbol: symbol,
-                    confidence: finalConfidence
-                )
+                        // Generate rationale based on pattern and ML insights
+                        let rationale = self.generateIntelligentRationale(
+                            pattern: pattern,
+                            insights: insights,
+                            symbol: symbol,
+                            confidence: finalConfidence
+                        )
 
-                let suggestion = TradeSuggestion(
-                    symbol: symbol,
-                    action: action,
-                    price: price,
-                    quantity: quantity,
-                    confidence: finalConfidence,
-                    rationale: rationale,
-                    timestamp: Date()
-                )
+                        let suggestion = TradeSuggestion(
+                            symbol: symbol,
+                            action: action,
+                            price: price,
+                            quantity: quantity,
+                            confidence: finalConfidence,
+                            rationale: rationale,
+                            timestamp: Date()
+                        )
 
-                // Process the suggestion if it has the highest confidence so far
-                DispatchQueue.main.async {
-                    if finalConfidence > highestConfidence {
-                        highestConfidence = finalConfidence
-                        // Process the best suggestion
-                        self.processSuggestion(suggestion)
+                        // Process the suggestion if it has the highest confidence so far
+                        if finalConfidence > highestConfidence {
+                            highestConfidence = finalConfidence
+                            // Process the best suggestion
+                            self.processSuggestion(suggestion)
+                        }
                     }
                 }
             }
@@ -264,14 +277,18 @@ class TradeSuggestionManager: ObservableObject {
 
         // Add market regime context
         switch insights.marketRegime {
-        case .bullish:
-            rationale += "Market is in bullish regime, supporting upward momentum. "
-        case .bearish:
-            rationale += "Market is in bearish regime, supporting downward pressure. "
+        case .trending:
+            rationale += "Market is in trending regime, supporting directional momentum. "
+        case .ranging:
+            rationale += "Market is ranging, focusing on mean reversion opportunities. "
         case .volatile:
             rationale += "Market is volatile, requiring careful position sizing. "
-        case .sideways:
-            rationale += "Market is ranging, focusing on mean reversion opportunities. "
+        case .quiet:
+            rationale += "Market is quiet, looking for breakout opportunities. "
+        case .breakout:
+            rationale += "Market is breaking out, supporting momentum trades. "
+        case .reversal:
+            rationale += "Market is reversing, supporting contrarian positions. "
         }
 
         // Add ML insights

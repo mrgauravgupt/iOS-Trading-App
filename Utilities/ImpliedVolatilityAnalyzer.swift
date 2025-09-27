@@ -139,6 +139,20 @@ class ImpliedVolatilityAnalyzer {
         return termStructurePoints
     }
 
+    /// Calculate volatility surface for options analysis
+    func calculateVolatilitySurface(chain: NIFTYOptionsChain, underlyingPrice: Double) -> VolatilitySurface {
+        let ivSurface = calculateIVSurface(chain: chain, underlyingPrice: underlyingPrice)
+        let volatilityPoints = ivSurface.points.map { point in
+            VolatilitySurfacePoint(
+                strike: point.strike,
+                timeToExpiry: point.timeToExpiry,
+                impliedVolatility: point.impliedVolatility,
+                optionType: point.optionType
+            )
+        }
+        return VolatilitySurface(points: volatilityPoints)
+    }
+
     /// Calculate IV surface
     private func calculateIVSurface(chain: NIFTYOptionsChain, underlyingPrice: Double) -> IVSurface {
         var surfacePoints: [IVSurfacePoint] = []

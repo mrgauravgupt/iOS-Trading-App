@@ -1,18 +1,19 @@
 import Foundation
 import Combine
+import SharedPatternModels
 
 @MainActor
 class IntradayPatternEngine: ObservableObject {
     @Published var detectedPatterns: [IntradayPattern] = []
     @Published var activeSignals: [IntradayTradingSignal] = []
-    @Published var patternAlerts: [PatternAlert] = []
+    @Published var patternAlerts: [SharedPatternModels.PatternAlert] = []
 
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
     private let volumeAnalyzer = VolumeAnalyzer()
     private let orderFlowAnalyzer = OrderFlowAnalyzer()
 
     // Pattern performance tracking
-    private var patternPerformanceHistory: [String: PatternPerformance] = [:]
+    private var patternPerformanceHistory: [String: SharedPatternModels.PatternPerformance] = [:]
     
     // MARK: - Initialization
     
@@ -1401,12 +1402,10 @@ enum PatternDirection: String {
     case neutral = "Neutral"
 }
 
-struct PatternAlert {
-    let pattern: IntradayPattern
-    let message: String
-    let priority: AlertPriority
-    let timestamp: Date
-}
+// Removed duplicate PatternAlert struct - now using SharedPatternModels.PatternAlert
+
+// MARK: - Missing Method Implementations
+
 
 // MARK: - Missing Method Implementations
 
@@ -1428,11 +1427,18 @@ extension IntradayPatternEngine {
             confidence *= 1.1 // Higher confidence for longer timeframes
         case .oneHour:
             confidence *= 1.2
+        case .fourHour:
+            confidence *= 1.3 // Even higher confidence for 4-hour timeframes
+        case .oneDay:
+            confidence *= 1.4 // Highest confidence for daily timeframes
         }
 
         // Pattern performance adjustment
-        if let performance = patternPerformanceHistory[pattern.type.rawValue] {
-            let successRate = Double(performance.successfulTrades) / Double(performance.totalTrades)
+        if let performance = patternPerformanceHistory[pattern.type.rawValue],
+           let successfulTrades = performance.successfulTrades,
+           let totalTrades = performance.totalTrades,
+           totalTrades > 0 {
+            let successRate = Double(successfulTrades) / Double(totalTrades)
             confidence *= (0.5 + successRate) // Blend with historical performance
         }
 
@@ -1462,23 +1468,38 @@ extension IntradayPatternEngine {
 
     func updatePatternPerformance(patternType: IntradayPatternType, successful: Bool) {
         let key = patternType.rawValue
-        var performance = patternPerformanceHistory[key] ?? PatternPerformance(totalTrades: 0, successfulTrades: 0)
+        let existingPerformance = patternPerformanceHistory[key]
+        
+        let currentTotalTrades = existingPerformance?.totalTrades ?? 0
+        let currentSuccessfulTrades = existingPerformance?.successfulTrades ?? 0
+        
+        let newTotalTrades = currentTotalTrades + 1
+        let newSuccessfulTrades = successful ? currentSuccessfulTrades + 1 : currentSuccessfulTrades
+        
+        let updatedPerformance = SharedPatternModels.PatternPerformance(
+            pattern: key,
+            timestamp: Date(),
+            confidence: existingPerformance?.confidence,
+            marketRegime: existingPerformance?.marketRegime,
+            outcome: successful,
+            holdingPeriod: existingPerformance?.holdingPeriod,
+            features: existingPerformance?.features,
+            totalTrades: newTotalTrades,
+            successfulTrades: newSuccessfulTrades
+        )
 
-        performance.totalTrades += 1
-        if successful {
-            performance.successfulTrades += 1
-        }
-
-        patternPerformanceHistory[key] = performance
+        patternPerformanceHistory[key] = updatedPerformance
     }
 
     func getPatternSuccessRate(_ patternType: IntradayPatternType) -> Double {
         guard let performance = patternPerformanceHistory[patternType.rawValue],
-              performance.totalTrades > 0 else {
+              let totalTrades = performance.totalTrades,
+              let successfulTrades = performance.successfulTrades,
+              totalTrades > 0 else {
             return 0.5 // Default 50% for new patterns
         }
 
-        return Double(performance.successfulTrades) / Double(performance.totalTrades)
+        return Double(successfulTrades) / Double(totalTrades)
     }
 
     // MARK: - Additional Helper Methods
@@ -1755,10 +1776,7 @@ extension IntradayPatternEngine {
 
 // MARK: - Supporting Data Structures
 
-struct PatternPerformance {
-    var totalTrades: Int
-    var successfulTrades: Int
-}
+// Removed duplicate PatternPerformance struct - now using SharedPatternModels.PatternPerformance
 
 struct PivotPoint {
     let level: Double

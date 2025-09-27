@@ -5,9 +5,16 @@ class AIAgentTrader: ObservableObject {
     private let agentCoordinator = AgentCoordinator()
     private let orderExecutor = OrderExecutor()
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
-    private let patternRecognitionEngine = PatternRecognitionEngine()
+    private var patternRecognitionEngine: PatternRecognitionEngine?
     private let mlModelManager = MLModelManager.shared
     private var tradeHistory: [(state: [Double], action: Int, reward: Double)] = []
+
+    init() {
+        // Initialize PatternRecognitionEngine asynchronously
+        Task { @MainActor in
+            self.patternRecognitionEngine = PatternRecognitionEngine()
+        }
+    }
 
     func executeAITrade(marketData: MarketData, news: [Article]) {
       let decision = agentCoordinator.coordinateDecision(marketData: marketData, news: news)
@@ -82,14 +89,20 @@ class AIAgentTrader: ObservableObject {
       return totalPL
     }
 
+    @MainActor
     func analyzeHistoricalData(data: [MarketData]) -> [String: Double] {
+        guard let patternRecognitionEngine = patternRecognitionEngine else {
+            print("PatternRecognitionEngine not initialized yet")
+            return [:]
+        }
+
         var patternPerformance: [String: (positiveReturns: Double, totalReturns: Double, count: Int)] = [:]
 
         // Process historical data in chunks to identify patterns and their performance
         for i in 0..<data.count - 10 {  // Look at 10-period windows
             let window = Array(data[i..<i+10])
             let prices = window.map { $0.price }
-            
+
             // Get patterns from our pattern recognition engine
             let patterns = patternRecognitionEngine.analyzePatterns(
                 highs: prices,

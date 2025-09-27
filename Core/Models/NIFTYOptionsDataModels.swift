@@ -1,11 +1,9 @@
 import Foundation
 
-// MARK: - NIFTY Options Specific Data Models
+// Import shared models to avoid duplication
+// Note: OptionType, Timeframe, MarketRegime, VolatilityEnvironment, TrendDirection, and TradeAction are imported from CoreModels
 
-public enum OptionType: String, Codable, CaseIterable {
-    case call = "CE"
-    case put = "PE"
-}
+// MARK: - NIFTY Options Specific Data Models
 
 struct NIFTYOptionContract: Codable, Identifiable, Hashable {
     let id = UUID()
@@ -85,23 +83,7 @@ struct OHLCData: Codable, Identifiable {
     }
 }
 
-enum Timeframe: String, Codable, CaseIterable {
-    case oneMinute = "1m"
-    case fiveMinute = "5m"
-    case fifteenMinute = "15m"
-    case thirtyMinute = "30m"
-    case oneHour = "1h"
-    
-    var seconds: Int {
-        switch self {
-        case .oneMinute: return 60
-        case .fiveMinute: return 300
-        case .fifteenMinute: return 900
-        case .thirtyMinute: return 1800
-        case .oneHour: return 3600
-        }
-    }
-}
+// Note: Timeframe enum is now imported from CoreModels to avoid duplication
 
 struct VolumeLevel: Codable, Identifiable {
     let id = UUID()
@@ -310,25 +292,7 @@ struct AIModelState: Codable {
     let timestamp: Date
 }
 
-enum MarketRegime: String, Codable {
-    case trending = "Trending"
-    case ranging = "Ranging"
-    case volatile = "Volatile"
-    case quiet = "Quiet"
-}
-
-enum VolatilityEnvironment: String, Codable {
-    case low = "Low"
-    case normal = "Normal"
-    case high = "High"
-    case extreme = "Extreme"
-}
-
-enum TrendDirection: String, Codable {
-    case bullish = "Bullish"
-    case bearish = "Bearish"
-    case neutral = "Neutral"
-}
+// Note: MarketRegime, VolatilityEnvironment, and TrendDirection enums are now imported from CoreModels to avoid duplication
 
 struct KeyLevel: Codable, Identifiable {
     let id = UUID()
@@ -369,18 +333,18 @@ enum PatternTimeframe: String, Codable, CaseIterable {
     }
 }
 
-enum PatternType: String, Codable, CaseIterable {
+enum OptionsPatternType: String, Codable, CaseIterable {
     case breakout = "Breakout"
     case reversal = "Reversal"
     case continuation = "Continuation"
     case momentum = "Momentum"
     case scalping = "Scalping"
     case volatility = "Volatility"
-    
+
     var displayName: String {
         return self.rawValue
     }
-    
+
     var color: String {
         switch self {
         case .breakout: return "blue"
@@ -396,7 +360,7 @@ enum PatternType: String, Codable, CaseIterable {
 struct DetectedPattern: Identifiable, Codable {
     let id = UUID()
     let timeframe: PatternTimeframe
-    let patternType: PatternType
+    let patternType: OptionsPatternType
     let description: String
     let confidence: Double
     let timestamp: Date
@@ -407,11 +371,7 @@ struct DetectedPattern: Identifiable, Codable {
 }
 
 // MARK: - General App Models
-
-enum TradeAction: String, Codable {
-    case buy = "BUY"
-    case sell = "SELL"
-}
+// Note: TradeAction enum is now imported from CoreModels to avoid duplication
 
 struct TradeSuggestion: Identifiable, Codable {
     let id: UUID

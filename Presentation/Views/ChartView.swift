@@ -18,11 +18,11 @@ struct ChartView: View {
     @State private var patternConfidenceThreshold: Double = 0.7
     
     // Pattern Analysis State
-    @State private var detectedPatterns: [PatternRecognitionEngine.PatternAlert] = []
+    @State private var detectedPatterns: [PatternRecognitionEngine.PatternRecognitionAlert] = []
     @State private var indicatorValues: [String: Double] = [:]
     @State private var supportResistanceLevels: [Double] = []
     @State private var showPatternDetails = false
-    @State private var selectedPattern: PatternRecognitionEngine.PatternAlert?
+    @State private var selectedPattern: PatternRecognitionEngine.PatternRecognitionAlert?
 
     /// Types of charts that can be displayed
     enum ChartType: String, CaseIterable {
@@ -394,7 +394,7 @@ struct ChartView: View {
         
         // Simulate pattern detection with enhanced algorithms
         detectedPatterns = [
-            PatternRecognitionEngine.PatternAlert(
+            PatternRecognitionEngine.PatternRecognitionAlert(
                 pattern: TechnicalAnalysisEngine.PatternResult(
                     pattern: "Head and Shoulders",
                     signal: .sell,
@@ -409,7 +409,7 @@ struct ChartView: View {
                 timestamp: Date(),
                 urgency: .high
             ),
-            PatternRecognitionEngine.PatternAlert(
+            PatternRecognitionEngine.PatternRecognitionAlert(
                 pattern: TechnicalAnalysisEngine.PatternResult(
                     pattern: "Bull Flag",
                     signal: .buy,
@@ -424,7 +424,7 @@ struct ChartView: View {
                 timestamp: Date(),
                 urgency: .medium
             ),
-            PatternRecognitionEngine.PatternAlert(
+            PatternRecognitionEngine.PatternRecognitionAlert(
                 pattern: TechnicalAnalysisEngine.PatternResult(
                     pattern: "Three White Soldiers",
                     signal: .strongBuy,
@@ -521,7 +521,7 @@ struct ChartView: View {
 // MARK: - Supporting Views
 
 struct PatternSummaryCard: View {
-    let pattern: PatternRecognitionEngine.PatternAlert
+    let pattern: PatternRecognitionEngine.PatternRecognitionAlert
     let action: () -> Void
     
     var body: some View {
@@ -551,7 +551,7 @@ struct PatternSummaryCard: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func urgencyColor(_ urgency: PatternRecognitionEngine.AlertUrgency) -> Color {
+    private func urgencyColor(_ urgency: PatternRecognitionEngine.PatternRecognitionAlertUrgency) -> Color {
         switch urgency {
         case .critical: return .red
         case .high: return .orange
@@ -562,7 +562,7 @@ struct PatternSummaryCard: View {
 }
 
 struct PatternDetailView: View {
-    let pattern: PatternRecognitionEngine.PatternAlert
+    let pattern: PatternRecognitionEngine.PatternRecognitionAlert
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {

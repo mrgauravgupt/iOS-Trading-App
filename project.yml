@@ -25,6 +25,10 @@ targets:
       - path: Services/Notifications
       - path: Services/Analytics
       - path: Utilities
+      - path: Shared/Models
+      
+    dependencies:
+      - target: SharedPatternModels
       
     settings:
       base:
@@ -44,17 +48,22 @@ targets:
           CODE_SIGN_STYLE: Automatic
           DEVELOPMENT_TEAM: 54Z85P52PZ
 
+  SharedPatternModels:
+    type: framework
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Shared/Models
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.SharedPatternModels
+        GENERATE_INFOPLIST_FILE: YES
+
   iOS-Trading-AppTests:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: Tests
-    settings:
-      base:
-        INFOPLIST_FILE: Tests/Info.plist
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGN_IDENTITY: ""
-        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: iOS-Trading-App

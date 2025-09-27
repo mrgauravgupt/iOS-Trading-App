@@ -1,19 +1,46 @@
 import Foundation
-
-// MARK: - Options Chain Analyzer
+import SharedPatternModels
 
 class OptionsChainAnalyzer {
     static let shared = OptionsChainAnalyzer()
 
-    private let greeksCalculator = OptionsGreeksCalculator.shared
-    private let ivAnalyzer = ImpliedVolatilityAnalyzer.shared
-
+    private let greeksCalculator = OptionsGreeksCalculator()
+    private let volatilityAnalyzer = ImpliedVolatilityAnalyzer()
+    
+    // MARK: - Public Methods
+    
+    func analyzeOptionsChain(_ chain: NIFTYOptionsChain, underlyingPrice: Double) -> OptionsAnalysis {
+        let atmStrike = chain.getATMStrike()
+        let chainMetrics = chain.calculateMetrics()
+        let metrics = OptionsMetrics(
+            pcr: chainMetrics.pcr,
+            oiPcr: chainMetrics.oiPcr,
+            maxPain: chainMetrics.maxPain,
+            skew: chainMetrics.skew,
+            totalCallOI: chainMetrics.totalCallOI,
+            totalPutOI: chainMetrics.totalPutOI,
+            totalCallVolume: chainMetrics.totalCallVolume,
+            totalPutVolume: chainMetrics.totalPutVolume
+        )
+        let greeks = calculateGreeksExposure(chain: chain)
+        let volatilitySurface = volatilityAnalyzer.calculateVolatilitySurface(chain: chain, underlyingPrice: underlyingPrice)
+        let sentiment = analyzeMarketSentiment(chain: chain, underlyingPrice: underlyingPrice)
+        
+        return OptionsAnalysis(
+            atmStrike: atmStrike,
+            metrics: metrics,
+            greeksExposure: greeks,
+            volatilitySurface: volatilitySurface,
+            sentimentAnalysis: sentiment
+        )
+    }
+    
     // MARK: - Core Analysis Methods
 
     /// Comprehensive analysis of options chain
     func analyzeChain(_ chain: NIFTYOptionsChain, underlyingPrice: Double) -> OptionsChainAnalysis {
         let metrics = chain.calculateMetrics()
-        let ivAnalysis = ivAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
+        let ivAnalysis = volatilityAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
         let greeksExposure = calculateGreeksExposure(chain: chain)
         let liquidityAnalysis = analyzeLiquidity(chain: chain)
         let sentimentAnalysis = analyzeMarketSentiment(chain: chain, underlyingPrice: underlyingPrice)
@@ -116,14 +143,15 @@ class OptionsChainAnalyzer {
             volatilitySkew: skew,
             sentimentScore: sentimentScore,
             marketSentiment: interpretSentiment(sentimentScore),
-            confidenceLevel: calculateSentimentConfidence(pcr: pcr, oiPcr: oiPcr, skew: skew)
+            keywords: nil,
+            sources: nil
         )
     }
 
     /// Calculate risk metrics for the options chain
     private func calculateRiskMetrics(chain: NIFTYOptionsChain, underlyingPrice: Double) -> ChainRiskMetrics {
         let greeksExp = calculateGreeksExposure(chain: chain)
-        let ivAnalysis = ivAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
+        let ivAnalysis = volatilityAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
 
         // Calculate Value at Risk (simplified)
         let var95 = calculateVaR(chain: chain, underlyingPrice: underlyingPrice, confidence: 0.95)
@@ -202,8 +230,8 @@ class OptionsChainAnalyzer {
 
     /// Analyze volatility events
     func analyzeVolatilityEvents(chain: NIFTYOptionsChain, historicalData: [HistoricalVolatility]) -> VolatilityAnalysis {
-        let currentIV = ivAnalyzer.calculateIVForChain(chain, underlyingPrice: chain.underlyingPrice).averageIV
-        let ivPercentile = ivAnalyzer.calculateIVPercentile(currentIV: currentIV, historicalIVs: historicalData.map { $0.impliedVol })
+        let currentIV = volatilityAnalyzer.calculateIVForChain(chain, underlyingPrice: chain.underlyingPrice).averageIV
+        let ivPercentile = volatilityAnalyzer.calculateIVPercentile(currentIV: currentIV, historicalIVs: historicalData.map { $0.impliedVol })
 
         let volatilityRegime = determineVolatilityRegime(currentIV: currentIV, percentile: ivPercentile)
         let expectedMove = calculateExpectedMove(underlyingPrice: chain.underlyingPrice, iv: currentIV, daysToExpiry: 1)
@@ -258,7 +286,7 @@ class OptionsChainAnalyzer {
     private func calculateVaR(chain: NIFTYOptionsChain, underlyingPrice: Double, confidence: Double) -> Double {
         // Simplified VaR calculation using delta approximation
         let greeksExp = calculateGreeksExposure(chain: chain)
-        let ivAnalysis = ivAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
+        let ivAnalysis = volatilityAnalyzer.calculateIVForChain(chain, underlyingPrice: underlyingPrice)
 
         // Assume 1-day, 1 standard deviation move
         let dailyMove = underlyingPrice * ivAnalysis.averageIV / sqrt(365)
@@ -341,6 +369,12 @@ class OptionsChainAnalyzer {
             recommendations.append("Consider bearish strategies like Long Puts or Bear Put Spreads")
         case .neutral:
             recommendations.append("Consider neutral strategies like Iron Condors or Straddles")
+        case .extremeBullish:
+            recommendations.append("Extreme bullish sentiment - consider aggressive bullish strategies like Long Calls or leveraged positions")
+        case .extremeBearish:
+            recommendations.append("Extreme bearish sentiment - consider aggressive bearish strategies like Long Puts or protective puts")
+        case .none:
+            recommendations.append("Sentiment unclear - consider balanced strategies and wait for clearer signals")
         }
 
         // Volatility-based recommendations

@@ -6,6 +6,14 @@ class BacktestingEngine: ObservableObject {
     private let historicalDataEngine = HistoricalDataEngine()
     private let mlModelManager = MLModelManager.shared
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
+    private var patternRecognitionEngine: PatternRecognitionEngine?
+
+    init() {
+        // Initialize PatternRecognitionEngine asynchronously
+        Task { @MainActor in
+            self.patternRecognitionEngine = PatternRecognitionEngine()
+        }
+    }
     
     func runBacktest(symbol: String, startDate: Date, endDate: Date, patterns: [String] = []) async -> BacktestResult {
         do {
@@ -71,10 +79,20 @@ class BacktestingEngine: ObservableObject {
     }
 
     private func analyzePatternsWithData(marketData: MarketData, patterns: [String]) -> [PatternRecognitionEngine.PatternResult] {
-        let patternRecognitionEngine = PatternRecognitionEngine()
-        
+        guard let patternRecognitionEngine = patternRecognitionEngine else {
+            print("PatternRecognitionEngine not initialized yet")
+            return []
+        }
+
         // Use real pattern analysis with available market data
-        let results = patternRecognitionEngine.validatePatternRecognition(marketData: [marketData])
+        // Note: This is a synchronous method that needs to be called from main actor context
+        var results: [PatternRecognitionEngine.PatternResult] = []
+        
+        // For backtesting, we'll use a simplified approach to avoid actor isolation issues
+        // In a real implementation, this should be made async
+        DispatchQueue.main.sync {
+            results = patternRecognitionEngine.validatePatternRecognition(marketData: [marketData])
+        }
         
         // Filter results to only include requested patterns if specified
         if patterns.isEmpty {

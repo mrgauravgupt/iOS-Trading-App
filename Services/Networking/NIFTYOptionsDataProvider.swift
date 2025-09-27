@@ -235,8 +235,7 @@ class NIFTYOptionsDataProvider: ObservableObject {
                 oiPutCallRatio: putCallRatio,
                 volatilitySkew: 0.0,
                 sentimentScore: 0.0,
-                marketSentiment: .neutral,
-                confidenceLevel: 0.0
+                marketSentiment: .neutral
             ),
             riskMetrics: ChainRiskMetrics(
                 valueAtRisk: 0.0,

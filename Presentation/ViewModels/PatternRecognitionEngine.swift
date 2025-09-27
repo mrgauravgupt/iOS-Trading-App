@@ -1,14 +1,22 @@
 import UIKit
 import Foundation
-import SwiftUI
+import Combine
+import SharedPatternModels
 
-public class PatternRecognitionEngine: ObservableObject {
+// Import CoreModels for shared enums (MarketRegime, TrendDirection, etc.)
+
+@MainActor
+class PatternRecognitionEngine: ObservableObject {
     private let technicalAnalysisEngine = TechnicalAnalysisEngine()
     private let mlModelManager = MLModelManager.shared
 
     // ML-based adaptive thresholds
     private var adaptiveThresholds: [String: Double] = [:]
-    private var patternPerformanceHistory: [String: [PatternPerformance]] = [:]
+    @Published var detectedPatterns: [TechnicalAnalysisEngine.PatternResult] = []
+    @Published var patternAlerts: [SharedPatternModels.PatternAlert] = []
+    @Published var marketConditions: [MarketCondition] = []
+    
+    private var patternPerformanceHistory: [String: [SharedPatternModels.PatternPerformance]] = [:]
     private var marketConditionHistory: [MarketCondition] = []
 
     // Use the enhanced TradingSignal from TechnicalAnalysisEngine
@@ -18,18 +26,10 @@ public class PatternRecognitionEngine: ObservableObject {
 
     // MARK: - ML-Based Pattern Enhancement
 
-    struct PatternPerformance {
-        let pattern: String
-        let confidence: Double
-        let marketRegime: MarketRegime
-        let outcome: Bool // true if profitable
-        let timestamp: Date
-        let holdingPeriod: Int // in minutes
-        let features: [Double] // ML features used for prediction
-    }
+    // Removed duplicate PatternPerformance struct - now using SharedPatternModels.PatternPerformance
 
     struct MarketCondition {
-        let regime: MarketRegime
+        let regime: SharedPatternModels.MarketRegime
         let volatility: Double
         let volume: Double
         let timestamp: Date
@@ -67,12 +67,13 @@ public class PatternRecognitionEngine: ObservableObject {
     
     private func adjustPatternConfidenceWithML(patterns: [PatternResult], marketData: [MarketData]) -> [PatternResult] {
         let regime = detectMarketRegime(marketData: marketData)
+        let trendDirection = detectTrendDirection(marketData: marketData)
         let volatility = marketData.map { $0.price }.standardDeviation()
         
         // Create state for ML model
         let state: [Double] = [
-            regime == .bullish ? 1.0 : 0.0,
-            regime == .bearish ? 1.0 : 0.0,
+            trendDirection == .bullish ? 1.0 : 0.0,
+            trendDirection == .bearish ? 1.0 : 0.0,
             volatility,
             Double(marketData.count)
         ]
@@ -100,13 +101,13 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    private func getHistoricalPerformanceAdjustment(for pattern: String, regime: MarketRegime) -> Double {
+    private func getHistoricalPerformanceAdjustment(for pattern: String, regime: SharedPatternModels.MarketRegime) -> Double {
         guard let history = patternPerformanceHistory[pattern] else { return 0.0 }
         
         let relevantHistory = history.filter { $0.marketRegime == regime }
         guard !relevantHistory.isEmpty else { return 0.0 }
         
-        let successRate = Double(relevantHistory.filter { $0.outcome }.count) / Double(relevantHistory.count)
+        let successRate = Double(relevantHistory.filter { $0.outcome == true }.count) / Double(relevantHistory.count)
         let adjustment = (successRate - 0.5) * 0.2 // Adjust by up to 20% based on success rate
         
         return adjustment
@@ -117,7 +118,7 @@ public class PatternRecognitionEngine: ObservableObject {
         for patternType in adaptiveThresholds.keys {
             if let history = patternPerformanceHistory[patternType], !history.isEmpty {
                 let recentHistory = Array(history.suffix(10)) // Last 10 occurrences
-                let successRate = Double(recentHistory.filter { $0.outcome }.count) / Double(recentHistory.count)
+                let successRate = Double(recentHistory.filter { $0.outcome == true }.count) / Double(recentHistory.count)
                 
                 // Adaptive threshold: lower for successful patterns, higher for failures
                 let baseThreshold: Double = 0.7
@@ -133,15 +134,17 @@ public class PatternRecognitionEngine: ObservableObject {
         return adaptiveThresholds[pattern] ?? 0.7
     }
     
-    func recordPatternOutcome(pattern: String, confidence: Double, regime: MarketRegime, outcome: Bool, holdingPeriod: Int) {
-        let performance = PatternPerformance(
+    func recordPatternOutcome(pattern: String, confidence: Double, regime: SharedPatternModels.MarketRegime, outcome: Bool, holdingPeriod: Int) {
+        let performance = SharedPatternModels.PatternPerformance(
             pattern: pattern,
+            timestamp: Date(),
             confidence: confidence,
             marketRegime: regime,
             outcome: outcome,
-            timestamp: Date(),
             holdingPeriod: holdingPeriod,
-            features: [confidence, Double(holdingPeriod)] // Basic features
+            features: [confidence, Double(holdingPeriod)],
+            totalTrades: nil,
+            successfulTrades: nil
         )
         
         if patternPerformanceHistory[pattern] == nil {
@@ -167,7 +170,7 @@ public class PatternRecognitionEngine: ObservableObject {
         ))
         
         // Train ML model with this outcome
-        let state: [Double] = [confidence, regime == .bullish ? 1.0 : 0.0, Double(holdingPeriod)]
+        let state: [Double] = [confidence, regime == .trending ? 1.0 : 0.0, Double(holdingPeriod)]
         let reward = outcome ? 1.0 : -1.0
         mlModelManager.learnFromTrade(state: state, action: outcome ? 0 : 1, reward: reward, nextState: state)
     }
@@ -181,9 +184,9 @@ public class PatternRecognitionEngine: ObservableObject {
     }
     
     // Real-time pattern scanning for alerts with adaptive thresholds
-    func scanForPatternAlerts(marketData: [MarketData], alertThreshold: Double = 0.7) -> [PatternAlert] {
+    func scanForPatternAlerts(marketData: [MarketData], alertThreshold: Double = 0.7) -> [SharedPatternModels.PatternAlert] {
         let analysisResults = analyzeComprehensivePatterns(marketData: marketData)
-        var alerts: [PatternAlert] = []
+        var alerts: [SharedPatternModels.PatternAlert] = []
 
         for (timeframe, patterns) in analysisResults {
             for pattern in patterns {
@@ -192,11 +195,16 @@ public class PatternRecognitionEngine: ObservableObject {
                 let effectiveThreshold = min(alertThreshold, adaptiveThreshold)
 
                 if pattern.confidence >= effectiveThreshold {
-                    let alert = PatternAlert(
-                        pattern: pattern,
+                    let alert = SharedPatternModels.PatternAlert(
+                        id: UUID(),
+                        patternType: .recognition,
+                        symbol: "NIFTY",
                         timeframe: timeframe,
                         timestamp: Date(),
-                        urgency: determineUrgency(pattern: pattern)
+                        confidence: pattern.confidence,
+                        signal: convertSignal(pattern.signal),
+                        strength: convertStrength(pattern.strength),
+                        urgency: convertUrgency(determineUrgency(pattern: pattern))
                     )
                     alerts.append(alert)
                 }
@@ -204,11 +212,19 @@ public class PatternRecognitionEngine: ObservableObject {
         }
 
         // Sort by urgency and confidence
-        alerts.sort { first, second in
-            if first.urgency == second.urgency {
-                return first.pattern.confidence > second.pattern.confidence
+        alerts.sort { (first: SharedPatternModels.PatternAlert, second: SharedPatternModels.PatternAlert) in
+            if let firstUrgency = first.urgency, let secondUrgency = second.urgency {
+                if firstUrgency.priority == secondUrgency.priority {
+                    return first.confidence > second.confidence
+                }
+                return firstUrgency.priority > secondUrgency.priority
+            } else if first.urgency != nil {
+                return true
+            } else if second.urgency != nil {
+                return false
+            } else {
+                return first.confidence > second.confidence
             }
-            return first.urgency.priority > second.urgency.priority
         }
 
         return alerts
@@ -216,7 +232,7 @@ public class PatternRecognitionEngine: ObservableObject {
     
     // MARK: - Pattern Alert System
     
-    enum AlertUrgency: String, CaseIterable {
+    enum PatternRecognitionAlertUrgency: String, CaseIterable {
         case critical = "CRITICAL"
         case high = "HIGH"
         case medium = "MEDIUM"
@@ -241,19 +257,19 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    struct PatternAlert: Identifiable {
+    struct PatternRecognitionAlert: Identifiable {
         let id = UUID()
         let pattern: PatternResult
         let timeframe: String
         let timestamp: Date
-        let urgency: AlertUrgency
+        let urgency: PatternRecognitionAlertUrgency
         
         var alertMessage: String {
             return "\(urgency.rawValue): \(pattern.pattern) detected on \(timeframe) with \(Int(pattern.confidence * 100))% confidence. Signal: \(pattern.signal.rawValue)"
         }
     }
     
-    struct ConfluencePattern: Identifiable {
+    struct PatternRecognitionConfluence: Identifiable {
         let id = UUID()
         let patterns: [PatternResult]
         let timeframes: [String]
@@ -261,13 +277,13 @@ public class PatternRecognitionEngine: ObservableObject {
         let signal: TechnicalAnalysisEngine.TradingSignal
         let strength: PatternStrength
         let timestamp: Date
-        
+
         var description: String {
             let patternNames = patterns.map { $0.pattern }.joined(separator: ", ")
             let timeframeList = timeframes.joined(separator: ", ")
             return "\(patternNames) confluence across \(timeframeList)"
         }
-        
+
         var confluenceScore: Double {
             let timeframeBonus = Double(timeframes.count) * 0.1
             let patternBonus = Double(patterns.count) * 0.05
@@ -275,7 +291,7 @@ public class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    private func determineUrgency(pattern: PatternResult) -> AlertUrgency {
+    private func determineUrgency(pattern: PatternResult) -> PatternRecognitionAlertUrgency {
         let confidenceScore = pattern.confidence
         let strengthScore: Double
         
@@ -296,6 +312,19 @@ public class PatternRecognitionEngine: ObservableObject {
             return .medium
         } else {
             return .low
+        }
+    }
+    
+    private func getUrgencyPriority(_ urgency: SharedPatternModels.PatternAlert.AlertUrgency) -> Int {
+        switch urgency {
+        case .critical:
+            return 4
+        case .high:
+            return 3
+        case .medium:
+            return 2
+        case .low:
+            return 1
         }
     }
     
@@ -350,10 +379,10 @@ public class PatternRecognitionEngine: ObservableObject {
     }
     
     // Market regime detection
-    func detectMarketRegime(marketData: [MarketData]) -> MarketRegime {
+    func detectMarketRegime(marketData: [MarketData]) -> SharedPatternModels.MarketRegime {
         let prices = marketData.map { $0.price }
 
-        guard prices.count >= 50 else { return .sideways }
+        guard prices.count >= 50 else { return .ranging }
         
         // Calculate trend strength
         let shortMA = technicalAnalysisEngine.calculateSMA(prices: Array(prices.suffix(10)), period: 10)
@@ -362,31 +391,40 @@ public class PatternRecognitionEngine: ObservableObject {
         let trendStrength = abs(shortMA - longMA) / longMA
         let volatility = prices.suffix(20).map { $0 }.standardDeviation() / prices.average()
         
-        // Determine regime
+        // Determine regime - using CoreModels.MarketRegime
         if trendStrength > 0.05 {
-            return shortMA > longMA ? .bullish : .bearish
+            return .trending
         } else if volatility > 0.02 {
             return .volatile
         } else {
-            return .sideways
+            return .ranging
         }
     }
     
-    enum MarketRegime {
-        case bullish
-        case bearish
-        case sideways
-        case volatile
+    // MARK: - Trend Direction Detection
+    // Uses shared TrendDirection from SharedModels
+    private func detectTrendDirection(marketData: [MarketData]) -> TrendDirection {
+        guard marketData.count >= 10 else { return .neutral }
         
-        var description: String {
-            switch self {
-            case .bullish: return "Bullish"
-            case .bearish: return "Bearish"
-            case .sideways: return "Sideways"
-            case .volatile: return "Volatile"
-            }
+        let prices = marketData.map { $0.price }
+        let recentPrices = Array(prices.suffix(10))
+        let olderPrices = Array(prices.prefix(10))
+        
+        let recentAvg = recentPrices.reduce(0, +) / Double(recentPrices.count)
+        let olderAvg = olderPrices.reduce(0, +) / Double(olderPrices.count)
+        
+        let changePercent = (recentAvg - olderAvg) / olderAvg
+        
+        if changePercent > 0.01 {
+            return .bullish
+        } else if changePercent < -0.01 {
+            return .bearish
+        } else {
+            return .neutral
         }
     }
+    
+    // Note: MarketRegime and TrendDirection enums are now imported from CoreModels to avoid duplication
     
     // Pattern success rate tracking - requires actual trade outcome data
     func trackPatternPerformance(historicalData: [MarketData], patterns: [PatternResult], tradeOutcomes: [String: Bool] = [:]) -> [String: Double] {
@@ -450,7 +488,7 @@ public class PatternRecognitionEngine: ObservableObject {
         let volatility = prices.suffix(20).map { $0 }.standardDeviation()
         
         // Predict potential head and shoulders formation
-        if recentTrend == .sideways && volatility > prices.average() * 0.01 {
+        if recentTrend == .neutral && volatility > prices.average() * 0.01 {
             potentialPatterns.append(PotentialPattern(
                 pattern: "Head and Shoulders",
                 probability: 0.65,
@@ -488,7 +526,7 @@ public class PatternRecognitionEngine: ObservableObject {
     }
     
     private func calculateTrendDirection(prices: [Double]) -> TrendDirection {
-        guard prices.count >= 5 else { return .sideways }
+        guard prices.count >= 5 else { return .neutral }
         
         let firstHalf = Array(prices.prefix(prices.count / 2))
         let secondHalf = Array(prices.suffix(prices.count / 2))
@@ -503,13 +541,11 @@ public class PatternRecognitionEngine: ObservableObject {
         } else if change < -0.02 {
             return .bearish
         } else {
-            return .sideways
+            return .neutral
         }
     }
     
-    enum TrendDirection {
-        case bullish, bearish, sideways
-    }
+    // Note: TrendDirection enum is now imported from CoreModels to avoid duplication
     
     // MARK: - Smart Pattern Filtering
     
@@ -518,17 +554,12 @@ public class PatternRecognitionEngine: ObservableObject {
         
         return patterns.filter { pattern in
             switch regime {
-            case .bullish:
-                // In bullish markets, prioritize buy signals and continuation patterns
+            case .trending:
+                // In trending markets, prioritize continuation patterns
                 return pattern.signal == .buy || pattern.signal == .strongBuy ||
                        pattern.pattern.contains("Flag") || pattern.pattern.contains("Triangle")
                 
-            case .bearish:
-                // In bearish markets, prioritize sell signals and reversal patterns
-                return pattern.signal == .sell || pattern.signal == .strongSell ||
-                       pattern.pattern.contains("Head and Shoulders") || pattern.pattern.contains("Double Top")
-                
-            case .sideways:
+            case .ranging:
                 // In ranging markets, prioritize reversal patterns at extremes
                 return pattern.pattern.contains("Double") || pattern.pattern.contains("Support") ||
                        pattern.pattern.contains("Resistance")
@@ -536,6 +567,10 @@ public class PatternRecognitionEngine: ObservableObject {
             case .volatile:
                 // In volatile markets, require higher confidence patterns
                 return pattern.confidence > 0.8
+                
+            case .quiet, .breakout, .reversal:
+                // For other regimes, use default filtering
+                return pattern.confidence > 0.6
             }
         }
     }
@@ -596,17 +631,22 @@ public class PatternRecognitionEngine: ObservableObject {
         return technicalAnalysisEngine.analyzeMultiTimeframe(data: data)
     }
     
-    func generateAlerts(from analysis: [String: [PatternResult]]) -> [PatternAlert] {
-        var alerts: [PatternAlert] = []
+    func generateAlerts(from analysis: [String: [PatternResult]]) -> [SharedPatternModels.PatternAlert] {
+        var alerts: [SharedPatternModels.PatternAlert] = []
         
         for (timeframe, patterns) in analysis {
             for pattern in patterns {
                 if pattern.confidence >= 0.7 { // Alert threshold
-                    let alert = PatternAlert(
-                        pattern: pattern,
+                    let alert = SharedPatternModels.PatternAlert(
+                        id: UUID(),
+                        patternType: .recognition,
+                        symbol: "NIFTY",
                         timeframe: timeframe,
                         timestamp: Date(),
-                        urgency: determineUrgency(pattern: pattern)
+                        confidence: pattern.confidence,
+                        signal: convertSignal(pattern.signal),
+                        strength: convertStrength(pattern.strength),
+                        urgency: convertUrgency(determineUrgency(pattern: pattern))
                     )
                     alerts.append(alert)
                 }
@@ -615,10 +655,15 @@ public class PatternRecognitionEngine: ObservableObject {
         
         // Sort by urgency and confidence
         alerts.sort { first, second in
-            if first.urgency.priority != second.urgency.priority {
-                return first.urgency.priority > second.urgency.priority
+            // We need to handle optional urgency
+            guard let firstUrgency = first.urgency, let secondUrgency = second.urgency else {
+                return first.confidence > second.confidence
             }
-            return first.pattern.confidence > second.pattern.confidence
+            
+            if getUrgencyPriority(firstUrgency) != getUrgencyPriority(secondUrgency) {
+                return getUrgencyPriority(firstUrgency) > getUrgencyPriority(secondUrgency)
+            }
+            return first.confidence > second.confidence
         }
         
         return alerts
@@ -628,7 +673,7 @@ public class PatternRecognitionEngine: ObservableObject {
         return technicalAnalysisEngine.analyzePatternConfluence(multiTimeframeResults: analysis)
     }
     
-    func determineMarketRegime(data: [MarketData]) -> MarketRegime {
+    func determineMarketRegime(data: [MarketData]) -> SharedPatternModels.MarketRegime {
         return detectMarketRegime(marketData: data)
     }
 
@@ -1013,13 +1058,16 @@ public class PatternRecognitionEngine: ObservableObject {
     }
 
     /// Train ML models with pattern performance data
-    func trainMLModels(with performances: [PatternPerformance]) {
+    func trainMLModels(with performances: [SharedPatternModels.PatternPerformance]) {
         for performance in performances {
-            ensembleModel.trainEnsemble(
-                pattern: performance.pattern,
-                features: performance.features,
-                target: performance.outcome ? 1.0 : 0.0
-            )
+            // Only process performances that have features data
+            if let features = performance.features {
+                ensembleModel.trainEnsemble(
+                    pattern: performance.pattern,
+                    features: features,
+                    target: performance.outcome ?? false ? 1.0 : 0.0
+                )
+            }
         }
     }
 
@@ -1051,21 +1099,63 @@ public class PatternRecognitionEngine: ObservableObject {
     struct PatternInsights {
         let pattern: String
         let mlConfidence: Double
-        let marketRegime: MarketRegime
+        let marketRegime: SharedPatternModels.MarketRegime
         let recommendedAction: String
         let riskLevel: String
     }
 
-    private func calculateRiskLevel(prediction: Double, regime: MarketRegime) -> String {
+    private func calculateRiskLevel(prediction: Double, regime: SharedPatternModels.MarketRegime) -> String {
         let baseRisk = 1.0 - prediction
 
         switch regime {
         case .volatile:
             return baseRisk > 0.6 ? "High" : baseRisk > 0.4 ? "Medium" : "Low"
-        case .bullish, .bearish:
+        case .trending, .breakout:
             return baseRisk > 0.5 ? "Medium" : "Low"
-        case .sideways:
+        case .ranging, .quiet, .reversal:
             return baseRisk > 0.7 ? "High" : baseRisk > 0.5 ? "Medium" : "Low"
+        }
+    }
+    
+    // Helper functions to convert between enum types
+    private func convertSignal(_ signal: TechnicalAnalysisEngine.TradingSignal) -> SharedPatternModels.PatternAlert.TradingSignal {
+        switch signal {
+        case .buy:
+            return .buy
+        case .sell:
+            return .sell
+        case .hold:
+            return .hold
+        case .strongBuy:
+            return .strongBuy
+        case .strongSell:
+            return .strongSell
+        }
+    }
+    
+    private func convertStrength(_ strength: TechnicalAnalysisEngine.PatternStrength) -> SharedPatternModels.PatternAlert.PatternStrength {
+        switch strength {
+        case .weak:
+            return .weak
+        case .moderate:
+            return .moderate
+        case .strong:
+            return .strong
+        case .veryStrong:
+            return .veryStrong
+        }
+    }
+    
+    private func convertUrgency(_ urgency: PatternRecognitionAlertUrgency) -> SharedPatternModels.PatternAlert.AlertUrgency {
+        switch urgency {
+        case .critical:
+            return .critical
+        case .high:
+            return .high
+        case .medium:
+            return .medium
+        case .low:
+            return .low
         }
     }
 }

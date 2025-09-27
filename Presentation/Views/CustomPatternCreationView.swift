@@ -4,34 +4,24 @@ struct CustomPatternCreationView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var patternName = ""
     @State private var patternDescription = ""
-    @State private var selectedPatternType: PatternType = .chart
+    @State private var selectedPatternType: CustomPatternType = .chart
     @State private var confidenceThreshold: Double = 0.7
-    @State private var timeframes: Set<Timeframe> = [.m5, .m15]
+    @State private var timeframes: Set<Timeframe> = [.fiveMinute, .fifteenMinute]
     @State private var isEnabled = true
     @State private var showSaveAlert = false
     @State private var saveMessage = ""
     
-    enum PatternType: String, CaseIterable, Identifiable, Codable {
+    enum CustomPatternType: String, CaseIterable, Identifiable, Codable {
         case chart = "Chart Pattern"
         case candlestick = "Candlestick Pattern"
         case harmonic = "Harmonic Pattern"
         case volume = "Volume Pattern"
         case custom = "Custom Indicator"
-        
+
         var id: String { self.rawValue }
     }
     
-    enum Timeframe: String, CaseIterable, Identifiable, Codable {
-        case m1 = "1 Minute"
-        case m5 = "5 Minutes"
-        case m15 = "15 Minutes"
-        case m30 = "30 Minutes"
-        case h1 = "1 Hour"
-        case h4 = "4 Hours"
-        case d1 = "Daily"
-        
-        var id: String { self.rawValue }
-    }
+    // Note: Using shared Timeframe from CoreModels to avoid duplication
     
     var body: some View {
         NavigationView {
@@ -91,7 +81,7 @@ struct CustomPatternCreationView: View {
                     .lineLimit(3)
                 
                 Picker("Pattern Type", selection: $selectedPatternType) {
-                    ForEach(PatternType.allCases) { type in
+                    ForEach(CustomPatternType.allCases) { type in
                         Text(type.rawValue).tag(type)
                     }
                 }
@@ -143,7 +133,7 @@ struct CustomPatternCreationView: View {
                 .fontWeight(.semibold)
             
             VStack(alignment: .leading, spacing: 12) {
-                ForEach(Timeframe.allCases) { timeframe in
+                ForEach(Timeframe.allCases, id: \.self) { timeframe in
                     Toggle(timeframe.rawValue, isOn: Binding(
                         get: { timeframes.contains(timeframe) },
                         set: { isSelected in
@@ -266,9 +256,9 @@ struct CustomPattern: Codable, Identifiable {
     let id: UUID
     let name: String
     let description: String
-    let type: CustomPatternCreationView.PatternType
+    let type: CustomPatternCreationView.CustomPatternType
     let confidenceThreshold: Double
-    let timeframes: [CustomPatternCreationView.Timeframe]
+    let timeframes: [Timeframe]
     let isEnabled: Bool
     let createdAt: Date
 }

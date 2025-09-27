@@ -1,4 +1,5 @@
 import SwiftUI
+import SharedPatternModels
 
 /// Advanced Paper Trading View with AI Auto-Trading Engine
 struct PaperTradingView: View {
@@ -21,7 +22,7 @@ struct PaperTradingView: View {
     @State private var takeProfitPercentage: Double = 0.04 // 4% take profit
     
     // Enhanced Alerts and Analysis
-    @State private var patternAlerts: [PatternRecognitionEngine.PatternAlert] = []
+    @State private var patternAlerts: [SharedPatternModels.PatternAlert] = []
     @State private var riskAlerts: [RiskAlert] = []
     @State private var aiDecisions: [AITradingDecision] = []
     @State private var momentumAlerts: [String] = []
@@ -842,11 +843,11 @@ struct PaperTradingView: View {
                             id: UUID(),
                             timestamp: Date(),
                             symbol: "NIFTY",
-                            action: strongestPattern.pattern.signal == .buy ? "BUY" : strongestPattern.pattern.signal == .sell ? "SELL" : "HOLD",
+                            action: strongestPattern.signal == .buy ? "BUY" : strongestPattern.signal == .sell ? "SELL" : "HOLD",
                             quantity: calculateOptimalQuantity(price: marketData.price),
                             price: marketData.price,
-                            confidence: strongestPattern.pattern.confidence,
-                            reason: "Pattern: \(strongestPattern.pattern.pattern) detected",
+                            confidence: strongestPattern.confidence,
+                            reason: "Pattern: \(strongestPattern.patternType) detected",
                             agent: "Pattern Recognition AI"
                         )
                         self.aiDecisions = [decision]
@@ -1033,13 +1034,13 @@ struct AIDecisionCard: View {
 
 // Custom PatternAlertCard for PaperTradingView
 struct PaperTradingPatternAlertCard: View {
-    let alert: PatternRecognitionEngine.PatternAlert
+    let alert: SharedPatternModels.PatternAlert
     
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(alert.pattern.pattern)
+                    Text("\(alert.patternType)".capitalized)
                         .font(.subheadline)
                         .fontWeight(.medium)
                     
@@ -1048,11 +1049,11 @@ struct PaperTradingPatternAlertCard: View {
                     urgencyBadge
                 }
                 
-                Text("Confidence: \(String(format: "%.1f%%", alert.pattern.confidence * 100))")
+                Text("Confidence: \(String(format: "%.1f%%", alert.confidence * 100))")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Text("Signal: \(alert.pattern.signal.rawValue)")
+                Text("Signal: \(alert.signal)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
@@ -1073,7 +1074,7 @@ struct PaperTradingPatternAlertCard: View {
     }
     
     private var urgencyBadge: some View {
-        Text(alert.urgency.rawValue.uppercased())
+        Text((alert.urgency?.rawValue ?? "medium").uppercased())
             .font(.caption2)
             .fontWeight(.bold)
             .padding(.horizontal, 6)
@@ -1084,7 +1085,7 @@ struct PaperTradingPatternAlertCard: View {
     }
     
     private var urgencyColor: Color {
-        switch alert.urgency {
+        switch alert.urgency ?? .medium {
         case .critical: return .red
         case .high: return .orange
         case .medium: return .yellow
@@ -1093,7 +1094,7 @@ struct PaperTradingPatternAlertCard: View {
     }
     
     private var urgencyIcon: String {
-        switch alert.urgency {
+        switch alert.urgency ?? .medium {
         case .critical: return "exclamationmark.triangle.fill"
         case .high: return "exclamationmark.circle.fill"
         case .medium: return "info.circle.fill"

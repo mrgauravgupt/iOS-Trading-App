@@ -1,10 +1,11 @@
 import SwiftUI
 import UIKit
+import SharedPatternModels
 
 struct PatternScannerView: View {
     let multiTimeframeAnalysis: [String: [TechnicalAnalysisEngine.PatternResult]]
-    let patternAlerts: [PatternAlert]
-    let confluencePatterns: [ConfluencePattern]
+    let patternAlerts: [SharedPatternModels.PatternAlert]
+    let confluencePatterns: [SharedPatternModels.ConfluencePattern]
     
     @State private var selectedTimeframe: String = "1D"
     @State private var sortBy: SortOption = .confidence
@@ -36,46 +37,7 @@ struct PatternScannerView: View {
         }
     }
     
-    // Add missing types from PatternRecognitionEngine
-    struct PatternAlert: Identifiable {
-        let id = UUID()
-        let pattern: TechnicalAnalysisEngine.PatternResult
-        let timeframe: String
-        let timestamp: Date
-        let urgency: AlertUrgency
-        
-        var patternName: String {
-            return pattern.pattern
-        }
-        
-        var confidence: Double {
-            return pattern.confidence
-        }
-        
-        var message: String? {
-            return "Signal: \(pattern.signal.rawValue)"
-        }
-    }
-    
-    struct ConfluencePattern: Identifiable {
-        let id = UUID()
-        let patterns: [TechnicalAnalysisEngine.PatternResult]
-        let timeframes: [String]
-        let overallConfidence: Double
-        let signal: TechnicalAnalysisEngine.TradingSignal
-        let strength: TechnicalAnalysisEngine.PatternStrength
-        let timestamp: Date
-        
-        var dominantPattern: String {
-            return patterns.first?.pattern ?? "Unknown Pattern"
-        }
-        
-        var confluenceScore: Double {
-            let timeframeBonus = Double(timeframes.count) * 0.1
-            let patternBonus = Double(patterns.count) * 0.05
-            return min(overallConfidence + timeframeBonus + patternBonus, 1.0)
-        }
-    }
+    // Removed duplicate PatternAlert and ConfluencePattern structs - now using SharedPatternModels
     
     var body: some View {
         NavigationView {
@@ -176,12 +138,13 @@ struct PatternScannerView: View {
     
     // MARK: - Computed Properties
     
-    private var filteredAlerts: [PatternAlert] {
+    private var filteredAlerts: [SharedPatternModels.PatternAlert] {
         var alerts = patternAlerts
         
         if let urgency = filterUrgency {
             alerts = alerts.filter { alert in
-                switch (urgency, alert.urgency) {
+                guard let alertUrgency = alert.urgency else { return false }
+                switch (urgency, alertUrgency) {
                 case (.critical, .critical), (.high, .high), (.medium, .medium), (.low, .low):
                     return true
                 default:
@@ -190,7 +153,25 @@ struct PatternScannerView: View {
             }
         }
         
-        return alerts.sorted { $0.urgency.priority > $1.urgency.priority }
+        switch sortBy {
+        case .confidence:
+            alerts = alerts.sorted { $0.confidence > $1.confidence }
+        case .strength:
+            // We need to implement strength comparison for SharedPatternModels
+            break
+        case .urgency:
+            alerts = alerts.sorted { 
+                guard let firstUrgency = $0.urgency, let secondUrgency = $1.urgency else { 
+                    return false 
+                }
+                return getUrgencyPriority(firstUrgency) > getUrgencyPriority(secondUrgency)
+            }
+        case .alphabetical:
+            // We need to implement pattern name access for SharedPatternModels
+            break
+        }
+        
+        return alerts
     }
     
     private var sortedPatterns: [TechnicalAnalysisEngine.PatternResult] {
@@ -224,12 +205,25 @@ struct PatternScannerView: View {
             $0.strength == .strong || $0.strength == .veryStrong 
         }.count
     }
+    
+    private func getUrgencyPriority(_ urgency: SharedPatternModels.PatternAlert.AlertUrgency) -> Int {
+        switch urgency {
+        case .critical:
+            return 4
+        case .high:
+            return 3
+        case .medium:
+            return 2
+        case .low:
+            return 1
+        }
+    }
 }
 
 // MARK: - Supporting Views
 
 struct PatternAlertsSection: View {
-    let alerts: [PatternScannerView.PatternAlert]
+    let alerts: [SharedPatternModels.PatternAlert]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -240,98 +234,121 @@ struct PatternAlertsSection: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
-                Text("\(alerts.count)")
+                
+                Text("\(alerts.count) alerts")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.2))
-                    .cornerRadius(8)
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal)
             
-            ForEach(alerts.indices, id: \.self) { index in
-                PatternAlertCard(alert: alerts[index])
+            if alerts.isEmpty {
+                EmptyStateView(
+                    icon: "bell.slash.fill",
+                    title: "No Alerts",
+                    message: "No active pattern alerts at the moment"
+                )
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(alerts.indices, id: \.self) { index in
+                            PatternAlertCard(alert: alerts[index])
+                        }
+                        .padding(.horizontal)
+                    }
+                }
             }
         }
-        .padding()
-        .background(Color(UIColor.systemGray6))
-        .cornerRadius(12)
     }
 }
 
 struct PatternAlertCard: View {
-    let alert: PatternScannerView.PatternAlert
+    let alert: SharedPatternModels.PatternAlert
     
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(alert.patternName)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    Spacer()
-                    
-                    urgencyBadge
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(alert.patternType.rawValue)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                 
-                Text("Confidence: \(String(format: "%.1f%%", alert.confidence * 100))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Spacer()
                 
-                if let message = alert.message {
-                    Text(message)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
+                if let urgency = alert.urgency {
+                    Text(urgency.rawValue)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(urgencyColor(urgency).opacity(0.2))
+                        .foregroundColor(urgencyColor(urgency))
+                        .cornerRadius(8)
                 }
             }
             
-            Spacer()
+            Text("\(Int(alert.confidence * 100))% confidence")
+                .font(.caption)
+                .foregroundColor(.secondary)
             
-            VStack {
-                Image(systemName: urgencyIcon)
-                    .foregroundColor(urgencyColor)
-                    .font(.title2)
+            HStack {
+                Text("Signal: \(signalText(alert.signal))")
+                    .font(.caption)
+                
+                Spacer()
+                
+                Text("Strength: \(strengthText(alert.strength))")
+                    .font(.caption)
             }
         }
         .padding()
-        .background(Color(UIColor.systemBackground))
-        .cornerRadius(8)
-        .shadow(radius: 1)
+        .frame(width: 280)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
     
-    private var urgencyBadge: some View {
-        Text(alert.urgency.rawValue.uppercased())
-            .font(.caption2)
-            .fontWeight(.bold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(urgencyColor.opacity(0.2))
-            .foregroundColor(urgencyColor)
-            .cornerRadius(4)
-    }
-    
-    private var urgencyColor: Color {
-        switch alert.urgency {
-        case .critical: return .red
-        case .high: return .orange
-        case .medium: return .yellow
-        case .low: return .blue
+    private func urgencyColor(_ urgency: SharedPatternModels.PatternAlert.AlertUrgency) -> Color {
+        switch urgency {
+        case .critical:
+            return .red
+        case .high:
+            return .orange
+        case .medium:
+            return .yellow
+        case .low:
+            return .green
         }
     }
     
-    private var urgencyIcon: String {
-        switch alert.urgency {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .high: return "exclamationmark.circle.fill"
-        case .medium: return "info.circle.fill"
-        case .low: return "checkmark.circle.fill"
+    private func signalText(_ signal: SharedPatternModels.PatternAlert.TradingSignal) -> String {
+        switch signal {
+        case .buy:
+            return "Buy"
+        case .sell:
+            return "Sell"
+        case .hold:
+            return "Hold"
+        case .strongBuy:
+            return "Strong Buy"
+        case .strongSell:
+            return "Strong Sell"
+        }
+    }
+    
+    private func strengthText(_ strength: SharedPatternModels.PatternAlert.PatternStrength) -> String {
+        switch strength {
+        case .weak:
+            return "Weak"
+        case .moderate:
+            return "Moderate"
+        case .strong:
+            return "Strong"
+        case .veryStrong:
+            return "Very Strong"
         }
     }
 }
 
 struct ConfluencePatternsSection: View {
-    let patterns: [PatternScannerView.ConfluencePattern]
+    let patterns: [SharedPatternModels.ConfluencePattern]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -342,26 +359,35 @@ struct ConfluencePatternsSection: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
-                Text("\(patterns.count)")
+                
+                Text("\(patterns.count) patterns")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.purple.opacity(0.2))
-                    .cornerRadius(8)
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal)
             
-            ForEach(patterns.indices, id: \.self) { index in
-                ConfluencePatternCard(pattern: patterns[index])
+            if patterns.isEmpty {
+                EmptyStateView(
+                    icon: "arrow.triangle.merge",
+                    title: "No Confluence Patterns",
+                    message: "No confluence patterns detected at the moment"
+                )
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(patterns.indices, id: \.self) { index in
+                            ConfluencePatternCard(pattern: patterns[index])
+                        }
+                        .padding(.horizontal)
+                    }
+                }
             }
         }
-        .padding()
-        .background(Color(UIColor.systemGray6))
-        .cornerRadius(12)
     }
 }
 
 struct ConfluencePatternCard: View {
-    let pattern: PatternScannerView.ConfluencePattern
+    let pattern: SharedPatternModels.ConfluencePattern
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -372,37 +398,93 @@ struct ConfluencePatternCard: View {
                 
                 Spacer()
                 
-                Text("\(pattern.timeframes.count) TF")
-                    .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.purple.opacity(0.2))
-                    .cornerRadius(4)
+                Text("\(Int(pattern.overallConfidence * 100))%")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.2))
+                    .foregroundColor(.blue)
+                    .cornerRadius(8)
             }
             
-            Text("Confidence: \(String(format: "%.1f%%", pattern.confluenceScore * 100))")
+            Text("Timeframes: \(pattern.timeframes.joined(separator: ", "))")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
             HStack {
-                Text("Timeframes:")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                Text("Signal: \(signalText(pattern.signal))")
+                    .font(.caption)
                 
-                ForEach(pattern.timeframes, id: \.self) { timeframe in
-                    Text(timeframe)
-                        .font(.caption2)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(3)
-                }
+                Spacer()
+                
+                Text("Strength: \(strengthText(pattern.strength))")
+                    .font(.caption)
+            }
+            
+            Text("Confluence Score: \(String(format: "%.2f", pattern.confluenceScore))")
+                .font(.caption)
+                .italic()
+        }
+        .padding()
+        .frame(width: 280)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private func signalText(_ signal: SharedPatternModels.PatternAlert.TradingSignal) -> String {
+        switch signal {
+        case .buy:
+            return "Buy"
+        case .sell:
+            return "Sell"
+        case .hold:
+            return "Hold"
+        case .strongBuy:
+            return "Strong Buy"
+        case .strongSell:
+            return "Strong Sell"
+        }
+    }
+    
+    private func strengthText(_ strength: SharedPatternModels.PatternAlert.PatternStrength) -> String {
+        switch strength {
+        case .weak:
+            return "Weak"
+        case .moderate:
+            return "Moderate"
+        case .strong:
+            return "Strong"
+        case .veryStrong:
+            return "Very Strong"
+        }
+    }
+}
+
+/// A reusable empty state view component
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let message: String
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 48))
+                .foregroundColor(.secondary)
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Text(message)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
         }
         .padding()
-        .background(Color(UIColor.systemBackground))
-        .cornerRadius(8)
-        .shadow(radius: 1)
     }
 }
 
