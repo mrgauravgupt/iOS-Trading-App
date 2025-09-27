@@ -26,16 +26,11 @@ class DataExportManager {
         }
     }
 
-    func importData(from url: URL, completion: @escaping (Result<Void, Error>) -> Void) {
-        do {
-            let data = try Data(contentsOf: url)
-            let tradingData = try JSONDecoder().decode([ExportableTradingData].self, from: data)
-            for item in tradingData {
-                PersistenceController.shared.addTradingData(symbol: item.symbol ?? "", price: item.price, volume: item.volume, timestamp: item.timestamp ?? Date())
-            }
-            completion(.success(()))
-        } catch {
-            completion(.failure(error))
+    func importData(from url: URL) async throws {
+        let data = try Data(contentsOf: url)
+        let tradingData = try JSONDecoder().decode([ExportableTradingData].self, from: data)
+        for item in tradingData {
+            try await PersistenceController.shared.addTradingData(symbol: item.symbol ?? "", price: item.price, volume: item.volume, timestamp: item.timestamp ?? Date())
         }
     }
 }

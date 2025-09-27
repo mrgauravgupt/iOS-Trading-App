@@ -9,17 +9,19 @@ class DataSyncManager {
         completion(.success(()))
     }
 
-    func syncHistoricalData(symbol: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        ZerodhaAPIClient().fetchHistoricalData(symbol: symbol) { result in
-            switch result {
-            case .success(let data):
-                for item in data {
-                    PersistenceController.shared.addTradingData(symbol: item.symbol, price: item.price, volume: Int64(item.volume), timestamp: item.timestamp)
+    func syncHistoricalData(symbol: String) async throws {
+        let data = try await withCheckedThrowingContinuation { continuation in
+            ZerodhaAPIClient().fetchHistoricalData(symbol: symbol) { result in
+                switch result {
+                case .success(let data):
+                    continuation.resume(returning: data)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
                 }
-                completion(.success(()))
-            case .failure(let error):
-                completion(.failure(error))
             }
+        }
+        for item in data {
+            try await PersistenceController.shared.addTradingData(symbol: item.symbol, price: item.price, volume: Int64(item.volume), timestamp: item.timestamp)
         }
     }
 }
