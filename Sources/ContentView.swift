@@ -49,37 +49,36 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     // Custom Header - Responsive height based on screen size
                     headerView(geometry: geometry)
-                        .padding(.top, geometry.safeAreaInsets.top)
-                    
+
                     // Main Content - Takes all remaining space
                     TabView(selection: $selectedTab) {
                         // Dashboard Tab
                         dashboardView(geometry: geometry)
                             .tag(0)
-                        
+
                         // Trading Tab
                         tradingView(geometry: geometry)
                             .tag(1)
-                        
+
                         // NIFTY Options AI Tab
                         NIFTYOptionsDashboard()
                             .tag(2)
-                        
+
                         // Analytics Tab
                         analyticsView(geometry: geometry)
                             .tag(3)
-                        
+
                         // Portfolio Tab
                         portfolioView(geometry: geometry)
                             .tag(4)
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
+
                     // Custom Tab Bar - Responsive sizing
                     customTabBar(geometry: geometry)
-                        .padding(.bottom, geometry.safeAreaInsets.bottom)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .ignoresSafeArea(.all)
@@ -418,38 +417,38 @@ struct ContentView: View {
                     Text("AI Trading Insights")
                         .font(.system(size: isCompact ? 12 : 14, weight: .semibold))
                         .foregroundColor(.white)
-                    
+
                     VStack(alignment: .leading, spacing: isCompact ? 8 : 12) {
                         HStack {
                             Image(systemName: "chart.line.uptrend.xyaxis")
                                 .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.blue)
-                            
+
                             Text("NIFTY showing bullish divergence on RSI")
                                 .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
-                        
+
                         HStack {
                             Image(systemName: "chart.bar.fill")
                                 .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.green)
-                            
+
                             Text("Volume spike detected in IT sector")
                                 .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
-                        
+
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: isCompact ? 14 : 16, weight: .medium))
                                 .foregroundColor(.orange)
-                            
+
                             Text("Volatility increasing ahead of options expiry")
                                 .font(.system(size: isCompact ? 12 : 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
-                        
+
                         Button(action: {
                             // Show trade suggestions
                             showTradeSuggestions = true
@@ -471,6 +470,8 @@ struct ContentView: View {
                             .fill(Color.white.opacity(0.05))
                     )
                 }
+
+                Spacer()
             }
             .padding(contentPadding)
         }
