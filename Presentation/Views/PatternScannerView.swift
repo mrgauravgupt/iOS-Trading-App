@@ -46,26 +46,26 @@ struct PatternScannerView: View {
                 VStack(spacing: 12) {
                     HStack {
                         Text("Pattern Scanner")
-                            .font(.largeTitle)
+                            .font(.subheadline)
                             .fontWeight(.bold)
-                        
+
                         Spacer()
-                        
+
                         Button("Close") {
                             // Dismiss handled by parent
                         }
                         .foregroundColor(.blue)
                     }
-                    
+
                     // Filter Controls
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             // Timeframe Selection
                             HStack {
                                 Text("Timeframe:")
-                                    .font(.caption)
+                                    .font(.caption2)
                                     .foregroundColor(.secondary)
-                                
+
                                 Picker("Timeframe", selection: $selectedTimeframe) {
                                     ForEach(timeframes, id: \.self) { timeframe in
                                         Text(timeframe).tag(timeframe)
@@ -73,16 +73,16 @@ struct PatternScannerView: View {
                                 }
                                 .pickerStyle(SegmentedPickerStyle())
                             }
-                            
+
                             Divider()
                                 .frame(height: 20)
-                            
+
                             // Sort Options
                             HStack {
                                 Text("Sort:")
-                                    .font(.caption)
+                                    .font(.caption2)
                                     .foregroundColor(.secondary)
-                                
+
                                 Picker("Sort", selection: $sortBy) {
                                     ForEach(SortOption.allCases, id: \.self) { option in
                                         Text(option.rawValue).tag(option)
@@ -90,15 +90,15 @@ struct PatternScannerView: View {
                                 }
                                 .pickerStyle(MenuPickerStyle())
                             }
-                            
+
                             // Confluence Toggle
                             Toggle("Confluence Only", isOn: $showOnlyConfluence)
-                                .font(.caption)
+                                .font(.caption2)
                         }
                         .padding(.horizontal)
                     }
                 }
-                .padding()
+                .padding(10)
                 .background(Color(.systemBackground))
                 .shadow(radius: 1)
                 
@@ -224,23 +224,23 @@ struct PatternScannerView: View {
 
 struct PatternAlertsSection: View {
     let alerts: [SharedPatternModels.PatternAlert]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "bell.fill")
                     .foregroundColor(.orange)
                 Text("Active Alerts")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Text("\(alerts.count) alerts")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
             .padding(.horizontal)
-            
+
             if alerts.isEmpty {
                 EmptyStateView(
                     icon: "bell.slash.fill",
@@ -263,46 +263,46 @@ struct PatternAlertsSection: View {
 
 struct PatternAlertCard: View {
     let alert: SharedPatternModels.PatternAlert
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(alert.patternType.rawValue)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 Spacer()
-                
+
                 if let urgency = alert.urgency {
                     Text(urgency.rawValue)
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(urgencyColor(urgency).opacity(0.2))
                         .foregroundColor(urgencyColor(urgency))
-                        .cornerRadius(8)
+                        .cornerRadius(10)
                 }
             }
-            
+
             Text("\(Int(alert.confidence * 100))% confidence")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             HStack {
                 Text("Signal: \(signalText(alert.signal))")
-                    .font(.caption)
-                
+                    .font(.caption2)
+
                 Spacer()
-                
+
                 Text("Strength: \(strengthText(alert.strength))")
-                    .font(.caption)
+                    .font(.caption2)
             }
         }
-        .padding()
+        .padding(8)
         .frame(width: 280)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     private func urgencyColor(_ urgency: SharedPatternModels.PatternAlert.AlertUrgency) -> Color {
@@ -349,23 +349,23 @@ struct PatternAlertCard: View {
 
 struct ConfluencePatternsSection: View {
     let patterns: [SharedPatternModels.ConfluencePattern]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "arrow.triangle.merge")
                     .foregroundColor(.purple)
                 Text("Confluence Patterns")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Text("\(patterns.count) patterns")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
             .padding(.horizontal)
-            
+
             if patterns.isEmpty {
                 EmptyStateView(
                     icon: "arrow.triangle.merge",
@@ -388,48 +388,48 @@ struct ConfluencePatternsSection: View {
 
 struct ConfluencePatternCard: View {
     let pattern: SharedPatternModels.ConfluencePattern
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(pattern.dominantPattern)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                Text("\(Int(pattern.overallConfidence * 100))%")
                     .font(.caption)
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                Text("\(Int(pattern.overallConfidence * 100))%")
+                    .font(.caption2)
                     .fontWeight(.semibold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(Color.blue.opacity(0.2))
                     .foregroundColor(.blue)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
             }
-            
+
             Text("Timeframes: \(pattern.timeframes.joined(separator: ", "))")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             HStack {
                 Text("Signal: \(signalText(pattern.signal))")
-                    .font(.caption)
-                
+                    .font(.caption2)
+
                 Spacer()
-                
+
                 Text("Strength: \(strengthText(pattern.strength))")
-                    .font(.caption)
+                    .font(.caption2)
             }
-            
+
             Text("Confluence Score: \(String(format: "%.2f", pattern.confluenceScore))")
-                .font(.caption)
+                .font(.caption2)
                 .italic()
         }
-        .padding()
+        .padding(8)
         .frame(width: 280)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     private func signalText(_ signal: SharedPatternModels.PatternAlert.TradingSignal) -> String {
@@ -461,112 +461,111 @@ struct ConfluencePatternCard: View {
     }
 }
 
-/// A reusable empty state view component
 struct EmptyStateView: View {
     let icon: String
     let title: String
     let message: String
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
-            
+
             VStack(spacing: 8) {
                 Text(title)
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 Text(message)
-                    .font(.body)
+                    .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
         }
-        .padding()
+        .padding(10)
     }
 }
 
 struct TimeframePatternsSection: View {
     let patterns: [TechnicalAnalysisEngine.PatternResult]
     let timeframe: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .foregroundColor(.blue)
                 Text("\(timeframe) Patterns")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
                 Text("\(patterns.count)")
-                    .font(.caption)
+                    .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(Color.blue.opacity(0.2))
-                    .cornerRadius(8)
+                    .cornerRadius(10)
             }
-            
+
             if patterns.isEmpty {
                 Text("No patterns detected in this timeframe")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
+                    .padding(10)
             } else {
                 ForEach(patterns.indices, id: \.self) { index in
                     PatternCard(pattern: patterns[index])
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(UIColor.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
 }
 
 struct PatternCard: View {
     let pattern: TechnicalAnalysisEngine.PatternResult
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.pattern)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 HStack {
                     Text("Confidence: \(String(format: "%.1f%%", pattern.confidence * 100))")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Spacer()
-                    
+
                     strengthBadge
                 }
-                
+
                 Text("Success Rate: \(String(format: "%.1f%%", pattern.successRate * 100))")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             VStack {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(strengthColor)
                     .font(.title2)
-                
+
                 Text(pattern.strength.rawValue)
                     .font(.caption2)
                     .foregroundColor(strengthColor)
             }
         }
-        .padding()
+        .padding(8)
         .background(Color(UIColor.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
         .shadow(radius: 1)
     }
     
@@ -595,26 +594,26 @@ struct StatisticsSection: View {
     let totalPatterns: Int
     let averageConfidence: Double
     let strongPatterns: Int
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "chart.pie.fill")
                     .foregroundColor(.green)
                 Text("Statistics")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
             }
-            
+
             HStack {
                 StatCard(title: "Total Patterns", value: "\(totalPatterns)", color: .blue)
                 StatCard(title: "Avg Confidence", value: "\(String(format: "%.1f%%", averageConfidence * 100))", color: .orange)
                 StatCard(title: "Strong Patterns", value: "\(strongPatterns)", color: .green)
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
 }
 
@@ -622,23 +621,23 @@ struct StatCard: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack {
             Text(value)
-                .font(.title2)
+                .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(color)
-            
+
             Text(title)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
     }
 }
 

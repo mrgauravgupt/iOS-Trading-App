@@ -68,32 +68,32 @@ struct CustomPatternCreationView: View {
     private var basicInfoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Basic Information")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             VStack(spacing: 12) {
                 TextField("Pattern Name", text: $patternName)
                     .textFieldStyle(.roundedBorder)
                     .autocapitalization(.words)
-                
+
                 TextField("Description (Optional)", text: $patternDescription)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(3)
-                
+
                 Picker("Pattern Type", selection: $selectedPatternType) {
                     ForEach(CustomPatternType.allCases) { type in
                         Text(type.rawValue).tag(type)
                     }
                 }
                 .pickerStyle(.menu)
-                
+
                 Toggle("Enable Pattern", isOn: $isEnabled)
                     .toggleStyle(.switch)
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Configuration Section
@@ -101,27 +101,27 @@ struct CustomPatternCreationView: View {
     private var configurationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Configuration")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Confidence Threshold: \(String(format: "%.1f", confidenceThreshold))")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.medium)
-                    
+
                     Slider(value: $confidenceThreshold, in: 0.1...1.0, step: 0.1)
                         .accentColor(.blue)
-                    
+
                     Text("Minimum confidence level required to trigger this pattern")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Timeframe Section
@@ -129,9 +129,9 @@ struct CustomPatternCreationView: View {
     private var timeframeSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Active Timeframes")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(Timeframe.allCases, id: \.self) { timeframe in
                     Toggle(timeframe.rawValue, isOn: Binding(
@@ -147,16 +147,16 @@ struct CustomPatternCreationView: View {
                     .toggleStyle(CheckboxToggleStyle())
                 }
             }
-            
+
             if timeframes.isEmpty {
                 Text("Please select at least one timeframe")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.red)
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Parameters Section
@@ -164,31 +164,31 @@ struct CustomPatternCreationView: View {
     private var parametersSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Pattern Parameters")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             VStack(spacing: 12) {
                 Text("Advanced parameters will be available based on pattern type.")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 // Placeholder for future parameter controls
                 HStack {
                     Image(systemName: "gear")
                         .foregroundColor(.gray)
                     Text("Parameters configuration coming soon")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.gray)
                 }
-                .padding()
+                .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.systemGray5))
-                .cornerRadius(8)
+                .cornerRadius(10)
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Save Button
@@ -196,12 +196,13 @@ struct CustomPatternCreationView: View {
     private var saveButton: some View {
         Button(action: saveCustomPattern) {
             Text("Save Custom Pattern")
-                .font(.headline)
+                .font(.caption)
+                .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(8)
                 .background(canSave ? Color.blue : Color.gray)
-                .cornerRadius(12)
+                .cornerRadius(10)
         }
         .disabled(!canSave)
         .padding(.top, 10)
@@ -273,7 +274,7 @@ struct CheckboxToggleStyle: ToggleStyle {
                 .onTapGesture {
                     configuration.isOn.toggle()
                 }
-            
+
             configuration.label
         }
     }

@@ -68,9 +68,9 @@ struct PatternImportView: View {
     private var importMethodSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Import Method")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             Picker("Method", selection: $importMethod) {
                 ForEach(ImportMethod.allCases) { method in
                     Text(method.rawValue).tag(method)
@@ -78,9 +78,9 @@ struct PatternImportView: View {
             }
             .pickerStyle(.segmented)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Import Input Section
@@ -88,9 +88,9 @@ struct PatternImportView: View {
     private var importInputSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Import Source")
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             switch importMethod {
             case .file:
                 fileImportSection
@@ -100,22 +100,22 @@ struct PatternImportView: View {
                 pasteImportSection
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     private var fileImportSection: some View {
         VStack(spacing: 12) {
             Text("Select a JSON file containing pattern definitions")
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             TextField("File URL or Path", text: $fileURL)
                 .textFieldStyle(.roundedBorder)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
-            
+
             Button(action: {
                 // In a real app, this would open a file picker
                 // For now, we'll use a placeholder
@@ -131,9 +131,9 @@ struct PatternImportView: View {
     private var urlImportSection: some View {
         VStack(spacing: 12) {
             Text("Enter the URL of a JSON file containing patterns")
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             TextField("https://example.com/patterns.json", text: $fileURL)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.URL)
@@ -145,14 +145,14 @@ struct PatternImportView: View {
     private var pasteImportSection: some View {
         VStack(spacing: 12) {
             Text("Paste JSON array of pattern definitions")
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             TextEditor(text: $jsonText)
                 .frame(height: 200)
                 .border(Color.gray.opacity(0.3), width: 1)
-                .cornerRadius(8)
-            
+                .cornerRadius(10)
+
             Button(action: validateAndPreviewJSON) {
                 Label("Validate & Preview", systemImage: "eye")
             }
@@ -166,53 +166,53 @@ struct PatternImportView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Preview (\(importedPatterns.count) patterns)")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button(action: { showPatternPreview = true }) {
                     Text("View All")
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundColor(.blue)
                 }
             }
-            
+
             VStack(spacing: 8) {
                 ForEach(importedPatterns.prefix(3)) { pattern in
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(pattern.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            Text(pattern.type.rawValue)
                                 .font(.caption)
+                                .fontWeight(.medium)
+
+                            Text(pattern.type.rawValue)
+                                .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Text("Conf: \(String(format: "%.1f", pattern.confidenceThreshold))")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.blue)
                     }
-                    .padding()
+                    .padding(8)
                     .background(Color(.systemBackground))
-                    .cornerRadius(8)
+                    .cornerRadius(10)
                 }
-                
+
                 if importedPatterns.count > 3 {
                     Text("... and \(importedPatterns.count - 3) more patterns")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Import Button
@@ -224,12 +224,13 @@ struct PatternImportView: View {
                     .progressViewStyle(CircularProgressViewStyle())
             } else {
                 Text("Import Patterns")
-                    .font(.headline)
+                    .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(8)
                     .background(canImport ? Color.green : Color.gray)
-                    .cornerRadius(12)
+                    .cornerRadius(10)
             }
         }
         .disabled(!canImport || isImporting)
@@ -339,38 +340,38 @@ struct PatternImportView: View {
 struct PatternPreviewView: View {
     let patterns: [CustomPattern]
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             List(patterns) { pattern in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(pattern.name)
-                            .font(.headline)
-                        
+                            .font(.subheadline)
+
                         Spacer()
-                        
+
                         Text(pattern.type.rawValue)
-                            .font(.caption)
+                            .font(.caption2)
                             .padding(4)
                             .background(Color.blue.opacity(0.2))
                             .cornerRadius(4)
                     }
-                    
+
                     if !pattern.description.isEmpty {
                         Text(pattern.description)
-                            .font(.subheadline)
+                            .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     HStack {
                         Text("Confidence: \(String(format: "%.1f", pattern.confidenceThreshold))")
                         Spacer()
                         Text("Timeframes: \(pattern.timeframes.map { $0.rawValue }.joined(separator: ", "))")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Text("Created: \(pattern.createdAt.formatted(date: .abbreviated, time: .shortened))")
                         .font(.caption2)
                         .foregroundColor(.secondary)

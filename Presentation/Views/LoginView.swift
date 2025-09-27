@@ -13,21 +13,21 @@ struct LoginView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Zerodha Login Required").font(.title2).fontWeight(.semibold)
+            Text("Zerodha Login Required").font(.subheadline).fontWeight(.semibold)
             Text("Enter API key and complete login to obtain an access token.")
-                .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
             CredentialsFields()
             Button(action: startLogin) {
-                if isLoggingIn { ProgressView() } else { Text("Login with Zerodha") }
+                if isLoggingIn { ProgressView() } else { Text("Login with Zerodha").font(.caption).fontWeight(.semibold) }
             }
             .buttonStyle(.borderedProminent)
             .disabled(isLoggingIn || (Config.zerodhaAPIKey().isEmpty))
             Text("Login requires valid Zerodha API key and will open the official login page. After login, your access token will be fetched automatically.")
-                .font(.footnote)
+                .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .padding()
+        .padding(10)
         .alert("Connected", isPresented: $showSuccess) {
             Button("OK") { presentationMode.wrappedValue.dismiss() }
         } message: {
@@ -128,6 +128,8 @@ private struct CredentialsFields: View {
                         print("Keychain save error: \(error.localizedDescription)")
                     }
                 }
+                .font(.caption)
+                .fontWeight(.semibold)
             }
         }
     }

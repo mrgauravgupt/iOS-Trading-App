@@ -49,33 +49,33 @@ struct TradeSuggestionView: View {
         VStack(spacing: 12) {
             HStack {
                 Text("AI Trading Mode")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Toggle("Auto Trade", isOn: $suggestionManager.autoTradeEnabled)
                     .onChange(of: suggestionManager.autoTradeEnabled) { _, _ in
                         suggestionManager.toggleAutoTrade()
                     }
             }
-            
+
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(suggestionManager.aiTradingMode.rawValue)
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(suggestionManager.autoTradeEnabled ? .green : .orange)
-                    
+
                     Text(suggestionManager.aiTradingMode.description)
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 Spacer()
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
         .padding(.horizontal)
     }
     
@@ -87,27 +87,27 @@ struct TradeSuggestionView: View {
                     Image(systemName: "lightbulb")
                         .font(.system(size: 48))
                         .foregroundColor(.orange)
-                    
+
                     Text("No Current Suggestions")
-                        .font(.title2)
+                        .font(.subheadline)
                         .fontWeight(.semibold)
-                    
+
                     Text("AI is analyzing market conditions. New suggestions will appear here.")
-                        .font(.body)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-                    
+
                     Button("Generate Test Suggestion") {
                         suggestionManager.generateTestSuggestion()
                     }
-                    .padding()
+                    .padding(8)
                     .background(Color.blue)
                     .foregroundColor(.white)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .padding(10)
             } else {
                 List {
                     ForEach(suggestionManager.currentSuggestions.sorted(by: { $0.timestamp > $1.timestamp })) { suggestion in
@@ -128,19 +128,19 @@ struct TradeSuggestionView: View {
                     Image(systemName: "clock")
                         .font(.system(size: 48))
                         .foregroundColor(.gray)
-                    
+
                     Text("No History Available")
-                        .font(.title2)
+                        .font(.subheadline)
                         .fontWeight(.semibold)
-                    
+
                     Text("Trade suggestion history will appear here once suggestions are generated.")
-                        .font(.body)
+                        .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .padding(10)
             } else {
                 VStack(spacing: 0) {
                     // History Stats
@@ -166,42 +166,42 @@ struct TradeSuggestionView: View {
         return HStack(spacing: 20) {
             VStack {
                 Text("\(totalSuggestions)")
-                    .font(.title2)
+                    .font(.caption)
                     .fontWeight(.bold)
                 Text("Total")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             VStack {
                 Text("\(executedSuggestions)")
-                    .font(.title2)
+                    .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.green)
                 Text("Executed")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             VStack {
                 Text("\(Int(executionRate * 100))%")
-                    .font(.title2)
+                    .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.blue)
                 Text("Rate")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             Button("Clear History") {
                 suggestionManager.clearSuggestionHistory()
             }
-            .font(.caption)
+            .font(.caption2)
             .foregroundColor(.red)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
     }
     
@@ -223,10 +223,10 @@ struct TradeSuggestionCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(suggestion.symbol)
-                    .font(.headline)
+                    .font(.subheadline)
                 Spacer()
                 Text(suggestion.action.rawValue.uppercased())
-                    .font(.headline)
+                    .font(.subheadline)
                     .foregroundColor(suggestion.action == .buy ? .green : .red)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -235,49 +235,49 @@ struct TradeSuggestionCard: View {
                             .fill(suggestion.action == .buy ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
                     )
             }
-            
+
             Divider()
-            
+
             HStack {
                 VStack(alignment: .leading) {
                     Text("Price")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("₹\(String(format: "%.2f", suggestion.price))")
-                        .font(.body)
+                        .font(.caption)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading) {
                     Text("Quantity")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(suggestion.quantity)")
-                        .font(.body)
+                        .font(.caption)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading) {
                     Text("Confidence")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(Int(suggestion.confidence * 100))%")
-                        .font(.body)
+                        .font(.caption)
                 }
             }
-            
+
             Text(suggestion.rationale)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.top, 4)
-            
-            Text("Suggested at: \(formattedDate(suggestion.timestamp))")
                 .font(.caption)
                 .foregroundColor(.secondary)
+                .padding(.top, 4)
+
+            Text("Suggested at: \(formattedDate(suggestion.timestamp))")
+                .font(.caption2)
+                .foregroundColor(.secondary)
                 .padding(.top, 2)
-            
+
             if !suggestion.isExecuted {
                 Button(action: onExecute) {
                     Text("Execute Trade")
@@ -285,7 +285,7 @@ struct TradeSuggestionCard: View {
                         .padding(.vertical, 8)
                         .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(10)
                 }
                 .padding(.top, 8)
             } else {
@@ -294,13 +294,13 @@ struct TradeSuggestionCard: View {
                     .padding(.vertical, 8)
                     .background(Color.gray.opacity(0.3))
                     .foregroundColor(.secondary)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
                     .padding(.top, 8)
             }
         }
-        .padding()
+        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color(UIColor.systemBackground))
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         )
@@ -323,12 +323,12 @@ struct HistorySuggestionCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(suggestion.symbol)
-                    .font(.headline)
+                    .font(.subheadline)
                 Spacer()
-                
+
                 HStack(spacing: 8) {
                     Text(suggestion.action.rawValue.uppercased())
-                        .font(.headline)
+                        .font(.subheadline)
                         .foregroundColor(suggestion.action == .buy ? .green : .red)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -336,60 +336,60 @@ struct HistorySuggestionCard: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(suggestion.action == .buy ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
                         )
-                    
+
                     // Execution status
                     Image(systemName: suggestion.isExecuted ? "checkmark.circle.fill" : "clock.circle")
                         .foregroundColor(suggestion.isExecuted ? .green : .orange)
                 }
             }
-            
+
             Divider()
-            
+
             HStack {
                 VStack(alignment: .leading) {
                     Text("Price")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("₹\(String(format: "%.2f", suggestion.price))")
-                        .font(.body)
+                        .font(.caption)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading) {
                     Text("Quantity")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(suggestion.quantity)")
-                        .font(.body)
+                        .font(.caption)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .leading) {
                     Text("Confidence")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                     Text("\(Int(suggestion.confidence * 100))%")
-                        .font(.body)
+                        .font(.caption)
                 }
             }
-            
+
             Text(suggestion.rationale)
-                .font(.subheadline)
+                .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.top, 4)
-            
+
             HStack {
                 Text("Suggested: \(formattedDate(suggestion.timestamp))")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
                 if suggestion.isExecuted {
                     Text("EXECUTED")
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.bold)
                         .foregroundColor(.green)
                         .padding(.horizontal, 6)
@@ -398,7 +398,7 @@ struct HistorySuggestionCard: View {
                         .cornerRadius(4)
                 } else {
                     Text("PENDING")
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.bold)
                         .foregroundColor(.orange)
                         .padding(.horizontal, 6)
@@ -409,9 +409,9 @@ struct HistorySuggestionCard: View {
             }
             .padding(.top, 2)
         }
-        .padding()
+        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color(UIColor.systemBackground))
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         )

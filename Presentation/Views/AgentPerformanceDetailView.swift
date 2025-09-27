@@ -49,23 +49,23 @@ struct AgentPerformanceDetailView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             Image(systemName: agentIcon)
-                .font(.title)
+                .font(.title3)
                 .foregroundColor(agentColor)
                 .frame(width: 60, height: 60)
                 .background(agentColor.opacity(0.1))
                 .clipShape(Circle())
-            
+
             VStack(spacing: 4) {
                 Text(selectedAgent.rawValue)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text(agentDescription)
                     .font(.subheadline)
+                    .fontWeight(.bold)
+
+                Text(agentDescription)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
-            
+
             Divider()
         }
     }
@@ -78,7 +78,7 @@ struct AgentPerformanceDetailView: View {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
                 Text("Performance Overview")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -148,9 +148,9 @@ struct AgentPerformanceDetailView: View {
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Decision History Section
@@ -161,7 +161,7 @@ struct AgentPerformanceDetailView: View {
                 Image(systemName: "list.bullet")
                     .foregroundColor(.purple)
                 Text("Recent Decisions")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -178,9 +178,9 @@ struct AgentPerformanceDetailView: View {
                 .frame(maxHeight: 200)
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemBackground))
-        .cornerRadius(15)
+        .cornerRadius(12)
         .shadow(radius: 2)
     }
     
@@ -192,7 +192,7 @@ struct AgentPerformanceDetailView: View {
                 Image(systemName: "brain.head.profile")
                     .foregroundColor(.green)
                 Text("Learning Metrics")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -203,19 +203,19 @@ struct AgentPerformanceDetailView: View {
                     value: "Daily",
                     description: "Last updated: 2 hours ago"
                 )
-                
+
                 LearningMetricRow(
                     title: "Learning Rate",
                     value: "0.015",
                     description: "Optimal range: 0.01-0.02"
                 )
-                
+
                 LearningMetricRow(
                     title: "Improvement Rate",
                     value: "+12.3%",
                     description: "Over last 30 days"
                 )
-                
+
                 LearningMetricRow(
                     title: "Data Quality Score",
                     value: "94.2%",
@@ -223,9 +223,9 @@ struct AgentPerformanceDetailView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Risk Analysis Section
@@ -236,7 +236,7 @@ struct AgentPerformanceDetailView: View {
                 Image(systemName: "shield")
                     .foregroundColor(.red)
                 Text("Risk Analysis")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -247,19 +247,19 @@ struct AgentPerformanceDetailView: View {
                     value: "8.2%",
                     riskLevel: .low
                 )
-                
+
                 RiskMetricRow(
                     title: "Overconfidence Risk",
                     value: "Low",
                     riskLevel: .low
                 )
-                
+
                 RiskMetricRow(
                     title: "Market Regime Adaptation",
                     value: "Excellent",
                     riskLevel: .low
                 )
-                
+
                 RiskMetricRow(
                     title: "Data Drift Detection",
                     value: "Active",
@@ -267,9 +267,9 @@ struct AgentPerformanceDetailView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Computed Properties
@@ -396,13 +396,13 @@ struct DecisionHistoryItem: Identifiable {
 
 struct DecisionHistoryRow: View {
     let decision: DecisionHistoryItem
-    
+
     private var timeString: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: decision.timestamp)
     }
-    
+
     private var outcomeColor: Color {
         switch decision.outcome {
         case .success: return .green
@@ -410,7 +410,7 @@ struct DecisionHistoryRow: View {
         case .neutral: return .gray
         }
     }
-    
+
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
@@ -418,39 +418,39 @@ struct DecisionHistoryRow: View {
                     Text(timeString)
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Spacer()
-                    
+
                     Text("\(Int(decision.confidence * 100))%")
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)
                 }
-                
+
                 Text(decision.decision)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(2)
-                
+
                 HStack {
                     Text("P&L: \(String(format: "%.2f", decision.pnl))")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(decision.pnl > 0 ? .green : .red)
-                    
+
                     Spacer()
-                    
+
                     Circle()
                         .fill(outcomeColor)
                         .frame(width: 8, height: 8)
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
     }
 }
 
@@ -458,31 +458,31 @@ struct LearningMetricRow: View {
     let title: String
     let value: String
     let description: String
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 Text(description)
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
+                .font(.caption)
+                .fontWeight(.semibold)
                 .foregroundColor(.blue)
         }
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
     }
@@ -498,13 +498,13 @@ struct PerformanceMetricCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(title)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
             Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
+                .font(.caption)
+                .fontWeight(.semibold)
                 .foregroundColor(color)
 
             HStack(spacing: 4) {
@@ -518,9 +518,9 @@ struct PerformanceMetricCard: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .cornerRadius(10)
         .shadow(radius: 2)
     }
 }
@@ -554,11 +554,11 @@ struct RiskMetricRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
 
                 Text(value)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
 
@@ -567,7 +567,7 @@ struct RiskMetricRow: View {
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
     }
 }
 

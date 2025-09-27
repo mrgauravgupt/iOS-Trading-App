@@ -126,22 +126,22 @@ struct BacktestingView: View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "chart.bar.doc.horizontal")
-                    .font(.title)
+                    .font(.title3)
                     .foregroundColor(.blue)
-                
+
                 VStack(alignment: .leading) {
                     Text("Advanced Backtesting")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Comprehensive Pattern Testing Suite")
                         .font(.subheadline)
+                        .fontWeight(.bold)
+
+                    Text("Comprehensive Pattern Testing Suite")
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             Divider()
         }
     }
@@ -154,11 +154,11 @@ struct BacktestingView: View {
                 Image(systemName: "gear")
                     .foregroundColor(.orange)
                 Text("Basic Configuration")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
-            
+
             VStack(spacing: 12) {
                 HStack {
                     Text("Symbol:")
@@ -168,11 +168,11 @@ struct BacktestingView: View {
                         .autocapitalization(.allCharacters)
                         .disableAutocorrection(true)
                 }
-                
+
                 DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                
+
                 DatePicker("End Date", selection: $endDate, displayedComponents: .date)
-                
+
                 HStack {
                     Text("Initial Capital:")
                         .frame(width: 100, alignment: .leading)
@@ -180,7 +180,7 @@ struct BacktestingView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.decimalPad)
                 }
-                
+
                 HStack {
                     Text("Position Size:")
                         .frame(width: 100, alignment: .leading)
@@ -190,9 +190,9 @@ struct BacktestingView: View {
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Advanced Options Section
@@ -203,18 +203,18 @@ struct BacktestingView: View {
                 Image(systemName: "slider.horizontal.3")
                     .foregroundColor(.purple)
                 Text("Advanced Options")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
-            
+
             VStack(spacing: 12) {
                 // Test Type Selection
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Test Type:")
-                        .font(.subheadline)
+                        .font(.caption)
                         .fontWeight(.medium)
-                    
+
                     Picker("Test Type", selection: $selectedTestType) {
                         ForEach(TestType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
@@ -222,20 +222,20 @@ struct BacktestingView: View {
                     }
                     .pickerStyle(MenuPickerStyle())
                 }
-                
+
                 // Multi-Timeframe Toggle
                 Toggle("Multi-Timeframe Analysis", isOn: $enableMultiTimeframe)
-                
+
                 if enableMultiTimeframe {
                     TimeframeSelectionView(selectedTimeframes: $selectedTimeframes, timeframes: timeframeOptions)
                 }
-                
+
                 // ML Optimization Toggle
                 Toggle("ML Pattern Optimization", isOn: $enableMLOptimization)
-                
+
                 // Monte Carlo Toggle
                 Toggle("Monte Carlo Simulation", isOn: $enableMonteCarloSimulation)
-                
+
                 if enableMonteCarloSimulation {
                     HStack {
                         Text("Simulation Runs:")
@@ -249,9 +249,9 @@ struct BacktestingView: View {
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Pattern Selection Section
@@ -262,10 +262,10 @@ struct BacktestingView: View {
                 Image(systemName: "waveform.path.ecg")
                     .foregroundColor(.green)
                 Text("Pattern Selection")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Button(selectedTestType == .comprehensive ? "Select All" : "Clear All") {
                     if selectedTestType == .comprehensive {
                         selectedPatterns = Set(comprehensivePatterns)
@@ -275,7 +275,7 @@ struct BacktestingView: View {
                 }
                 .foregroundColor(.blue)
             }
-            
+
             if selectedTestType == .comprehensive {
                 ComprehensivePatternSelector(
                     patterns: comprehensivePatterns,
@@ -287,14 +287,14 @@ struct BacktestingView: View {
                     selectedPatterns: $selectedPatterns
                 )
             }
-            
+
             Text("\(selectedPatterns.count) patterns selected")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Run Backtest Section
@@ -312,11 +312,12 @@ struct BacktestingView: View {
                 Text(isLoading ? "Running Backtest..." : "Run Advanced Backtest")
             }
             .frame(maxWidth: .infinity)
-            .font(.headline)
+            .font(.caption)
+            .fontWeight(.semibold)
             .foregroundColor(.white)
-            .padding()
+            .padding(8)
             .background(isLoading ? Color.gray : Color.blue)
-            .cornerRadius(12)
+            .cornerRadius(10)
         }
         .disabled(isLoading || selectedPatterns.isEmpty)
     }
@@ -326,19 +327,19 @@ struct BacktestingView: View {
     private var loadingSection: some View {
         VStack(spacing: 12) {
             Text("Processing \(selectedPatterns.count) patterns...")
-                .font(.headline)
-            
+                .font(.subheadline)
+
             ProgressView(value: loadingProgress)
                 .progressViewStyle(LinearProgressViewStyle())
                 .frame(height: 8)
-            
+
             Text("\(String(format: "%.0f%%", loadingProgress * 100)) complete")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Results Section
@@ -349,16 +350,16 @@ struct BacktestingView: View {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .foregroundColor(.green)
                 Text("Backtest Results")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Button("Detailed View") {
                     showDetailedResults = true
                 }
                 .foregroundColor(.blue)
             }
-            
+
             // Results Tab Selection
             Picker("Results", selection: $selectedTab) {
                 ForEach(ResultTab.allCases, id: \.self) { tab in
@@ -366,7 +367,7 @@ struct BacktestingView: View {
                 }
             }
             .pickerStyle(SegmentedPickerStyle())
-            
+
             // Tab Content
             switch selectedTab {
             case .overview:
@@ -391,9 +392,9 @@ struct BacktestingView: View {
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Helper Properties
@@ -561,13 +562,13 @@ struct DrawdownPoint: Identifiable {
 struct TimeframeSelectionView: View {
     @Binding var selectedTimeframes: Set<String>
     let timeframes: [String]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Timeframes:")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible()),
@@ -582,12 +583,12 @@ struct TimeframeSelectionView: View {
                             selectedTimeframes.insert(timeframe)
                         }
                     }
-                    .font(.caption)
+                    .font(.caption2)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(selectedTimeframes.contains(timeframe) ? Color.blue : Color.gray.opacity(0.3))
                     .foregroundColor(selectedTimeframes.contains(timeframe) ? .white : .primary)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
                 }
             }
         }
@@ -597,13 +598,13 @@ struct TimeframeSelectionView: View {
 struct ComprehensivePatternSelector: View {
     let patterns: [String]
     @Binding var selectedPatterns: Set<String>
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Select from 50+ comprehensive patterns:")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
@@ -628,7 +629,7 @@ struct ComprehensivePatternSelector: View {
 struct BasicPatternSelector: View {
     let patterns: [String]
     @Binding var selectedPatterns: Set<String>
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ForEach(patterns, id: \.self) { pattern in
@@ -651,12 +652,12 @@ struct PatternSelectionRow: View {
     let pattern: String
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             HStack {
                 Text(pattern)
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -665,7 +666,7 @@ struct PatternSelectionRow: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .background(isSelected ? Color.green.opacity(0.1) : Color.clear)
-            .cornerRadius(8)
+            .cornerRadius(10)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -675,7 +676,7 @@ struct PatternSelectionRow: View {
 
 struct OverviewResultsView: View {
     let results: AdvancedBacktestResult
-    
+
     var body: some View {
         VStack(spacing: 12) {
             LazyVGrid(columns: [
@@ -687,9 +688,9 @@ struct OverviewResultsView: View {
                 MetricCard(title: "Sharpe Ratio", value: String(format: "%.2f", results.sharpeRatio), change: "", color: .purple)
                 MetricCard(title: "Max Drawdown", value: "\(String(format: "%.1f%%", results.maxDrawdown * 100))", change: "", color: .orange)
             }
-            
+
             Text("Best Pattern: \(results.bestPerformingPattern)")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.green)
         }
     }
@@ -697,35 +698,35 @@ struct OverviewResultsView: View {
 
 struct PatternResultsView: View {
     let results: AdvancedBacktestResult
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ForEach(results.patternResults.prefix(5), id: \.patternName) { pattern in
                 HStack {
                     VStack(alignment: .leading) {
                         Text(pattern.patternName)
-                            .font(.subheadline)
+                            .font(.caption)
                             .fontWeight(.medium)
                         Text("\(pattern.trades) trades")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     VStack(alignment: .trailing) {
                         Text("\(String(format: "%.1f%%", pattern.winRate * 100))")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
+                            .font(.caption)
+                            .fontWeight(.semibold)
                             .foregroundColor(pattern.winRate > 0.6 ? .green : .red)
                         Text("Win Rate")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding()
+                .padding(8)
                 .background(Color(.systemBackground))
-                .cornerRadius(8)
+                .cornerRadius(10)
             }
         }
     }
@@ -733,7 +734,7 @@ struct PatternResultsView: View {
 
 struct MetricsResultsView: View {
     let results: AdvancedBacktestResult
-    
+
     var body: some View {
         LazyVGrid(columns: [
             GridItem(.flexible()),
@@ -751,13 +752,13 @@ struct MetricsResultsView: View {
 
 struct MonteCarloResultsView: View {
     let results: AdvancedBacktestResult
-    
+
     var body: some View {
         if let mcResults = results.monteCarloResults {
             VStack(spacing: 12) {
                 Text("Monte Carlo Simulation Results")
-                    .font(.headline)
-                
+                    .font(.subheadline)
+
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
@@ -777,23 +778,24 @@ struct MonteCarloResultsView: View {
 
 struct MLInsightsView: View {
     let results: AdvancedBacktestResult
-    
+
     var body: some View {
         if let mlResults = results.mlInsights {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ML Optimization Insights")
-                    .font(.headline)
-                
-                Text("Top optimized patterns:")
                     .font(.subheadline)
+
+                Text("Top optimized patterns:")
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 ForEach(Array(mlResults.optimalPatternWeights.prefix(3)), id: \.key) { pattern, weight in
                     HStack {
                         Text(pattern)
                         Spacer()
                         Text("\(String(format: "%.1f%%", weight * 100))")
-                            .fontWeight(.bold)
+                            .font(.caption)
+                            .fontWeight(.semibold)
                             .foregroundColor(.blue)
                     }
                     .padding(.vertical, 4)
@@ -811,7 +813,7 @@ struct MLInsightsView: View {
 struct DetailedBacktestResultsView: View {
     let results: AdvancedBacktestResult
     @Environment(\.presentationMode) var presentationMode
-    
+
     var body: some View {
         NavigationView {
             ScrollView {

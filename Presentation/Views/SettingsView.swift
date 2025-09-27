@@ -98,7 +98,8 @@ struct SettingsView: View {
                     // Custom Header
                     HStack {
                         Text("Settings")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.subheadline)
+                            .fontWeight(.bold)
                             .foregroundColor(.white)
 
                         Spacer()
@@ -107,12 +108,12 @@ struct SettingsView: View {
                             isPresented = false
                         }) {
                             Image(systemName: "xmark")
-                                .font(.system(size: 18, weight: .medium))
+                                .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 10)
                     .background(Color.black.opacity(0.3))
 
                     // Main Content
@@ -143,8 +144,8 @@ struct SettingsView: View {
                                 agentBehaviorSection
                             }
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 20)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 10)
                     }
                 }
             }
@@ -220,7 +221,7 @@ struct SettingsView: View {
 
                     if !connectionStatus.isEmpty {
                         Text(connectionStatus)
-                            .font(.footnote)
+                            .font(.caption2)
                             .foregroundStyle(connectionStatus.contains("Success") ? .green : .secondary)
                     }
                 }
@@ -253,13 +254,13 @@ struct SettingsView: View {
             DisclosureGroup("AI Trading Controls") {
                 VStack(spacing: 16) {
                     Toggle("Enable AI Auto-Trading", isOn: $isAITradingEnabled)
-                        .font(.headline)
+                        .font(.caption)
                         .toggleStyle(SwitchToggleStyle(tint: .blue))
 
                     if isAITradingEnabled {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Trading Mode")
-                                .font(.subheadline)
+                                .font(.caption)
                                 .fontWeight(.medium)
 
                             Picker("Trading Mode", selection: Binding(
@@ -319,7 +320,7 @@ struct SettingsView: View {
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(8)
                         .background(Color.red)
                         .cornerRadius(10)
                     }
@@ -433,7 +434,7 @@ struct SettingsView: View {
                     )
 
                     Text("Limits exposure to highly correlated assets")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 .padding(.vertical, 8)
@@ -443,7 +444,7 @@ struct SettingsView: View {
             DisclosureGroup("Circuit Breakers") {
                 VStack(spacing: 12) {
                     Text("Automatic trading halts when risk thresholds are breached")
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundColor(.secondary)
 
                     Button("Test Circuit Breaker") {
@@ -726,23 +727,23 @@ struct SettingsView: View {
 struct SettingsCard<Content: View>: View {
     let title: String
     let content: Content
-    
+
     init(_ title: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.content = content()
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
-            
+
             content
         }
-        .padding()
+        .padding(10)
         .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -753,7 +754,7 @@ struct SettingsSlider: View {
     let step: Double
     let format: String
     let multiplier: Double
-    
+
     init(title: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, format: String, multiplier: Double = 1.0) {
         self.title = title
         self._value = value
@@ -762,22 +763,22 @@ struct SettingsSlider: View {
         self.format = format
         self.multiplier = multiplier
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 Spacer()
-                
+
                 Text(String(format: format, value * multiplier))
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(.blue)
             }
-            
+
             Slider(value: $value, in: range, step: step)
                 .accentColor(.blue)
         }

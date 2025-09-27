@@ -66,24 +66,24 @@ struct AIControlCenterView: View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "brain.head.profile")
-                    .font(.title)
+                    .font(.title3)
                     .foregroundColor(.purple)
-                
+
                 VStack(alignment: .leading) {
                     Text("AI Control Center")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Multi-Agent Trading System")
                         .font(.subheadline)
+                        .fontWeight(.bold)
+
+                    Text("Multi-Agent Trading System")
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 systemStatusIndicator
             }
-            
+
             Divider()
         }
     }
@@ -93,7 +93,7 @@ struct AIControlCenterView: View {
             Circle()
                 .fill(isAITradingEnabled ? Color.green : Color.red)
                 .frame(width: 12, height: 12)
-            
+
             Text(isAITradingEnabled ? "ACTIVE" : "INACTIVE")
                 .font(.caption2)
                 .fontWeight(.bold)
@@ -109,25 +109,25 @@ struct AIControlCenterView: View {
                 Image(systemName: "power")
                     .foregroundColor(.blue)
                 Text("Master Controls")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
-            
+
             VStack(spacing: 12) {
                 // AI Trading Toggle
                 HStack {
                     VStack(alignment: .leading) {
                         Text("AI Auto-Trading")
-                            .font(.subheadline)
+                            .font(.caption)
                             .fontWeight(.medium)
                         Text("Enable autonomous trading decisions")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Toggle("", isOn: $suggestionManager.autoTradeEnabled)
                         .scaleEffect(1.2)
                         .onChange(of: suggestionManager.autoTradeEnabled) { _, _ in
@@ -140,12 +140,12 @@ struct AIControlCenterView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Current Mode: \(suggestionManager.aiTradingMode.rawValue)")
-                            .font(.subheadline)
+                            .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(suggestionManager.autoTradeEnabled ? .green : .orange)
-                        
+
                         Text(suggestionManager.aiTradingMode.description)
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
@@ -155,14 +155,14 @@ struct AIControlCenterView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Risk Tolerance")
-                            .font(.subheadline)
+                            .font(.caption)
                             .fontWeight(.medium)
                         Spacer()
                         Text("Conservative")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.green)
                     }
-                    
+
                     Slider(value: .constant(0.3), in: 0...1)
                         .accentColor(.blue)
                 }
@@ -174,19 +174,20 @@ struct AIControlCenterView: View {
                     HStack {
                         Image(systemName: "stop.circle.fill")
                         Text("EMERGENCY STOP")
+                            .font(.caption)
                             .fontWeight(.bold)
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(8)
                     .background(Color.red)
                     .cornerRadius(10)
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Agent Performance Grid
@@ -197,10 +198,10 @@ struct AIControlCenterView: View {
                 Image(systemName: "person.3.fill")
                     .foregroundColor(.orange)
                 Text("Agent Performance")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Button("Details") {
                     showPerformanceDetails = true
                 }
@@ -218,7 +219,7 @@ struct AIControlCenterView: View {
                     decisions: 156,
                     accuracy: 0.73
                 )
-                
+
                 AgentPerformanceCard(
                     agentName: "Market Analyzer",
                     performance: 92.1,
@@ -226,7 +227,7 @@ struct AIControlCenterView: View {
                     decisions: 342,
                     accuracy: 0.85
                 )
-                
+
                 AgentPerformanceCard(
                     agentName: "Risk Manager",
                     performance: 95.8,
@@ -234,7 +235,7 @@ struct AIControlCenterView: View {
                     decisions: 89,
                     accuracy: 0.91
                 )
-                
+
                 AgentPerformanceCard(
                     agentName: "Strategy Selector",
                     performance: 78.4,
@@ -244,9 +245,9 @@ struct AIControlCenterView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Learning Progress Section
@@ -257,7 +258,7 @@ struct AIControlCenterView: View {
                 Image(systemName: "graduationcap.fill")
                     .foregroundColor(.green)
                 Text("Learning Progress")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -268,19 +269,19 @@ struct AIControlCenterView: View {
                     progress: 0.78,
                     improvement: "+12.3%"
                 )
-                
+
                 LearningProgressBar(
                     title: "Risk Assessment",
                     progress: 0.91,
                     improvement: "+5.7%"
                 )
-                
+
                 LearningProgressBar(
                     title: "Market Timing",
                     progress: 0.65,
                     improvement: "+23.1%"
                 )
-                
+
                 LearningProgressBar(
                     title: "Strategy Selection",
                     progress: 0.72,
@@ -288,9 +289,9 @@ struct AIControlCenterView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Strategy Optimization Section
@@ -301,10 +302,10 @@ struct AIControlCenterView: View {
                 Image(systemName: "slider.horizontal.3")
                     .foregroundColor(.purple)
                 Text("Strategy Optimization")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Button("Optimize") {
                     optimizeStrategies()
                 }
@@ -318,14 +319,14 @@ struct AIControlCenterView: View {
                     optimizedValue: "73%",
                     improvement: "+8.9%"
                 )
-                
+
                 OptimizationMetric(
                     name: "Risk-Reward Ratio",
                     currentValue: "1:2.1",
                     optimizedValue: "1:2.4",
                     improvement: "+14.3%"
                 )
-                
+
                 OptimizationMetric(
                     name: "Position Sizing",
                     currentValue: "2.3%",
@@ -334,9 +335,9 @@ struct AIControlCenterView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Trade Suggestions Statistics Section
@@ -347,7 +348,7 @@ struct AIControlCenterView: View {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
                 Text("Trade Suggestions Statistics")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -355,11 +356,11 @@ struct AIControlCenterView: View {
             HStack(spacing: 20) {
                 VStack {
                     Text("\(suggestionManager.suggestionHistory.count)")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundColor(.blue)
                     Text("Total Suggestions")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
@@ -367,11 +368,11 @@ struct AIControlCenterView: View {
                 
                 VStack {
                     Text("\(suggestionManager.suggestionHistory.filter { $0.isExecuted }.count)")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundColor(.green)
                     Text("Executed")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
@@ -382,19 +383,19 @@ struct AIControlCenterView: View {
                         Double(suggestionManager.suggestionHistory.filter { $0.isExecuted }.count) / 
                         Double(suggestionManager.suggestionHistory.count) * 100
                     Text("\(Int(executionRate))%")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundColor(.orange)
                     Text("Success Rate")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
             }
             .frame(maxWidth: .infinity)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Manual Override Section
@@ -405,10 +406,10 @@ struct AIControlCenterView: View {
                 Image(systemName: "hand.raised.fill")
                     .foregroundColor(.orange)
                 Text("Manual Override")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Button("Override") {
                     showManualOverride = true
                 }
@@ -423,7 +424,7 @@ struct AIControlCenterView: View {
                 ) {
                     pauseAI()
                 }
-                
+
                 OverrideButton(
                     title: "Force Buy",
                     icon: "arrow.up.circle",
@@ -431,7 +432,7 @@ struct AIControlCenterView: View {
                 ) {
                     forceBuy()
                 }
-                
+
                 OverrideButton(
                     title: "Force Sell",
                     icon: "arrow.down.circle",
@@ -441,9 +442,9 @@ struct AIControlCenterView: View {
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Real-time Decisions Section
@@ -454,12 +455,12 @@ struct AIControlCenterView: View {
                 Image(systemName: "bolt.fill")
                     .foregroundColor(.yellow)
                 Text("Real-time Decisions")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                 Spacer()
-                
+
                 Text("Live")
-                    .font(.caption)
+                    .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(Color.red)
@@ -475,7 +476,7 @@ struct AIControlCenterView: View {
                     confidence: 0.83,
                     action: "Recommend BUY"
                 )
-                
+
                 RealtimeDecisionCard(
                     timestamp: Date().addingTimeInterval(-120),
                     agent: "Risk Manager",
@@ -483,7 +484,7 @@ struct AIControlCenterView: View {
                     confidence: 0.95,
                     action: "Position size: 1.2%"
                 )
-                
+
                 RealtimeDecisionCard(
                     timestamp: Date().addingTimeInterval(-300),
                     agent: "AI Trader",
@@ -493,9 +494,9 @@ struct AIControlCenterView: View {
                 )
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(15)
+        .cornerRadius(12)
     }
     
     // MARK: - Helper Functions
@@ -533,10 +534,10 @@ struct AgentPerformanceCard: View {
     let status: AgentStatus
     let decisions: Int
     let accuracy: Double
-    
+
     enum AgentStatus {
         case active, learning, inactive
-        
+
         var color: Color {
             switch self {
             case .active: return .green
@@ -544,7 +545,7 @@ struct AgentPerformanceCard: View {
             case .inactive: return .red
             }
         }
-        
+
         var text: String {
             switch self {
             case .active: return "Active"
@@ -553,17 +554,17 @@ struct AgentPerformanceCard: View {
             }
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(agentName)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(1)
-                
+
                 Spacer()
-                
+
                 Text(status.text)
                     .font(.caption2)
                     .fontWeight(.bold)
@@ -573,23 +574,23 @@ struct AgentPerformanceCard: View {
                     .foregroundColor(status.color)
                     .cornerRadius(4)
             }
-            
+
             Text("\(String(format: "%.1f%%", performance))")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.caption)
+                .fontWeight(.semibold)
                 .foregroundColor(performance > 80 ? .green : performance > 60 ? .orange : .red)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("Decisions: \(decisions)")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Text("Accuracy: \(String(format: "%.1f%%", accuracy * 100))")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
         }
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
         .cornerRadius(10)
         .shadow(radius: 2)
@@ -600,35 +601,35 @@ struct LearningProgressBar: View {
     let title: String
     let progress: Double
     let improvement: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                Text(improvement)
                     .font(.caption)
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                Text(improvement)
+                    .font(.caption2)
                     .fontWeight(.bold)
                     .foregroundColor(.green)
             }
-            
+
             HStack {
                 ProgressView(value: progress)
                     .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                
+
                 Text("\(String(format: "%.0f%%", progress * 100))")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundColor(.blue)
             }
         }
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
     }
 }
 
@@ -637,39 +638,39 @@ struct OptimizationMetric: View {
     let currentValue: String
     let optimizedValue: String
     let improvement: String
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(name)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
-                
+
                 HStack {
                     Text("Current: \(currentValue)")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Text("→")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.blue)
-                    
+
                     Text("Optimized: \(optimizedValue)")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.blue)
                 }
             }
-            
+
             Spacer()
-            
+
             Text(improvement)
-                .font(.caption)
+                .font(.caption2)
                 .fontWeight(.bold)
                 .foregroundColor(.green)
         }
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
     }
 }
 
@@ -678,22 +679,22 @@ struct OverrideButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack {
                 Image(systemName: icon)
-                    .font(.title2)
-                
+                    .font(.title3)
+
                 Text(title)
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(color)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(color.opacity(0.1))
-            .cornerRadius(8)
+            .cornerRadius(10)
         }
     }
 }
@@ -704,54 +705,54 @@ struct RealtimeDecisionCard: View {
     let decision: String
     let confidence: Double
     let action: String
-    
+
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.timeStyle = .medium
         return formatter
     }
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(agent)
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)
-                    
+
                     Spacer()
-                    
+
                     Text(timeFormatter.string(from: timestamp))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Text(decision)
-                    .font(.subheadline)
+                    .font(.caption)
                     .lineLimit(2)
-                
+
                 HStack {
                     Text("Confidence: \(String(format: "%.0f%%", confidence * 100))")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Spacer()
-                    
+
                     Text(action)
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundColor(.green)
                 }
             }
-            
+
             Circle()
                 .fill(confidence > 0.8 ? Color.green : confidence > 0.6 ? Color.orange : Color.red)
                 .frame(width: 8, height: 8)
         }
-        .padding()
+        .padding(8)
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(10)
         .shadow(radius: 1)
     }
 }

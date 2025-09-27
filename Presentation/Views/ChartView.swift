@@ -85,14 +85,14 @@ struct ChartView: View {
                             .background(selectedTimeframe == timeframe ? Color.blue : Color.gray.opacity(0.2))
                             .foregroundColor(selectedTimeframe == timeframe ? .white : .primary)
                             .clipShape(Capsule())
-                            .font(.caption)
+                            .font(.caption2)
                         }
                     }
                     .padding(.horizontal)
                 }
-                
+
                 Spacer()
-                
+
                 // Chart Type Selector
                 Picker("Chart Type", selection: $chartType) {
                     ForEach(ChartType.allCases, id: \.self) { type in
@@ -101,20 +101,20 @@ struct ChartView: View {
                 }
                 .pickerStyle(MenuPickerStyle())
             }
-            
+
             HStack {
                 // Pattern Overlay Toggle
                 Toggle("Patterns", isOn: $showPatternOverlay)
                     .toggleStyle(SwitchToggleStyle(tint: .blue))
-                
+
                 Spacer()
-                
+
                 // Indicators Toggle
                 Toggle("Indicators", isOn: $showIndicators)
                     .toggleStyle(SwitchToggleStyle(tint: .green))
-                
+
                 Spacer()
-                
+
                 // Pattern Confidence Threshold
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Confidence: \(Int(patternConfidenceThreshold * 100))%")
@@ -123,9 +123,9 @@ struct ChartView: View {
                         .frame(width: 80)
                 }
             }
-            .font(.caption)
+            .font(.caption2)
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
     }
     
@@ -219,11 +219,11 @@ struct ChartView: View {
                         Circle()
                             .fill(patternConfidenceColor(pattern.pattern.confidence))
                             .frame(width: 8, height: 8)
-                        
+
                         Text(pattern.pattern.pattern)
                             .font(.caption2)
                             .fontWeight(.medium)
-                        
+
                         Text("\(Int(pattern.pattern.confidence * 100))%")
                             .font(.caption2)
                             .foregroundColor(.secondary)
@@ -235,7 +235,7 @@ struct ChartView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -262,11 +262,11 @@ struct ChartView: View {
         VStack(spacing: 8) {
             HStack {
                 Text("Technical Indicators")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Menu("Select Indicators") {
                     ForEach(availableIndicators, id: \.self) { indicator in
                         Button(action: {
@@ -288,16 +288,16 @@ struct ChartView: View {
                 }
                 .foregroundColor(.blue)
             }
-            
+
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                 ForEach(selectedIndicators.sorted(), id: \.self) { indicator in
                     indicatorCard(indicator: indicator)
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Indicator Card
@@ -305,28 +305,28 @@ struct ChartView: View {
     private func indicatorCard(indicator: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(indicator)
-                .font(.caption)
+                .font(.caption2)
                 .fontWeight(.medium)
                 .foregroundColor(.secondary)
-            
+
             if let value = indicatorValues[indicator] {
                 Text(String(format: "%.2f", value))
-                    .font(.headline)
-                    .fontWeight(.bold)
+                    .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundColor(indicatorColor(for: indicator, value: value))
             } else {
                 Text("--")
-                    .font(.headline)
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             // Indicator-specific additional info
             indicatorAdditionalInfo(for: indicator)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
         .background(Color.white)
-        .cornerRadius(8)
+        .cornerRadius(10)
         .shadow(radius: 1)
     }
     
@@ -336,16 +336,16 @@ struct ChartView: View {
         VStack(spacing: 8) {
             HStack {
                 Text("Pattern Analysis")
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Text("\(detectedPatterns.count) patterns detected")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             if !detectedPatterns.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -360,12 +360,12 @@ struct ChartView: View {
                 }
             } else {
                 Text("No patterns detected at current confidence level")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .padding()
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemGray6))
     }
     
@@ -374,16 +374,16 @@ struct ChartView: View {
     private var fallbackView: some View {
         VStack {
             Text("Advanced chart features require iOS 16.0 or later")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             Text("Basic chart functionality available")
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
         .frame(height: 300)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
     
     // MARK: - Helper Functions
@@ -523,7 +523,7 @@ struct ChartView: View {
 struct PatternSummaryCard: View {
     let pattern: PatternRecognitionEngine.PatternRecognitionAlert
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 4) {
@@ -531,13 +531,13 @@ struct PatternSummaryCard: View {
                     Circle()
                         .fill(urgencyColor(pattern.urgency))
                         .frame(width: 6, height: 6)
-                    
+
                     Text(pattern.pattern.pattern)
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .lineLimit(1)
                 }
-                
+
                 Text("\(Int(pattern.pattern.confidence * 100))%")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -545,7 +545,7 @@ struct PatternSummaryCard: View {
             .padding(8)
             .frame(width: 120, alignment: .leading)
             .background(Color.white)
-            .cornerRadius(8)
+            .cornerRadius(10)
             .shadow(radius: 1)
         }
         .buttonStyle(PlainButtonStyle())
@@ -570,43 +570,43 @@ struct PatternDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(pattern.pattern.pattern)
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.bold)
-                    
+
                     HStack {
                         Text("Confidence: \(Int(pattern.pattern.confidence * 100))%")
-                            .font(.headline)
-                        
-                        Spacer()
-                        
-                        Text(pattern.timeframe)
                             .font(.subheadline)
+
+                        Spacer()
+
+                        Text(pattern.timeframe)
+                            .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(Color.blue.opacity(0.2))
                             .cornerRadius(4)
                     }
                 }
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Description")
-                        .font(.headline)
-                    
+                        .font(.subheadline)
+
                     Text(pattern.alertMessage)
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Recommendation")
-                        .font(.headline)
-                    
+                        .font(.subheadline)
+
                     Text(pattern.pattern.signal.rawValue)
                         .font(.body)
                         .foregroundColor(.blue)
                         .fontWeight(.medium)
                 }
-                
+
                 Spacer()
             }
             .padding()
