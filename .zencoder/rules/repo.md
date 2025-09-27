@@ -6,16 +6,15 @@ alwaysApply: true
 # Repository Information Overview
 
 ## Repository Summary
-This repository contains two main projects: an iOS Trading App built with SwiftUI and a React web application. The iOS app is the primary focus, providing a trading platform with AI-driven capabilities for the Indian market, particularly for NIFTY options trading. The React app appears to be a supplementary web interface.
+This repository contains an iOS Trading App built with SwiftUI, providing a trading platform with AI-driven capabilities for the Indian market, particularly for NIFTY options trading.
 
 ## Repository Structure
 - **iOS-Trading-App/**: SwiftUI-based iOS trading application with AI capabilities
-- **src/**: React web application source files
-- **public/**: Static assets for the React web application
+- **scripts/**: Build and code quality scripts
 - **.zencoder/**: Configuration and documentation files
 - **.vscode/**: VS Code editor configuration
 
-## Projects
+## Project
 
 ### iOS Trading App
 **Configuration File**: project.yml
@@ -69,36 +68,3 @@ The app includes comprehensive data models for options trading:
 - IntradayOptionsData: Intraday trading data with OHLC and volume
 - OptionsStrategy: Strategy modeling with risk/reward calculations
 - AIModelState: AI model state tracking for market analysis
-
-### React Web Application
-**Configuration File**: No explicit configuration file found
-
-#### Language & Runtime
-**Language**: TypeScript
-**Framework**: React
-**Build System**: Likely Create React App (based on structure)
-
-#### Dependencies
-No package.json found, but based on imports and structure:
-- React for UI components
-- TypeScript for type safety
-- Google Fonts (Inter family) for typography
-
-#### Build & Installation
-Standard React commands are likely used:
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Build for production
-npm run build
-```
-
-#### Key Features
-- **Modern UI**: Clean interface with responsive design
-- **Component-Based**: Structured with React components
-- **Responsive Layout**: Adapts to different screen sizes
-- **Typography**: Uses Inter font family from Google Fonts

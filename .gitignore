@@ -167,11 +167,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Node.js (if using for tooling)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+
 
 # Ruby (for fastlane)
 *.gem
