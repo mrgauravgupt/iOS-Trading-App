@@ -1,0 +1,3 @@
+[submodule "iOS-Trading-App"]
+	path = iOS-Trading-App
+	url = git@github.com:mrgauravgupt/iOS-Trading-App.git
