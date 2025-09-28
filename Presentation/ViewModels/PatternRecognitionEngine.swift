@@ -2,6 +2,7 @@ import UIKit
 import Foundation
 import Combine
 import SharedPatternModels
+import SharedCoreModels
 
 // Import CoreModels for shared enums (MarketRegime, TrendDirection, etc.)
 
@@ -29,7 +30,7 @@ class PatternRecognitionEngine: ObservableObject {
     // Removed duplicate PatternPerformance struct - now using SharedPatternModels.PatternPerformance
 
     struct MarketCondition {
-        let regime: SharedPatternModels.MarketRegime
+        let regime: SharedCoreModels.MarketRegime
         let volatility: Double
         let volume: Double
         let timestamp: Date
@@ -101,7 +102,7 @@ class PatternRecognitionEngine: ObservableObject {
         }
     }
     
-    private func getHistoricalPerformanceAdjustment(for pattern: String, regime: SharedPatternModels.MarketRegime) -> Double {
+    private func getHistoricalPerformanceAdjustment(for pattern: String, regime: SharedCoreModels.MarketRegime) -> Double {
         guard let history = patternPerformanceHistory[pattern] else { return 0.0 }
         
         let relevantHistory = history.filter { $0.marketRegime == regime }
@@ -134,7 +135,7 @@ class PatternRecognitionEngine: ObservableObject {
         return adaptiveThresholds[pattern] ?? 0.7
     }
     
-    func recordPatternOutcome(pattern: String, confidence: Double, regime: SharedPatternModels.MarketRegime, outcome: Bool, holdingPeriod: Int) {
+    func recordPatternOutcome(pattern: String, confidence: Double, regime: SharedCoreModels.MarketRegime, outcome: Bool, holdingPeriod: Int) {
         let performance = SharedPatternModels.PatternPerformance(
             pattern: pattern,
             timestamp: Date(),
@@ -170,7 +171,7 @@ class PatternRecognitionEngine: ObservableObject {
         ))
         
         // Train ML model with this outcome
-        let state: [Double] = [confidence, regime == .trending ? 1.0 : 0.0, Double(holdingPeriod)]
+        let state: [Double] = [confidence, regime == .bull || regime == .bear ? 1.0 : 0.0, Double(holdingPeriod)]
         let reward = outcome ? 1.0 : -1.0
         mlModelManager.learnFromTrade(state: state, action: outcome ? 0 : 1, reward: reward, nextState: state)
     }
@@ -379,10 +380,10 @@ class PatternRecognitionEngine: ObservableObject {
     }
     
     // Market regime detection
-    func detectMarketRegime(marketData: [MarketData]) -> SharedPatternModels.MarketRegime {
+    func detectMarketRegime(marketData: [MarketData]) -> SharedCoreModels.MarketRegime {
         let prices = marketData.map { $0.price }
 
-        guard prices.count >= 50 else { return .ranging }
+        guard prices.count >= 50 else { return .rangeBound }
         
         // Calculate trend strength
         let shortMA = technicalAnalysisEngine.calculateSMA(prices: Array(prices.suffix(10)), period: 10)
@@ -393,11 +394,11 @@ class PatternRecognitionEngine: ObservableObject {
         
         // Determine regime - using CoreModels.MarketRegime
         if trendStrength > 0.05 {
-            return .trending
+            return .bull
         } else if volatility > 0.02 {
-            return .volatile
+            return .highVolatility
         } else {
-            return .ranging
+            return .rangeBound
         }
     }
     
@@ -554,21 +555,21 @@ class PatternRecognitionEngine: ObservableObject {
         
         return patterns.filter { pattern in
             switch regime {
-            case .trending:
+            case .bull, .bear:
                 // In trending markets, prioritize continuation patterns
                 return pattern.signal == .buy || pattern.signal == .strongBuy ||
                        pattern.pattern.contains("Flag") || pattern.pattern.contains("Triangle")
-                
-            case .ranging:
+
+            case .rangeBound:
                 // In ranging markets, prioritize reversal patterns at extremes
                 return pattern.pattern.contains("Double") || pattern.pattern.contains("Support") ||
                        pattern.pattern.contains("Resistance")
-                
-            case .volatile:
+
+            case .highVolatility:
                 // In volatile markets, require higher confidence patterns
                 return pattern.confidence > 0.8
-                
-            case .quiet, .breakout, .reversal:
+
+            case .lowVolatility, .none:
                 // For other regimes, use default filtering
                 return pattern.confidence > 0.6
             }
@@ -673,7 +674,7 @@ class PatternRecognitionEngine: ObservableObject {
         return technicalAnalysisEngine.analyzePatternConfluence(multiTimeframeResults: analysis)
     }
     
-    func determineMarketRegime(data: [MarketData]) -> SharedPatternModels.MarketRegime {
+    func determineMarketRegime(data: [MarketData]) -> SharedCoreModels.MarketRegime {
         return detectMarketRegime(marketData: data)
     }
 
@@ -1099,20 +1100,20 @@ class PatternRecognitionEngine: ObservableObject {
     struct PatternInsights {
         let pattern: String
         let mlConfidence: Double
-        let marketRegime: SharedPatternModels.MarketRegime
+        let marketRegime: SharedCoreModels.MarketRegime
         let recommendedAction: String
         let riskLevel: String
     }
 
-    private func calculateRiskLevel(prediction: Double, regime: SharedPatternModels.MarketRegime) -> String {
+    private func calculateRiskLevel(prediction: Double, regime: SharedCoreModels.MarketRegime) -> String {
         let baseRisk = 1.0 - prediction
 
         switch regime {
-        case .volatile:
+        case .highVolatility:
             return baseRisk > 0.6 ? "High" : baseRisk > 0.4 ? "Medium" : "Low"
-        case .trending, .breakout:
+        case .bull, .bear:
             return baseRisk > 0.5 ? "Medium" : "Low"
-        case .ranging, .quiet, .reversal:
+        case .rangeBound, .lowVolatility, .none:
             return baseRisk > 0.7 ? "High" : baseRisk > 0.5 ? "Medium" : "Low"
         }
     }

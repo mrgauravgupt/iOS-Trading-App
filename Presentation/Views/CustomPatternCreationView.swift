@@ -1,4 +1,5 @@
 import SwiftUI
+import SharedCoreModels
 
 struct CustomPatternCreationView: View {
     @Environment(\.dismiss) private var dismiss
@@ -258,8 +259,8 @@ struct CustomPatternCreationView: View {
 
 // MARK: - Custom Pattern Model
 
-struct CustomPattern: Codable, Identifiable {
-    let id: UUID
+public struct CustomPattern: Codable, Identifiable {
+    public let id: UUID
     let name: String
     let description: String
     let type: CustomPatternCreationView.CustomPatternType

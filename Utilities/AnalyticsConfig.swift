@@ -37,7 +37,7 @@ public struct AnalyticsConfig {
         public let maxSectorLimit: Double = 30.0
         
         /// Correlation matrix sample data
-        public let correlationMatrix: [CorrelationData] = [
+        let correlationMatrix: [CorrelationData] = [
             CorrelationData(asset1: "NIFTY", asset2: "NIFTY", value: 1.0),
             CorrelationData(asset1: "NIFTY", asset2: "BANKNIFTY", value: 0.75),
             CorrelationData(asset1: "NIFTY", asset2: "TECH", value: 0.82),
@@ -57,7 +57,7 @@ public struct AnalyticsConfig {
         ]
         
         /// Drawdown history generator
-        public func generateDrawdownHistory(startDate: Date, endDate: Date) -> [DrawdownData] {
+        func generateDrawdownHistory(startDate: Date, endDate: Date) -> [DrawdownData] {
             let calendar = Calendar.current
             var currentDate = startDate
             var drawdowns: [DrawdownData] = []
@@ -102,7 +102,7 @@ public struct AnalyticsConfig {
         public let bearAccuracyTrend: Double = -0.5
         
         /// Learning progress generator
-        public func generatePredictionAccuracyHistory(startDate: Date, endDate: Date) -> [PredictionAccuracyData] {
+        func generatePredictionAccuracyHistory(startDate: Date, endDate: Date) -> [PredictionAccuracyData] {
             let calendar = Calendar.current
             var currentDate = startDate
             var accuracies: [PredictionAccuracyData] = []
@@ -116,7 +116,7 @@ public struct AnalyticsConfig {
             return accuracies
         }
         
-        public func generateLearningProgress(startDate: Date, endDate: Date) -> [LearningProgressData] {
+        func generateLearningProgress(startDate: Date, endDate: Date) -> [LearningProgressData] {
             let calendar = Calendar.current
             var currentDate = startDate
             var progress: [LearningProgressData] = []

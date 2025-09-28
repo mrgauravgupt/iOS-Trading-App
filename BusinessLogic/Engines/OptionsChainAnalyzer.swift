@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SharedCoreModels
 
 class OptionsChainAnalyzer {
     private let calculator = OptionsGreeksCalculator()

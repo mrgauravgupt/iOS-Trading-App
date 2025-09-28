@@ -119,28 +119,28 @@ struct RiskAnalyticsView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                         VaRMetricCard(
                             confidence: "95%",
-                            value: String(format: "₹%.0f", riskAnalytics.var95),
+                            value: String(format: "₹%.0f", AnalyticsConfig.risk.var95),
                             subtitle: "1-day loss threshold",
                             color: .orange
                         )
 
                         VaRMetricCard(
                             confidence: "99%",
-                            value: String(format: "₹%.0f", riskAnalytics.var99),
+                            value: String(format: "₹%.0f", AnalyticsConfig.risk.var99),
                             subtitle: "Extreme loss threshold",
                             color: .red
                         )
 
                         VaRMetricCard(
                             confidence: "99.9%",
-                            value: String(format: "₹%.0f", riskAnalytics.var999),
+                            value: String(format: "₹%.0f", AnalyticsConfig.risk.var999),
                             subtitle: "Tail risk threshold",
                             color: .purple
                         )
 
                         VaRMetricCard(
                             confidence: "Expected Shortfall",
-                            value: String(format: "₹%.0f", riskAnalytics.expectedShortfall),
+                            value: String(format: "₹%.0f", AnalyticsConfig.risk.expectedShortfall),
                             subtitle: "Average loss beyond VaR",
                             color: .gray
                         )
@@ -157,29 +157,29 @@ struct RiskAnalyticsView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                         StressTestCard(
                             scenario: "2008 Crisis",
-                            loss: riskAnalytics.crisis2008Loss,
-                            probability: riskAnalytics.crisis2008Probability,
+                            loss: AnalyticsConfig.risk.crisis2008Loss,
+                            probability: AnalyticsConfig.risk.crisis2008Probability,
                             color: .red
                         )
 
                         StressTestCard(
                             scenario: "COVID-19 Crash",
-                            loss: riskAnalytics.covidCrashLoss,
-                            probability: riskAnalytics.covidCrashProbability,
+                            loss: AnalyticsConfig.risk.covidCrashLoss,
+                            probability: AnalyticsConfig.risk.covidCrashProbability,
                             color: .orange
                         )
 
                         StressTestCard(
                             scenario: "Tech Bubble Burst",
-                            loss: riskAnalytics.techBubbleLoss,
-                            probability: riskAnalytics.techBubbleProbability,
+                            loss: AnalyticsConfig.risk.techBubbleLoss,
+                            probability: AnalyticsConfig.risk.techBubbleProbability,
                             color: .purple
                         )
 
                         StressTestCard(
                             scenario: "Interest Rate Shock",
-                            loss: riskAnalytics.rateShockLoss,
-                            probability: riskAnalytics.rateShockProbability,
+                            loss: AnalyticsConfig.risk.rateShockLoss,
+                            probability: AnalyticsConfig.risk.rateShockProbability,
                             color: .blue
                         )
                     }
@@ -203,7 +203,7 @@ struct RiskAnalyticsView: View {
                                     .foregroundColor(.secondary)
                                     .frame(height: 150)
                             } else {
-                                CorrelationMatrixView(correlations: riskAnalytics.correlationMatrix)
+                                CorrelationMatrixView(correlations: AnalyticsConfig.risk.correlationMatrix)
                                     .frame(height: 200)
                                     .padding()
 
@@ -257,7 +257,7 @@ struct RiskAnalyticsView: View {
                                     .foregroundColor(.secondary)
                                     .frame(height: 150)
                             } else {
-                                DrawdownChartView(drawdowns: riskAnalytics.drawdownHistory)
+                                DrawdownChartView(drawdowns: AnalyticsConfig.risk.generateDrawdownHistory(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date()))
                                     .frame(height: 150)
                                     .padding()
 
@@ -265,19 +265,19 @@ struct RiskAnalyticsView: View {
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                                     DrawdownStatView(
                                         title: "Max Drawdown",
-                                        value: String(format: "%.1f%%", riskAnalytics.maxDrawdown * 100),
+                                        value: String(format: "%.1f%%", AnalyticsConfig.risk.maxDrawdown * 100),
                                         subtitle: "Peak to trough"
                                     )
 
                                     DrawdownStatView(
                                         title: "Avg Drawdown",
-                                        value: String(format: "%.1f%%", riskAnalytics.averageDrawdown * 100),
+                                        value: String(format: "%.1f%%", AnalyticsConfig.risk.averageDrawdown * 100),
                                         subtitle: "Mean decline"
                                     )
 
                                     DrawdownStatView(
                                         title: "Recovery Time",
-                                        value: "\(riskAnalytics.averageRecoveryDays)",
+                                        value: "\(AnalyticsConfig.risk.averageRecoveryDays)",
                                         subtitle: "Days to recover"
                                     )
                                 }
@@ -298,33 +298,33 @@ struct RiskAnalyticsView: View {
                         RiskLimitCard(
                             title: "Daily Loss Limit",
                             current: riskAnalytics.dailyLoss,
-                            limit: riskAnalytics.dailyLossLimit,
+                            limit: AnalyticsConfig.risk.dailyLossLimit,
                             unit: "₹",
-                            color: riskAnalytics.dailyLoss > riskAnalytics.dailyLossLimit * 0.8 ? .red : .green
+                            color: riskAnalytics.dailyLoss > AnalyticsConfig.risk.dailyLossLimit * 0.8 ? .red : .green
                         )
 
                         RiskLimitCard(
                             title: "Portfolio VaR Limit",
                             current: riskAnalytics.portfolioVar,
-                            limit: riskAnalytics.portfolioVarLimit,
+                            limit: AnalyticsConfig.risk.portfolioVarLimit,
                             unit: "₹",
-                            color: riskAnalytics.portfolioVar > riskAnalytics.portfolioVarLimit * 0.8 ? .orange : .green
+                            color: riskAnalytics.portfolioVar > AnalyticsConfig.risk.portfolioVarLimit * 0.8 ? .orange : .green
                         )
 
                         RiskLimitCard(
                             title: "Concentration Limit",
                             current: riskAnalytics.maxPositionSize,
-                            limit: riskAnalytics.maxPositionLimit,
+                            limit: AnalyticsConfig.risk.maxPositionLimit,
                             unit: "%",
-                            color: riskAnalytics.maxPositionSize > riskAnalytics.maxPositionLimit * 0.8 ? .orange : .green
+                            color: riskAnalytics.maxPositionSize > AnalyticsConfig.risk.maxPositionLimit * 0.8 ? .orange : .green
                         )
 
                         RiskLimitCard(
                             title: "Sector Exposure",
                             current: riskAnalytics.maxSectorExposure,
-                            limit: riskAnalytics.maxSectorLimit,
+                            limit: AnalyticsConfig.risk.maxSectorLimit,
                             unit: "%",
-                            color: riskAnalytics.maxSectorExposure > riskAnalytics.maxSectorLimit * 0.8 ? .orange : .green
+                            color: riskAnalytics.maxSectorExposure > AnalyticsConfig.risk.maxSectorLimit * 0.8 ? .orange : .green
                         )
                     }
                 }
@@ -380,30 +380,30 @@ struct AIInsightsView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                         PatternPerformanceCard(
                             pattern: "Bullish Engulfing",
-                            accuracy: aiInsights.bullishEngulfingAccuracy,
-                            totalSignals: aiInsights.bullishEngulfingSignals,
-                            profitableTrades: aiInsights.bullishEngulfingProfitable
+                            accuracy: AnalyticsConfig.ai.bullishEngulfingAccuracy,
+                            totalSignals: AnalyticsConfig.ai.bullishEngulfingSignals,
+                            profitableTrades: Int(Double(AnalyticsConfig.ai.bullishEngulfingSignals) * AnalyticsConfig.ai.bullishEngulfingAccuracy)
                         )
 
                         PatternPerformanceCard(
                             pattern: "Bearish Engulfing",
-                            accuracy: aiInsights.bearishEngulfingAccuracy,
-                            totalSignals: aiInsights.bearishEngulfingSignals,
-                            profitableTrades: aiInsights.bearishEngulfingProfitable
+                            accuracy: AnalyticsConfig.ai.bearishEngulfingAccuracy,
+                            totalSignals: AnalyticsConfig.ai.bearishEngulfingSignals,
+                            profitableTrades: Int(Double(AnalyticsConfig.ai.bearishEngulfingSignals) * AnalyticsConfig.ai.bearishEngulfingAccuracy)
                         )
 
                         PatternPerformanceCard(
                             pattern: "Double Bottom",
-                            accuracy: aiInsights.doubleBottomAccuracy,
-                            totalSignals: aiInsights.doubleBottomSignals,
-                            profitableTrades: aiInsights.doubleBottomProfitable
+                            accuracy: AnalyticsConfig.ai.doubleBottomAccuracy,
+                            totalSignals: AnalyticsConfig.ai.doubleBottomSignals,
+                            profitableTrades: Int(Double(AnalyticsConfig.ai.doubleBottomSignals) * AnalyticsConfig.ai.doubleBottomAccuracy)
                         )
 
                         PatternPerformanceCard(
                             pattern: "Head & Shoulders",
-                            accuracy: aiInsights.headShouldersAccuracy,
-                            totalSignals: aiInsights.headShouldersSignals,
-                            profitableTrades: aiInsights.headShouldersProfitable
+                            accuracy: AnalyticsConfig.ai.headShouldersAccuracy,
+                            totalSignals: AnalyticsConfig.ai.headShouldersSignals,
+                            profitableTrades: Int(Double(AnalyticsConfig.ai.headShouldersSignals) * AnalyticsConfig.ai.headShouldersAccuracy)
                         )
                     }
                 }
@@ -426,7 +426,7 @@ struct AIInsightsView: View {
                                     .foregroundColor(.secondary)
                                     .frame(height: 150)
                             } else {
-                                PredictionAccuracyChart(accuracies: aiInsights.predictionAccuracyHistory)
+                                PredictionAccuracyChart(accuracies: AnalyticsConfig.ai.generatePredictionAccuracyHistory(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date()))
                                     .frame(height: 150)
                                     .padding()
 
@@ -434,20 +434,20 @@ struct AIInsightsView: View {
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                                     AccuracyStatView(
                                         title: "Overall Accuracy",
-                                        value: String(format: "%.1f%%", aiInsights.overallAccuracy * 100),
-                                        trend: aiInsights.accuracyTrend
+                                        value: String(format: "%.1f%%", AnalyticsConfig.ai.overallAccuracy * 100),
+                                        trend: AnalyticsConfig.ai.accuracyTrend
                                     )
 
                                     AccuracyStatView(
                                         title: "Bull Predictions",
-                                        value: String(format: "%.1f%%", aiInsights.bullPredictionAccuracy * 100),
-                                        trend: aiInsights.bullAccuracyTrend
+                                        value: String(format: "%.1f%%", AnalyticsConfig.ai.bullPredictionAccuracy * 100),
+                                        trend: AnalyticsConfig.ai.bullAccuracyTrend
                                     )
 
                                     AccuracyStatView(
                                         title: "Bear Predictions",
-                                        value: String(format: "%.1f%%", aiInsights.bearPredictionAccuracy * 100),
-                                        trend: aiInsights.bearAccuracyTrend
+                                        value: String(format: "%.1f%%", AnalyticsConfig.ai.bearPredictionAccuracy * 100),
+                                        trend: AnalyticsConfig.ai.bearAccuracyTrend
                                     )
                                 }
                                 .padding(.horizontal)
@@ -466,28 +466,28 @@ struct AIInsightsView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                         ModelMetricCard(
                             title: "Precision",
-                            value: String(format: "%.1f%%", aiInsights.modelPrecision * 100),
+                            value: String(format: "%.1f%%", AnalyticsConfig.ai.modelPrecision * 100),
                             subtitle: "True positives / predicted positives",
                             color: .blue
                         )
 
                         ModelMetricCard(
                             title: "Recall",
-                            value: String(format: "%.1f%%", aiInsights.modelRecall * 100),
+                            value: String(format: "%.1f%%", AnalyticsConfig.ai.modelRecall * 100),
                             subtitle: "True positives / actual positives",
                             color: .green
                         )
 
                         ModelMetricCard(
                             title: "F1-Score",
-                            value: String(format: "%.1f%%", aiInsights.modelF1Score * 100),
+                            value: String(format: "%.1f%%", AnalyticsConfig.ai.modelF1Score * 100),
                             subtitle: "Harmonic mean of precision/recall",
                             color: .orange
                         )
 
                         ModelMetricCard(
                             title: "AUC-ROC",
-                            value: String(format: "%.3f", aiInsights.modelAUC),
+                            value: String(format: "%.3f", AnalyticsConfig.ai.modelAUC),
                             subtitle: "Area under ROC curve",
                             color: .purple
                         )
@@ -512,7 +512,7 @@ struct AIInsightsView: View {
                                     .foregroundColor(.secondary)
                                     .frame(height: 150)
                             } else {
-                                LearningProgressChart(progress: aiInsights.learningProgress)
+                                LearningProgressChart(progress: AnalyticsConfig.ai.generateLearningProgress(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date()))
                                     .frame(height: 150)
                                     .padding()
 
@@ -522,7 +522,7 @@ struct AIInsightsView: View {
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
 
-                                    ForEach(aiInsights.recentImprovements, id: \.self) { improvement in
+                                    ForEach(AnalyticsConfig.ai.recentImprovements, id: \.self) { improvement in
                                         HStack(spacing: 8) {
                                             Image(systemName: "arrow.up.circle.fill")
                                                 .foregroundColor(.green)
@@ -550,22 +550,22 @@ struct AIInsightsView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 12) {
                         AIRecommendationCard(
                             title: "Portfolio Optimization",
-                            recommendation: aiInsights.portfolioRecommendation,
-                            confidence: aiInsights.portfolioConfidence,
+                            recommendation: AnalyticsConfig.ai.portfolioRecommendation,
+                            confidence: AnalyticsConfig.ai.portfolioConfidence,
                             action: "Rebalance Portfolio"
                         )
 
                         AIRecommendationCard(
                             title: "Risk Management",
-                            recommendation: aiInsights.riskRecommendation,
-                            confidence: aiInsights.riskConfidence,
+                            recommendation: AnalyticsConfig.ai.riskRecommendation,
+                            confidence: AnalyticsConfig.ai.riskConfidence,
                             action: "Adjust Risk Limits"
                         )
 
                         AIRecommendationCard(
                             title: "Strategy Enhancement",
-                            recommendation: aiInsights.strategyRecommendation,
-                            confidence: aiInsights.strategyConfidence,
+                            recommendation: AnalyticsConfig.ai.strategyRecommendation,
+                            confidence: AnalyticsConfig.ai.strategyConfidence,
                             action: "Update Trading Rules"
                         )
                     }
@@ -1002,30 +1002,30 @@ struct AIRecommendationCard: View {
 
 // MARK: - Data Models
 
-struct CorrelationData: Identifiable {
-    let id = UUID()
-    let asset1: String
-    let asset2: String
-    let value: Double
+public struct CorrelationData: Identifiable {
+    public let id = UUID()
+    public let asset1: String
+    public let asset2: String
+    public let value: Double
 }
 
-struct DrawdownData: Identifiable {
-    let id = UUID()
-    let date: Date
-    let percentage: Double
+public struct DrawdownData: Identifiable {
+    public let id = UUID()
+    public let date: Date
+    public let percentage: Double
 }
 
-struct PredictionAccuracyData: Identifiable {
-    let id = UUID()
-    let date: Date
-    let accuracy: Double
+public struct PredictionAccuracyData: Identifiable {
+    public let id = UUID()
+    public let date: Date
+    public let accuracy: Double
 }
 
-struct LearningProgressData: Identifiable {
-    let id = UUID()
-    let date: Date
-    let accuracy: Double
-    let f1Score: Double
+public struct LearningProgressData: Identifiable {
+    public let id = UUID()
+    public let date: Date
+    public let accuracy: Double
+    public let f1Score: Double
 }
 
 // MARK: - Analytics Managers
@@ -1067,65 +1067,34 @@ class RiskAnalyticsManager: ObservableObject {
     }
 
     private func generateMockRiskData() {
-        self.var95 = 25000
-        self.var99 = 45000
-        self.var999 = 75000
-        self.expectedShortfall = 55000
+        self.var95 = AnalyticsConfig.risk.var95
+        self.var99 = AnalyticsConfig.risk.var99
+        self.var999 = AnalyticsConfig.risk.var999
+        self.expectedShortfall = AnalyticsConfig.risk.expectedShortfall
 
-        self.crisis2008Loss = 85000
-        self.crisis2008Probability = 0.05
-        self.covidCrashLoss = 65000
-        self.covidCrashProbability = 0.08
-        self.techBubbleLoss = 55000
-        self.techBubbleProbability = 0.03
-        self.rateShockLoss = 35000
-        self.rateShockProbability = 0.12
+        self.crisis2008Loss = AnalyticsConfig.risk.crisis2008Loss
+        self.crisis2008Probability = AnalyticsConfig.risk.crisis2008Probability
+        self.covidCrashLoss = AnalyticsConfig.risk.covidCrashLoss
+        self.covidCrashProbability = AnalyticsConfig.risk.covidCrashProbability
+        self.techBubbleLoss = AnalyticsConfig.risk.techBubbleLoss
+        self.techBubbleProbability = AnalyticsConfig.risk.techBubbleProbability
+        self.rateShockLoss = AnalyticsConfig.risk.rateShockLoss
+        self.rateShockProbability = AnalyticsConfig.risk.rateShockProbability
 
-        self.correlationMatrix = [
-            CorrelationData(asset1: "NIFTY", asset2: "NIFTY", value: 1.0),
-            CorrelationData(asset1: "NIFTY", asset2: "BANKNIFTY", value: 0.75),
-            CorrelationData(asset1: "NIFTY", asset2: "TECH", value: 0.82),
-            CorrelationData(asset1: "NIFTY", asset2: "FINANCE", value: 0.68),
-            CorrelationData(asset1: "BANKNIFTY", asset2: "NIFTY", value: 0.75),
-            CorrelationData(asset1: "BANKNIFTY", asset2: "BANKNIFTY", value: 1.0),
-            CorrelationData(asset1: "BANKNIFTY", asset2: "TECH", value: 0.45),
-            CorrelationData(asset1: "BANKNIFTY", asset2: "FINANCE", value: 0.89),
-            CorrelationData(asset1: "TECH", asset2: "NIFTY", value: 0.82),
-            CorrelationData(asset1: "TECH", asset2: "BANKNIFTY", value: 0.45),
-            CorrelationData(asset1: "TECH", asset2: "TECH", value: 1.0),
-            CorrelationData(asset1: "TECH", asset2: "FINANCE", value: 0.52),
-            CorrelationData(asset1: "FINANCE", asset2: "NIFTY", value: 0.68),
-            CorrelationData(asset1: "FINANCE", asset2: "BANKNIFTY", value: 0.89),
-            CorrelationData(asset1: "FINANCE", asset2: "TECH", value: 0.52),
-            CorrelationData(asset1: "FINANCE", asset2: "FINANCE", value: 1.0)
-        ]
-
-        let calendar = Calendar.current
-        let endDate = Date()
-        let startDate = calendar.date(byAdding: .month, value: -3, to: endDate)!
-
-        var drawdowns: [DrawdownData] = []
-        var currentDate = startDate
-
-        while currentDate <= endDate {
-            let drawdown = Double.random(in: -0.15...0.0)
-            drawdowns.append(DrawdownData(date: currentDate, percentage: drawdown))
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-        }
-
-        self.drawdownHistory = drawdowns
-        self.maxDrawdown = 0.12
-        self.averageDrawdown = 0.045
-        self.averageRecoveryDays = 18
+        self.correlationMatrix = AnalyticsConfig.risk.correlationMatrix
+        self.drawdownHistory = AnalyticsConfig.risk.generateDrawdownHistory(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date())
+        self.maxDrawdown = AnalyticsConfig.risk.maxDrawdown
+        self.averageDrawdown = AnalyticsConfig.risk.averageDrawdown
+        self.averageRecoveryDays = AnalyticsConfig.risk.averageRecoveryDays
 
         self.dailyLoss = 8500
-        self.dailyLossLimit = 15000
+        self.dailyLossLimit = AnalyticsConfig.risk.dailyLossLimit
         self.portfolioVar = 28000
-        self.portfolioVarLimit = 35000
+        self.portfolioVarLimit = AnalyticsConfig.risk.portfolioVarLimit
         self.maxPositionSize = 12.5
-        self.maxPositionLimit = 15.0
+        self.maxPositionLimit = AnalyticsConfig.risk.maxPositionLimit
         self.maxSectorExposure = 28.3
-        self.maxSectorLimit = 30.0
+        self.maxSectorLimit = AnalyticsConfig.risk.maxSectorLimit
     }
 }
 
@@ -1173,68 +1142,40 @@ class AIInsightsManager: ObservableObject {
     }
 
     private func generateMockInsightsData() {
-        self.bullishEngulfingAccuracy = 0.68
-        self.bullishEngulfingSignals = 45
-        self.bullishEngulfingProfitable = 31
-        self.bearishEngulfingAccuracy = 0.72
-        self.bearishEngulfingSignals = 38
-        self.bearishEngulfingProfitable = 27
-        self.doubleBottomAccuracy = 0.61
-        self.doubleBottomSignals = 23
-        self.doubleBottomProfitable = 14
-        self.headShouldersAccuracy = 0.75
-        self.headShouldersSignals = 16
-        self.headShouldersProfitable = 12
+        self.bullishEngulfingAccuracy = AnalyticsConfig.ai.bullishEngulfingAccuracy
+        self.bullishEngulfingSignals = AnalyticsConfig.ai.bullishEngulfingSignals
+        self.bullishEngulfingProfitable = Int(Double(AnalyticsConfig.ai.bullishEngulfingSignals) * AnalyticsConfig.ai.bullishEngulfingAccuracy)
+        self.bearishEngulfingAccuracy = AnalyticsConfig.ai.bearishEngulfingAccuracy
+        self.bearishEngulfingSignals = AnalyticsConfig.ai.bearishEngulfingSignals
+        self.bearishEngulfingProfitable = Int(Double(AnalyticsConfig.ai.bearishEngulfingSignals) * AnalyticsConfig.ai.bearishEngulfingAccuracy)
+        self.doubleBottomAccuracy = AnalyticsConfig.ai.doubleBottomAccuracy
+        self.doubleBottomSignals = AnalyticsConfig.ai.doubleBottomSignals
+        self.doubleBottomProfitable = Int(Double(AnalyticsConfig.ai.doubleBottomSignals) * AnalyticsConfig.ai.doubleBottomAccuracy)
+        self.headShouldersAccuracy = AnalyticsConfig.ai.headShouldersAccuracy
+        self.headShouldersSignals = AnalyticsConfig.ai.headShouldersSignals
+        self.headShouldersProfitable = Int(Double(AnalyticsConfig.ai.headShouldersSignals) * AnalyticsConfig.ai.headShouldersAccuracy)
 
-        let calendar = Calendar.current
-        let endDate = Date()
-        let startDate = calendar.date(byAdding: .month, value: -3, to: endDate)!
+        self.predictionAccuracyHistory = AnalyticsConfig.ai.generatePredictionAccuracyHistory(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date())
+        self.overallAccuracy = AnalyticsConfig.ai.overallAccuracy
+        self.accuracyTrend = AnalyticsConfig.ai.accuracyTrend
+        self.bullPredictionAccuracy = AnalyticsConfig.ai.bullPredictionAccuracy
+        self.bullAccuracyTrend = AnalyticsConfig.ai.bullAccuracyTrend
+        self.bearPredictionAccuracy = AnalyticsConfig.ai.bearPredictionAccuracy
+        self.bearAccuracyTrend = AnalyticsConfig.ai.bearAccuracyTrend
 
-        var accuracies: [PredictionAccuracyData] = []
-        var currentDate = startDate
+        self.modelPrecision = AnalyticsConfig.ai.modelPrecision
+        self.modelRecall = AnalyticsConfig.ai.modelRecall
+        self.modelF1Score = AnalyticsConfig.ai.modelF1Score
+        self.modelAUC = AnalyticsConfig.ai.modelAUC
 
-        while currentDate <= endDate {
-            let accuracy = Double.random(in: 0.55...0.75)
-            accuracies.append(PredictionAccuracyData(date: currentDate, accuracy: accuracy))
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-        }
+        self.learningProgress = AnalyticsConfig.ai.generateLearningProgress(startDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, endDate: Date())
+        self.recentImprovements = AnalyticsConfig.ai.recentImprovements
 
-        self.predictionAccuracyHistory = accuracies
-        self.overallAccuracy = 0.67
-        self.accuracyTrend = 2.3
-        self.bullPredictionAccuracy = 0.71
-        self.bullAccuracyTrend = 1.8
-        self.bearPredictionAccuracy = 0.63
-        self.bearAccuracyTrend = -0.5
-
-        self.modelPrecision = 0.69
-        self.modelRecall = 0.65
-        self.modelF1Score = 0.67
-        self.modelAUC = 0.734
-
-        var progress: [LearningProgressData] = []
-        currentDate = startDate
-
-        while currentDate <= endDate {
-            let accuracy = Double.random(in: 0.60...0.75)
-            let f1Score = Double.random(in: 0.62...0.72)
-            progress.append(LearningProgressData(date: currentDate, accuracy: accuracy, f1Score: f1Score))
-            currentDate = calendar.date(byAdding: .day, value: 7, to: currentDate)!
-        }
-
-        self.learningProgress = progress
-        self.recentImprovements = [
-            "Improved pattern recognition accuracy by 3.2%",
-            "Enhanced feature engineering for better signal quality",
-            "Optimized model hyperparameters for reduced overfitting",
-            "Added sentiment analysis integration for market context"
-        ]
-
-        self.portfolioRecommendation = "Consider increasing allocation to Technology sector based on momentum analysis and reduce exposure to cyclical sectors."
-        self.portfolioConfidence = 0.82
-        self.riskRecommendation = "Current portfolio volatility is within acceptable limits. Consider implementing trailing stop losses for large positions."
-        self.riskConfidence = 0.78
-        self.strategyRecommendation = "Switch to momentum-based strategies during high volatility periods. Current mean-reversion approach showing reduced effectiveness."
-        self.strategyConfidence = 0.71
+        self.portfolioRecommendation = AnalyticsConfig.ai.portfolioRecommendation
+        self.portfolioConfidence = AnalyticsConfig.ai.portfolioConfidence
+        self.riskRecommendation = AnalyticsConfig.ai.riskRecommendation
+        self.riskConfidence = AnalyticsConfig.ai.riskConfidence
+        self.strategyRecommendation = AnalyticsConfig.ai.strategyRecommendation
+        self.strategyConfidence = AnalyticsConfig.ai.strategyConfidence
     }
 }

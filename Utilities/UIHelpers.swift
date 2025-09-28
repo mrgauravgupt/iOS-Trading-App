@@ -1,5 +1,10 @@
 import SwiftUI
 
+// Notification Names
+extension Notification.Name {
+    static let zerodhaTickUpdate = Notification.Name("zerodhaTickUpdate")
+}
+
 // Enhanced Trading App Color Palette
 extension Color {
     static let kiteBlue = Color(red: 0/255, green: 122/255, blue: 255/255)

@@ -1,6 +1,5 @@
 import Foundation
-
-// MARK: - Pattern Recognition Models
+import SharedCoreModels
 
 /// Represents a detected chart pattern
 public struct ChartPattern: Identifiable, Codable {

@@ -1,4 +1,5 @@
 import Foundation
+import SharedCoreModels
 
 // MARK: - Alert Types and Conditions
 

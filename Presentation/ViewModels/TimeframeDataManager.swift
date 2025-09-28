@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SharedCoreModels
 
 /// Manages multi-timeframe OHLC data aggregation and real-time updates
 class TimeframeDataManager: ObservableObject {

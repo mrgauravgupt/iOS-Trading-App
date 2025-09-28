@@ -1,6 +1,7 @@
 import Foundation
 import NaturalLanguage
 import os.log
+import SharedCoreModels
 
 public enum Sentiment: String {
     case positive = "Positive"

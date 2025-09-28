@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import SharedPatternModels
+import SharedCoreModels
 
 @MainActor
 class IntradayPatternEngine: ObservableObject {

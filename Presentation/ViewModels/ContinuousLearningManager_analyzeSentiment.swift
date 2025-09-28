@@ -1,3 +1,7 @@
+import SharedCoreModels
+
+// Commented out due to missing dependencies
+/*
 private func analyzeSentiment() async throws -> SentimentAnalysis {
     logger.info("Analyzing market sentiment")
     
@@ -13,3 +17,4 @@ private func analyzeSentiment() async throws -> SentimentAnalysis {
     // Convert the SentimentResult to SentimentAnalysis
     return sentimentResult.toSentimentAnalysis()
 }
+*/

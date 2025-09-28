@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import SharedCoreModels
 
 // Manager class for handling trade suggestions
 class TradeSuggestionManager: ObservableObject {
@@ -277,18 +278,20 @@ class TradeSuggestionManager: ObservableObject {
 
         // Add market regime context
         switch insights.marketRegime {
-        case .trending:
+        case .bull, .highVolatility:
             rationale += "Market is in trending regime, supporting directional momentum. "
-        case .ranging:
+        case .rangeBound:
             rationale += "Market is ranging, focusing on mean reversion opportunities. "
-        case .volatile:
+        case .highVolatility:
             rationale += "Market is volatile, requiring careful position sizing. "
-        case .quiet:
+        case .lowVolatility:
             rationale += "Market is quiet, looking for breakout opportunities. "
-        case .breakout:
+        case .bull:
             rationale += "Market is breaking out, supporting momentum trades. "
-        case .reversal:
+        case .bear:
             rationale += "Market is reversing, supporting contrarian positions. "
+        default:
+            rationale += "Market regime analysis in progress. "
         }
 
         // Add ML insights

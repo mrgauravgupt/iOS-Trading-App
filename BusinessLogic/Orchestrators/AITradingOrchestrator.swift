@@ -1,7 +1,7 @@
-import UIKit
 import Foundation
 import SwiftUI
 import Combine
+import SharedCoreModels
 
 
 // MARK: - AI Trading Orchestrator

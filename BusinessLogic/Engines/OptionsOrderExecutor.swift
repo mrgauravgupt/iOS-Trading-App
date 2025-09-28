@@ -1,6 +1,7 @@
 import UIKit
 import Foundation
 import Combine
+import SharedCoreModels
 
 class OptionsOrderExecutor: ObservableObject {
     @Published var executionResults: [ExecutionResult] = []

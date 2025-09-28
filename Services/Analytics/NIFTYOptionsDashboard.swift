@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
 import Combine
+import SharedCoreModels
 
 // MARK: - NIFTY Options Dashboard
 struct NIFTYOptionsDashboard: View {

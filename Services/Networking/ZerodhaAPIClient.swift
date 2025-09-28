@@ -6,10 +6,14 @@ class ZerodhaAPIClient {
     private var accessToken: String { Config.zerodhaAccessToken() }
 
     // Map app symbols to Zerodha identifiers
-    // NIFTY uses instrument token 256265 (index). Quote identifier is NSE:NIFTY 50
     private func instrumentToken(for symbol: String) -> String? {
         switch symbol.uppercased() {
-        case "NIFTY": return "256265"
+        case "NIFTY": return "256265" // NIFTY index
+        case "BANKNIFTY": return "260105" // BANKNIFTY index
+        case let s where s.hasPrefix("NIFTY") && s.hasSuffix("CE"): 
+            return "NFO:" + s // NIFTY options calls
+        case let s where s.hasPrefix("NIFTY") && s.hasSuffix("PE"):
+            return "NFO:" + s // NIFTY options puts
         default: return nil
         }
     }
@@ -17,12 +21,153 @@ class ZerodhaAPIClient {
     private func quoteIdentifier(for symbol: String) -> String? {
         switch symbol.uppercased() {
         case "NIFTY": return "NSE:NIFTY 50"
+        case "BANKNIFTY": return "NSE:NIFTY BANK"
+        case let s where s.hasPrefix("NIFTY") && s.hasSuffix("CE"):
+            return "NFO:" + s // NIFTY options calls
+        case let s where s.hasPrefix("NIFTY") && s.hasSuffix("PE"):
+            return "NFO:" + s // NIFTY options puts
         case "INFY": return "NSE:INFY"
         case "TCS": return "NSE:TCS"
         case "RELIANCE": return "NSE:RELIANCE"
-        case "BANKNIFTY": return "NSE:NIFTY BANK"
         default: return nil
         }
+    }
+
+    // MARK: - WebSocket Methods
+    
+    private var webSocketTask: URLSessionWebSocketTask?
+    private var webSocketRetryCount = 0
+    private let maxRetryCount = 5
+    
+    func connectWebSocket(for symbols: [String]) {
+        guard webSocketTask == nil else { return }
+        
+        var components = URLComponents(string: "wss://ws.zerodha.com")!
+        components.queryItems = [
+            URLQueryItem(name: "api_key", value: apiKey),
+            URLQueryItem(name: "access_token", value: accessToken)
+        ]
+        
+        guard let url = components.url else { return }
+        
+        let session = URLSession(configuration: .default)
+        webSocketTask = session.webSocketTask(with: url)
+        webSocketTask?.resume()
+        
+        listenToWebSocket()
+        subscribeToSymbols(symbols)
+    }
+    
+    private func listenToWebSocket() {
+        webSocketTask?.receive { [weak self] result in
+            switch result {
+            case .success(let message):
+                self?.handleWebSocketMessage(message)
+                self?.listenToWebSocket() // Continue listening
+            case .failure(let error):
+                print("WebSocket error: \(error)")
+                self?.reconnectWebSocket()
+            }
+        }
+    }
+    
+    private var lastMessageTimestamp = Date.distantPast
+    private let messageRateLimit = 0.1 // 100ms between messages
+    
+    private func handleWebSocketMessage(_ message: URLSessionWebSocketTask.Message) {
+        guard Date().timeIntervalSince(lastMessageTimestamp) > messageRateLimit else {
+            return // Rate limit exceeded
+        }
+        lastMessageTimestamp = Date()
+        
+        switch message {
+        case .string(let text):
+            processWebSocketString(text)
+        case .data(let data):
+            processWebSocketData(data)
+        default:
+            break
+        }
+    }
+    
+    private func processWebSocketString(_ text: String) {
+        do {
+            guard let json = try JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any] else {
+                return
+            }
+            
+            // Handle different message types
+            if let tick = json["tick"] as? [String: Any] {
+                processTickData(tick)
+            } else if let oi = json["oi"] as? [String: Any] {
+                processOIData(oi)
+            } else if let depth = json["depth"] as? [String: Any] {
+                processDepthData(depth)
+            }
+        } catch {
+            print("WebSocket message parsing error: \(error)")
+        }
+    }
+    
+    private func processWebSocketData(_ data: Data) {
+        // Handle binary data if needed
+    }
+    
+    private func processTickData(_ tick: [String: Any]) {
+        guard let symbol = tick["instrument_token"] as? String,
+              let lastPrice = tick["last_price"] as? Double else {
+            return
+        }
+        
+        // Notify subscribers of price update
+        NotificationCenter.default.post(
+            name: .zerodhaTickUpdate,
+            object: nil,
+            userInfo: ["symbol": symbol, "price": lastPrice]
+        )
+    }
+    
+    private func processOIData(_ oi: [String: Any]) {
+        // Process open interest data
+    }
+    
+    private func processDepthData(_ depth: [String: Any]) {
+        // Process market depth data
+    }
+    
+    private func subscribeToSymbols(_ symbols: [String]) {
+        guard !symbols.isEmpty else { return }
+        
+        let subscriptionMessage: [String: Any] = [
+            "a": "subscribe",
+            "v": symbols.compactMap { quoteIdentifier(for: $0) }
+        ]
+        
+        do {
+            let messageData = try JSONSerialization.data(withJSONObject: subscriptionMessage)
+            webSocketTask?.send(.string(String(data: messageData, encoding: .utf8)!)) { error in
+                if let error = error {
+                    print("WebSocket subscription error: \(error)")
+                }
+            }
+        } catch {
+            print("WebSocket subscription message error: \(error)")
+        }
+    }
+    
+    private func reconnectWebSocket() {
+        guard webSocketRetryCount < maxRetryCount else { return }
+        webSocketRetryCount += 1
+        
+        DispatchQueue.global().asyncAfter(deadline: .now() + Double(webSocketRetryCount)) { [weak self] in
+            self?.connectWebSocket(for: [])
+        }
+    }
+    
+    func disconnectWebSocket() {
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        webSocketRetryCount = 0
     }
 
     // Real historical data (no stubs). Uses day candles for past ~30 days.
@@ -160,5 +305,17 @@ class ZerodhaAPIClient {
     func getAvailableFunds() async throws -> Double {
         // Real implementation not available - throw error to indicate no data
         throw NSError(domain: "TradingAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Real funds data not available. Use paper trading mode."])
+    }
+
+    // MARK: - Options Data Methods
+
+    func fetchOptionsChain(symbol: String, underlyingPrice: Double) async throws -> NIFTYOptionsChain {
+        // Stub implementation - return empty options chain
+        throw NSError(domain: "OptionsAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Options chain data not available in stub implementation."])
+    }
+
+    func fetchHistoricalOptionsData(symbol: String, from startDate: Date, to endDate: Date) async throws -> [NIFTYOptionsChain] {
+        // Stub implementation - return empty array
+        return []
     }
 }

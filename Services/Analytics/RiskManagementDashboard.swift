@@ -1,4 +1,5 @@
 import SwiftUI
+import SharedCoreModels
 
 struct RiskManagementDashboard: View {
     @StateObject private var riskManager = AdvancedRiskManager()

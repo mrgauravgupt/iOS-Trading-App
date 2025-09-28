@@ -1,16 +1,7 @@
 import Foundation
+import SharedCoreModels
 
 // MARK: - Shared Enums
-
-/// Market regime classification
-public enum MarketRegime: String, Codable {
-    case trending = "Trending"
-    case ranging = "Ranging"
-    case volatile = "Volatile"
-    case quiet = "Quiet"
-    case breakout = "Breakout"
-    case reversal = "Reversal"
-}
 
 // MARK: - Pattern Alert Models
 
@@ -158,7 +149,7 @@ public struct PatternPerformance {
     
     // For ML-based pattern recognition
     public let confidence: Double?
-    public let marketRegime: MarketRegime? // Now uses shared enum from CoreModels
+    public let marketRegime: MarketRegime?
     public let outcome: Bool? // true if profitable
     public let holdingPeriod: Int? // in minutes
     public let features: [Double]? // ML features used for prediction
@@ -189,5 +180,3 @@ public struct PatternPerformance {
         self.successfulTrades = successfulTrades
     }
 }
-
-

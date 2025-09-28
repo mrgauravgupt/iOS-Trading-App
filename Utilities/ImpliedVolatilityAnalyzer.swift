@@ -1,4 +1,5 @@
 import Foundation
+import SharedCoreModels
 
 // MARK: - Implied Volatility Analyzer
 

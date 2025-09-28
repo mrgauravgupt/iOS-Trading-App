@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 import CoreML
-import UIKit
+import SharedCoreModels
 
 @MainActor
 class HistoricalTrainingManager: ObservableObject {

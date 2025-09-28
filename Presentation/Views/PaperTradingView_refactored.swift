@@ -1,15 +1,40 @@
 // This is a partial refactoring to replace the mock implementation in PaperTradingView
 
+import Foundation
+import OSLog
+import SharedCoreModels
+
+// Assuming these are defined elsewhere or need to be injected
+// For now, adding placeholders to fix compilation
+
+let logger = Logger(subsystem: "com.tradingapp", category: "PaperTrading")
+// Assuming portfolio, watchlist, dataProvider are defined elsewhere
+// For compilation, using placeholders - in real implementation, these would be injected
+let portfolio = Portfolio(holdings: [], cash: 0.0) // Placeholder
+let watchlist: [WatchlistItem] = [] // Placeholder
+let dataProvider = DataProvider() // Placeholder
+
+struct WatchlistItem {
+    var symbol: String
+}
+
+class DataProvider {
+    func fetchLatestPrices(for symbols: [String]) async throws -> [MarketDataPoint] {
+        // Placeholder implementation
+        return []
+    }
+}
+
 /// Get current market prices for all symbols
 private func getCurrentMarketPrices() async throws -> [String: Double] {
     logger.info("Fetching current market prices")
-    
+
     // Get the list of symbols in the portfolio
-    let portfolioSymbols = portfolio.positions.map { $0.symbol }
-    
+    let portfolioSymbols = portfolio.holdings.map { $0.symbol }
+
     // Add watchlist symbols
     let watchlistSymbols = watchlist.map { $0.symbol }
-    
+
     // Combine and remove duplicates
     let allSymbols = Array(Set(portfolioSymbols + watchlistSymbols))
     

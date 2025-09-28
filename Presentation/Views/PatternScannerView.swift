@@ -461,31 +461,7 @@ struct ConfluencePatternCard: View {
     }
 }
 
-struct EmptyStateView: View {
-    let icon: String
-    let title: String
-    let message: String
 
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-
-            VStack(spacing: 8) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-
-                Text(message)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(10)
-    }
-}
 
 struct TimeframePatternsSection: View {
     let patterns: [TechnicalAnalysisEngine.PatternResult]

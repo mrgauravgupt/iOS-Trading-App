@@ -25,11 +25,9 @@ targets:
       - path: Services/Notifications
       - path: Services/Analytics
       - path: Utilities
-      - path: Shared/Models
-      
     dependencies:
       - target: SharedPatternModels
-      
+      - target: SharedCoreModels
     settings:
       base:
         INFOPLIST_FILE: Info.plist
@@ -48,12 +46,25 @@ targets:
           CODE_SIGN_STYLE: Automatic
           DEVELOPMENT_TEAM: 54Z85P52PZ
 
+  SharedCoreModels:
+    type: framework
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Core/SharedModels
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.SharedCoreModels
+        GENERATE_INFOPLIST_FILE: YES
+
   SharedPatternModels:
     type: framework
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: Shared/Models
+    dependencies:
+      - target: SharedCoreModels
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.SharedPatternModels

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import SharedCoreModels
 
 // Local type for sentiment analysis to avoid dependency on CoreModels
 struct LocalSentimentAnalysis {

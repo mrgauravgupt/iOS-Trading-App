@@ -1,3 +1,6 @@
+import Foundation
+import SharedCoreModels
+
 // Remove the local struct definitions and use the shared types
 
 // Remove these local struct definitions:

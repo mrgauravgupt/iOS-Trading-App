@@ -1,4 +1,6 @@
 import Foundation
+import SharedPatternModels
+import SharedCoreModels
 
 // Import shared models to avoid duplication
 // Note: OptionType, Timeframe, MarketRegime, VolatilityEnvironment, TrendDirection, and TradeAction are imported from CoreModels
@@ -30,28 +32,45 @@ struct NIFTYOptionContract: Codable, Identifiable, Hashable {
     }
 }
 
-struct NIFTYOptionsChain: Codable {
+public struct NIFTYOptionsChain: Codable {
     let underlyingPrice: Double
     let expiryDate: Date
     let callOptions: [NIFTYOptionContract]
     let putOptions: [NIFTYOptionContract]
     var timestamp: Date
-    
+
+    // Computed properties for analysis
+    var skew: Double {
+        // Calculate volatility skew as difference between OTM put and call IV
+        let atmStrike = getATMStrike()
+        let otmPut = putOptions.filter { $0.strikePrice < atmStrike }.min(by: { $0.impliedVolatility < $1.impliedVolatility })
+        let otmCall = callOptions.filter { $0.strikePrice > atmStrike }.min(by: { $0.impliedVolatility < $1.impliedVolatility })
+
+        guard let putIV = otmPut?.impliedVolatility, let callIV = otmCall?.impliedVolatility else { return 0 }
+        return putIV - callIV
+    }
+
     // Helper methods for options analysis
     func getATMStrike() -> Double {
         let roundedPrice = round(underlyingPrice / 50) * 50
         return roundedPrice
     }
-    
+
     func getOptionsInRange(strikes: Int = 10) -> [NIFTYOptionContract] {
         let atmStrike = getATMStrike()
         let minStrike = atmStrike - Double(strikes * 50)
         let maxStrike = atmStrike + Double(strikes * 50)
-        
+
         let relevantCalls = callOptions.filter { $0.strikePrice >= minStrike && $0.strikePrice <= maxStrike }
         let relevantPuts = putOptions.filter { $0.strikePrice >= minStrike && $0.strikePrice <= maxStrike }
-        
+
         return relevantCalls + relevantPuts
+    }
+
+    func totalOptionValueAtStrike(_ strike: Double) -> Double {
+        let callValue = callOptions.first(where: { $0.strikePrice == strike })?.currentPrice ?? 0
+        let putValue = putOptions.first(where: { $0.strikePrice == strike })?.currentPrice ?? 0
+        return callValue + putValue
     }
 }
 
@@ -367,6 +386,36 @@ struct DetectedPattern: Identifiable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case timeframe, patternType, description, confidence, timestamp
+    }
+}
+
+// MARK: - Extensions
+
+extension VolatilitySurface {
+    public static func fromOptionsChain(_ chain: NIFTYOptionsChain) -> VolatilitySurface {
+        var points: [VolatilitySurfacePoint] = []
+
+        let timeToExpiry = chain.expiryDate.timeIntervalSince(Date()) / (24 * 3600) // days
+
+        for call in chain.callOptions {
+            points.append(VolatilitySurfacePoint(
+                strike: call.strikePrice,
+                timeToExpiry: timeToExpiry,
+                impliedVolatility: call.impliedVolatility,
+                optionType: .call
+            ))
+        }
+
+        for put in chain.putOptions {
+            points.append(VolatilitySurfacePoint(
+                strike: put.strikePrice,
+                timeToExpiry: timeToExpiry,
+                impliedVolatility: put.impliedVolatility,
+                optionType: .put
+            ))
+        }
+
+        return VolatilitySurface(points: points)
     }
 }
 

@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+// Forward declaration or import for NIFTYOptionsChain
+// Since NIFTYOptionsDataModels imports SharedModels, we need to avoid circular import
+// We'll define the method in NIFTYOptionsDataModels instead
+
 // MARK: - Core Enums
 
 /// Option type for Indian markets with specific CE/PE notation
@@ -97,6 +101,15 @@ public enum TrendDirection: String, Codable {
     case neutral = "Neutral"
     case strongBullish = "Strong Bullish"
     case strongBearish = "Strong Bearish"
+}
+
+public enum MarketRegime: String, Codable {
+    case bull = "Bull"
+    case bear = "Bear"
+    case rangeBound = "Range Bound"
+    case highVolatility = "High Volatility"
+    case lowVolatility = "Low Volatility"
+    case none = "None"
 }
 
 /// Market sentiment alias for compatibility
@@ -884,6 +897,8 @@ public struct VolatilitySurface: Codable {
     public static func empty() -> VolatilitySurface {
         return VolatilitySurface()
     }
+
+
 }
 
 public struct VolatilitySurfacePoint: Codable {

@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import SharedCoreModels
 
 struct AgentPerformanceDetailView: View {
     let selectedAgent: AIControlCenterView.AgentType
