@@ -1,0 +1,96 @@
+=== MODEL AUDIT REPORT ===
+Generated: Sun Sep 28 10:10:39 IST 2025
+
+1. DUPLICATE STRUCT DEFINITIONS:
+MarketDataPoint occurrences:
+./Core/SharedModels/SharedModels.swift:public struct MarketDataPoint {
+./Presentation/ViewModels/ContinuousLearningManager_fixed_types.swift:// struct MarketDataPoint: Codable {
+
+Pattern struct occurrences:
+./Core/Models/NIFTYOptionsDataModels.swift:struct DetectedPattern: Identifiable, Codable {
+./Shared/Models/PatternModels.swift:public struct PatternAlert: Identifiable {
+./Shared/Models/PatternModels.swift:public struct ConfluencePattern: Identifiable {
+./Shared/Models/PatternModels.swift:    public struct PatternResult {
+./Shared/Models/PatternModels.swift:public struct PatternPerformance {
+./Shared/Models/SharedPatternModels.swift:public struct ChartPattern: Identifiable, Codable {
+./Shared/Models/SharedPatternModels.swift:public struct PatternDetectionResult: Codable {
+./Shared/Models/SharedPatternModels.swift:public struct PatternScannerConfig: Codable {
+./Shared/Models/SharedPatternModels.swift:public struct PatternBacktestResult: Codable {
+./Presentation/ViewModels/TechnicalAnalysisEngine.swift:    struct PatternResult {
+./Presentation/ViewModels/IntradayPatternEngine.swift:struct IntradayPattern: Identifiable {
+./Presentation/ViewModels/IntradayPatternEngine.swift:// Removed duplicate PatternAlert struct - now using SharedPatternModels.PatternAlert
+./Presentation/ViewModels/IntradayPatternEngine.swift:// Removed duplicate PatternPerformance struct - now using SharedPatternModels.PatternPerformance
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    // Removed duplicate PatternPerformance struct - now using SharedPatternModels.PatternPerformance
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    struct PatternRecognitionAlert: Identifiable {
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    struct PatternRecognitionConfluence: Identifiable {
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    struct PotentialPattern {
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    struct PatternCluster {
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    struct PatternInsights {
+./Presentation/Views/PatternScannerView.swift:struct PatternScannerView: View {
+./Presentation/Views/PatternScannerView.swift:    // Removed duplicate PatternAlert and ConfluencePattern structs - now using SharedPatternModels
+./Presentation/Views/PatternScannerView.swift:struct PatternAlertsSection: View {
+./Presentation/Views/PatternScannerView.swift:struct PatternAlertCard: View {
+./Presentation/Views/PatternScannerView.swift:struct ConfluencePatternsSection: View {
+./Presentation/Views/PatternScannerView.swift:struct ConfluencePatternCard: View {
+./Presentation/Views/PatternScannerView.swift:struct TimeframePatternsSection: View {
+./Presentation/Views/PatternScannerView.swift:struct PatternCard: View {
+./Presentation/Views/BacktestingView.swift:struct PatternBacktestResult {
+./Presentation/Views/BacktestingView.swift:struct ComprehensivePatternSelector: View {
+./Presentation/Views/BacktestingView.swift:struct BasicPatternSelector: View {
+./Presentation/Views/BacktestingView.swift:struct PatternSelectionRow: View {
+./Presentation/Views/BacktestingView.swift:struct PatternResultsView: View {
+./Presentation/Views/ChartView.swift:struct PatternSummaryCard: View {
+./Presentation/Views/ChartView.swift:struct PatternDetailView: View {
+./Presentation/Views/AnalyticsDashboardView.swift:struct PatternPerformanceCard: View {
+./Presentation/Views/PerformanceAnalyticsView.swift:struct PatternPerformanceMetricCard: View {
+./Presentation/Views/PerformanceAnalyticsView.swift:struct PatternPerformanceMetric {
+./Presentation/Views/PaperTradingView.swift:struct PaperTradingPatternAlertCard: View {
+./Presentation/Views/CustomPatternCreationView.swift:struct CustomPatternCreationView: View {
+./Presentation/Views/CustomPatternCreationView.swift:public struct CustomPattern: Codable, Identifiable {
+./Presentation/Views/PatternImportView.swift:struct PatternImportView: View {
+./Presentation/Views/PatternImportView.swift:struct PatternPreviewView: View {
+./Services/Analytics/NIFTYOptionsDashboard.swift:struct PatternAlertRowView: View {
+
+Trade struct occurrences:
+./Core/SharedModels/SharedModels.swift:public struct TradeResult {
+./Core/Models/DataModels.swift:struct TradeData: Codable, Identifiable {
+./Core/Models/NIFTYOptionsDataModels.swift:struct TradeSuggestion: Identifiable, Codable {
+./Utilities/TradeSuggestionAlert.swift:struct TradeSuggestionAlert: ViewModifier {
+./BusinessLogic/Engines/VirtualPortfolio.swift:    public struct PortfolioTrade: Codable {
+./Presentation/ViewModels/BacktestingEngine.swift:struct BacktestTrade {
+./Presentation/Views/TradingAnalyticsView.swift:struct TradeTimingData: Identifiable {
+./Presentation/Views/TradeSuggestionView.swift:struct TradeSuggestionView: View {
+./Presentation/Views/TradeSuggestionView.swift:struct TradeSuggestionCard: View {
+./Presentation/Views/TradeSuggestionView.swift:struct TradeSuggestionView_Previews: PreviewProvider {
+
+2. IMPORT STATEMENT ANALYSIS:
+SharedCoreModels imports:
+      28
+
+Potentially problematic imports:
+./Core/SharedModels/SharedModels.swift:// Since NIFTYOptionsDataModels imports SharedModels, we need to avoid circular import
+./Core/Models/NIFTYOptionsDataModels.swift:import SharedPatternModels
+./Core/Models/NIFTYOptionsDataModels.swift:// Note: OptionType, Timeframe, MarketRegime, VolatilityEnvironment, TrendDirection, and TradeAction are imported from CoreModels
+./Core/Models/NIFTYOptionsDataModels.swift:// Note: Timeframe enum is now imported from CoreModels to avoid duplication
+./Core/Models/NIFTYOptionsDataModels.swift:// Note: MarketRegime, VolatilityEnvironment, and TrendDirection enums are now imported from CoreModels to avoid duplication
+./Core/Models/NIFTYOptionsDataModels.swift:// Note: TradeAction enum is now imported from CoreModels to avoid duplication
+./Presentation/ViewModels/IntradayPatternEngine.swift:import SharedPatternModels
+./Presentation/ViewModels/ContinuousLearningManager_fixed_types.swift:// Instead, import and use the shared types from SharedModels.swift
+./Presentation/ViewModels/ContinuousLearningManager_fixed_types.swift:// import Core.Models
+./Presentation/ViewModels/PatternRecognitionEngine.swift:import SharedPatternModels
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    // Note: MarketRegime and TrendDirection enums are now imported from CoreModels to avoid duplication
+./Presentation/ViewModels/PatternRecognitionEngine.swift:    // Note: TrendDirection enum is now imported from CoreModels to avoid duplication
+./Presentation/Views/PatternScannerView.swift:import SharedPatternModels
+./Presentation/Views/PaperTradingView.swift:import SharedPatternModels
+
+3. DIRECTORY STRUCTURE:
+./ViewModels
+./Core/SharedModels
+./Core/Models
+./SharedModels
+./Shared/Models
+./Models
+./CoreModels
+./Sources/ViewModels
+./Sources/Models
+./Presentation/ViewModels
